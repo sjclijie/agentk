@@ -1,0 +1,1 @@
+require('./src/es6-module-loader');
