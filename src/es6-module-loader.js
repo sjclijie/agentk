@@ -22,11 +22,24 @@ const System = global.System || (global.System = {});
 const loadProgress = Symbol('loadProgress'),
     moduleDefault = Symbol.for('default');
 
-
+/**
+ * @param {String} name full path of the module name
+ * @returns {Promise} a promise that resolves the module
+ */
 function include(name) {
     console.log('include', name);
-    return name in definedModules ? definedModules[name] :
-        System.module(fs.readFileSync(name, 'utf8'), {filename: name, autoSet: true});
+    if(name in definedModules) return definedModules[name];
+
+	if(fs.existsSync(name)) {
+		try {
+		    return Promise.resolve(System.module(fs.readFileSync(name, 'utf8'), {filename: name}));
+		} catch (e) { // file IO error, or module compilation failed
+			return Promise.reject(e);
+		}
+	}
+	let basename = path.basename(name), dir = path.dirname(name);
+	console.log('try to download file %s into %s', basename, dir);
+	return definedModules[name] = require('./publish').download(basename, dir)
 }
 
 function initModule(module, names) {
@@ -48,24 +61,30 @@ function initModule(module, names) {
     Object.defineProperties(module, props);
 }
 
+function onModuleLoad(module) {
+    return module[loadProgress];
+}
+
 System['import'] = function (name) {
-    try {
-        return include(name)[loadProgress];
-    } catch (e) {
-        return Promise.reject(e);
-    }
+    return include(name).then(onModuleLoad);
 };
+
+/**
+ * method called inside module, yields the module when source is parsed
+ * @param {string} name The full path of the module to be loaded
+ * @return The module
+ */
+function importer(name) {
+	return co.yield(include(name))
+}
 
 System.module = function (source, option) {
     let result = compile(source, option);
     let ctor = vm.runInThisContext(result, option);
 
     let module = {};
-    if (option.autoSet) {
-        definedModules[option.filename] = module;
-    }
     module[loadProgress] = co.promise(function () {
-        return ctor(module, co, include, Module.prototype.require.bind(option), option.filename, option.dir, moduleDefault, initModule);
+        return ctor(module, co, importer, Module.prototype.require.bind(option), option.filename, option.dir, moduleDefault, initModule);
     });
     return module;
 };
@@ -82,7 +101,6 @@ const parseOption = {
     sourceType: 'module',
     range: true
 };
-
 
 function compile(source, option) {
     let parsed = esprima.parse(source, parseOption);
@@ -148,10 +166,14 @@ function findExports(body, replace) {
         } else if (stmt.type === Syntax.ExportDefaultDeclaration) {
             //console.log(stmt);
             replace({range: [stmt.range[0], stmt.declaration.range[0]]}, 'module[moduleDefault]=');
-            arr[i] = {
-                type: Syntax.ExpressionStatement,
-                expression: stmt.declaration
-            };
+            if(stmt.declaration.type === Syntax.FunctionDeclaration) {
+                arr[i] = stmt.declaration;
+            } else {
+                arr[i] = {
+                    type: Syntax.ExpressionStatement,
+                    expression: stmt.declaration
+                }
+           }
         }
     }
 
@@ -232,7 +254,7 @@ function handleScope(body, locals, replace) {
                 }
             }
         } else if (stmt.type === Syntax.FunctionDeclaration) {
-            locals[stmt.id.name] = VARIABLE_TYPE;
+            stmt.id && (locals[stmt.id.name] = VARIABLE_TYPE);
             handleFunction(stmt);
             stmt.type = null;
         }

@@ -1,12 +1,12 @@
 "use strict";
 
-import '../module/http.js'; // simply import
-import http0,* as http from '../module/http.js'; // namespace
+import '../server/module/http.js'; // simply import
+import http0,* as http from '../server/module/http.js'; // namespace
 //import http0 from '../module/http.js'; // default
-import {createServer, request, read} from '../module/http.js'; // normal
-import * as file from '../module/file.js';
+import {listen, request, read} from '../server/module/http.js'; // normal
+import * as file from '../server/module/file.js';
 
-createServer(function (req, res) {
+listen(3000, function (req, res) {
     var m = /^\/([^/]+)(.+)/.exec(req.url);
     console.log(m[1], m[2]);
     if (m[1] === 'static') {

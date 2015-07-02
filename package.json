@@ -3,6 +3,9 @@
   "version": "0.0.1",
   "description": "synchronous web service framework",
   "main": "index.js",
+  "bin": {
+    "agentk": "bin/agentk.js"
+  },
   "directories": {
     "test": "test"
   },
@@ -22,6 +25,9 @@
     "sync",
     "framework"
   ],
+  "engines": {
+    "node": ">=0.12.2"
+  },
   "author": "kyrios",
   "license": "ISC",
   "bugs": {

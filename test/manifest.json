@@ -1,0 +1,9 @@
+{
+  "main": "test.js",
+  "directory": "",
+  "stdout": "log/stdout.log",
+  "stderr": "log/stderr.log",
+  "dependencies": {
+    "http": "*"
+  }
+}

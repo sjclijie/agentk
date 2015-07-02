@@ -1,12 +1,16 @@
-import {listen, request, read} from '../module/http.js'; // normal
-import * as file from '../module/file.js';
+import {listen, request, read} from '../server/module/http.js';
+
+import Router from '../server/module/router.js';
+
+Router();
 
 listen(3000, function (req, res) {
     var m = /^\/([^/]+)(.+)/.exec(req.url);
     console.log(m[1], m[2]);
     if (m[1] === 'static') {
         res.setHeader('Content-Type', 'text/javascript');
-        res.write(file.read(__dirname + m[2]));
+        res.enableGzip();
+        res.file(m[2].substr(1));
     } else {
         var tres = request({
             method: 'GET',
