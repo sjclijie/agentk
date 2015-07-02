@@ -61,7 +61,14 @@ let commands = {
                 console.log(xtermEscape("  $#yk<" + cmd + ">" + "           ".substr(cmd.length) + commands[cmd].help))
             });
             console.log(xtermEscape("\ntype $#Bk<agentk> help <command> to get more info"));
-        }
+        }, completion: function(prefix) {
+			if(arguments.length > 1) return;
+			let output = '';
+			for (let txt of Object.keys(commands)) {
+				if(!prefix || txt.substr(0, prefix.length) === prefix) output += txt + '\n'
+			}
+			console.log(output);
+		}
     },
     "run": {
         help: "run program without crash respawn",
@@ -143,7 +150,21 @@ let commands = {
         "will upload ‘http.js’ and ‘file.js’ to the server",
         func: function () {
             require('../server/publish.js')(arguments);
-        }
+        },
+		completion: function() {
+			let added = {};
+			for(let i = arguments.length - 1; i--; ) added[arguments[i] + '.js'] = true;
+			let last = arguments[arguments.length - 1];
+			
+			let files = require('fs').readdirSync('.');
+			let rFile = /^\w+\.js$/;
+			let output = '';
+			for(let file of files) {
+				if(!rFile.test(file) || file in added) continue;
+				if(!last || file.substr(0, last.length) === last) output += file.substr(0, file.length - 3) + '\n';
+			}
+			console.log(output);
+		}
     },
     "rc-install": {
         help: "create init.rc script",
@@ -156,8 +177,26 @@ let commands = {
         func: function () {
 
         }
-    }
+    },
+	"completion": {
+		help: "auto completion helper",
+		args: ">> ~/.bashrc (or ~/.zshrc)",
+		desc: "enable bash completion",
+		func: function(p, agentk, arg2, arg3) {
+			if(!arguments.length) {
+				require('fs').createReadStream(__dirname + '/completion.sh').pipe(process.stdout);
+			} else if(p !== "--") {
+				return;
+			}
+			if(arguments.length === 3) {
+				commands.help.completion(arg2);
+			} else if(arguments.length > 3 && arg2 in commands && commands[arg2].completion) {
+				commands[arg2].completion.apply(null, [].slice.call(arguments, 3));
+			}
+		}
+	}
 };
+
 
 let cmd = process.argv[2];
 

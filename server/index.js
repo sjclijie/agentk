@@ -22,11 +22,15 @@ http.listen(manifest.config.port, function (req, res) {
             return;
         }
         let tres = storage.put(buf, req.url);
-        if (tres.statusCode < 300) { // OK
-            console.log('upload success');
-        } else {
+        if (tres.statusCode >= 300) { // not OK
             res.status = tres.statusCode;
-            res.stream(tres);
+            return res.stream(tres);
+        }
+		console.log('upload success');
+		tres = storage.copy(req.url, '/' + m[1] + '.js');
+        if (tres.statusCode >= 300) { // not OK
+            res.status = tres.statusCode;
+            return res.stream(tres);
         }
     } else {
         res.status = 400;
