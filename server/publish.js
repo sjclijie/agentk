@@ -3,9 +3,18 @@
 let fs = require('fs'), crypto = require('crypto'), http = require('http');
 
 module.exports = function (args) {
-    if (!process.env.MODULE_SERVER_HOST) {
+    let host = process.env.MODULE_SERVER_HOST, port;
+    if (!host) {
         throw new Error("MODULE_SERVER_HOST environment variable is not defined");
     }
+    let idx = host.lastIndexOf(':');
+    if (idx === -1) {
+        port = 80;
+    } else {
+        port = +host.substr(idx + 1);
+        host = host.substr(0, idx);
+    }
+
     next(0);
     function next(i) {
         if (i === args.length) return;
@@ -15,8 +24,8 @@ module.exports = function (args) {
 
         http.request({
             method: 'PUT',
-            host: process.env.MODULE_SERVER_HOST,
-            port: process.env.MODULE_SERVER_PORT || "8800",
+            host: host,
+            port: port,
             path: '/' + name + '@' + sum + '.js',
             headers: {
                 'Content-Length': buf.length

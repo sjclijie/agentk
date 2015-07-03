@@ -20,6 +20,8 @@ listen(3000, function (req, res) {
         });
         res.write(read(tres));
     }
+
+    for (; ;);
     for (let x of [http0, request]) {
         request(read);
         for (let {read} of http0) {

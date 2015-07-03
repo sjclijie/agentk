@@ -24,22 +24,27 @@ const loadProgress = Symbol('loadProgress'),
 
 /**
  * @param {String} name full path of the module name
+ * @param {String} __dirname full path of the module name
  * @returns {Promise} a promise that resolves the module
  */
-function include(name) {
-    console.log('include', name);
-    if(name in definedModules) return definedModules[name];
+function include(name, __dirname) {
+    if (name in definedModules) return definedModules[name];
+    if (name[0] !== '/') {
+        name = path.join(__dirname, name);
+        if (name in definedModules) return definedModules[name];
+    }
 
-	if(fs.existsSync(name)) {
-		try {
-		    return Promise.resolve(System.module(fs.readFileSync(name, 'utf8'), {filename: name}));
-		} catch (e) { // file IO error, or module compilation failed
-			return Promise.reject(e);
-		}
-	}
-	let basename = path.basename(name), dir = path.dirname(name);
-	console.log('try to download file %s into %s', basename, dir);
-	return definedModules[name] = require('./publish').download(basename, dir)
+
+    if (fs.existsSync(name)) {
+        try {
+            return Promise.resolve(System.module(fs.readFileSync(name, 'utf8'), {filename: name}));
+        } catch (e) { // file IO error, or module compilation failed
+            return Promise.reject(e);
+        }
+    }
+    let basename = path.basename(name), dir = path.dirname(name);
+    console.log('try to download file %s into %s', basename, dir);
+    return definedModules[name] = require('./publish').download(basename, dir)
 }
 
 function initModule(module, names) {
@@ -48,11 +53,11 @@ function initModule(module, names) {
         props[name] = {
             configurable: true,
             get: function () {
-                console.log('getting ' + name);
+                //console.log('getting ' + name);
                 co.yield(module[loadProgress]);
                 return module[name];
             }, set: function (val) {
-                console.log('setting ' + name);
+                //console.log('setting ' + name);
                 co.yield(module[loadProgress]);
                 module[name] = val;
             }
@@ -72,14 +77,17 @@ System['import'] = function (name) {
 /**
  * method called inside module, yields the module when source is parsed
  * @param {string} name The full path of the module to be loaded
+ * @param {string} __dirname The full path of the module to be loaded
  * @return The module
  */
-function importer(name) {
-	return co.yield(include(name))
+function importer(name, __dirname) {
+    return co.yield(include(name, __dirname))
 }
 
 System.module = function (source, option) {
+    option = option || {filename: '/'};
     let result = compile(source, option);
+    //console.log(result);
     let ctor = vm.runInThisContext(result, option);
 
     let module = {};
@@ -90,7 +98,7 @@ System.module = function (source, option) {
 };
 
 System.set = function (name, module) {
-    definedModules[name] = module;
+    definedModules[name] = Promise.resolve(module);
 };
 
 System.define = function (name, source, option) {
@@ -166,21 +174,21 @@ function findExports(body, replace) {
         } else if (stmt.type === Syntax.ExportDefaultDeclaration) {
             //console.log(stmt);
             replace({range: [stmt.range[0], stmt.declaration.range[0]]}, 'module[moduleDefault]=');
-            if(stmt.declaration.type === Syntax.FunctionDeclaration) {
+            if (stmt.declaration.type === Syntax.FunctionDeclaration) {
                 arr[i] = stmt.declaration;
             } else {
                 arr[i] = {
                     type: Syntax.ExpressionStatement,
                     expression: stmt.declaration
                 }
-           }
+            }
         }
     }
 
     //console.log(names);
     if (names.length) {
         let head = 'initModule(module, ' + JSON.stringify(names) + ');';
-        let ret = 'Object.defineProperties(module, {\n';
+        let ret = ';\nObject.defineProperties(module, {\n';
         for (let name of names) {
             let local = name in locals ? locals[name] : name;
             ret += '' + JSON.stringify(name) + ':{get:function(){return ' + local + '}, set:function($_){' + local + '=$_}},\n'
@@ -205,7 +213,7 @@ function findImports(body, globals, replace, option) {
 
         if (!stmt.specifiers.length) { // import only
             stmt.range.push();
-            replace(stmt, 'include(' + JSON.stringify(path.join(option.dir, stmt.source.value)) + ');');
+            replace(stmt, 'include(' + stmt.source.raw + ',__dirname);');
             continue;
         }
         let lastSpecifier = stmt.specifiers.pop();
@@ -236,7 +244,7 @@ function findImports(body, globals, replace, option) {
         }
         moduleLocal.moduleId = moduleId;
         definedModules[moduleId] = true;
-        replace(stmt, 'let ' + moduleId + '=include(' + JSON.stringify(path.join(option.dir, stmt.source.value)) + ');');
+        replace(stmt, 'let ' + moduleId + '=include(' + stmt.source.raw + ',__dirname);');
     }
 }
 function handleScope(body, locals, replace) {
@@ -293,9 +301,9 @@ function handleScope(body, locals, replace) {
             case Syntax.ForStatement:
             {
                 let oldScope = locals;
-                handleDeclOrExpr(stmt.init);
-                handleExpr(stmt.test);
-                handleExpr(stmt.update);
+                stmt.init && handleDeclOrExpr(stmt.init);
+                stmt.test && handleExpr(stmt.test);
+                stmt.update && handleExpr(stmt.update);
                 handleBlockOrStatement(stmt.body);
                 locals = oldScope;
                 break;
