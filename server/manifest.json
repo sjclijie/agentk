@@ -1,0 +1,15 @@
+{
+  "main": "index.js",
+  "directory": "",
+  "stdout": "log/stdout.log",
+  "stderr": "log/stderr.log",
+  "config": {
+    "storage": {
+      "name": "aliyun_oss",
+      "bucket": "agent-k",
+      "host": "agent-k.oss-cn-beijing.aliyuncs.com",
+      "keyfile": "/home/kyriosli/oss.json"
+    },
+    "port": "8800"
+  }
+}
