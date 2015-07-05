@@ -1,6 +1,7 @@
 "use strict";
 
 import * as zlib from 'zlib.js';
+import {read as stream_read} from 'stream.js'
 
 const ohttp = require('http'),
     ofs = require('fs');
@@ -88,16 +89,9 @@ export function request(options, body) {
 }
 
 export function read(incoming) {
-    return co.wrap(function (resolve, reject) {
-        let bufs = [];
-        if (incoming.headers['content-encoding'] === 'gzip') { // gzipped
-            incoming = zlib.gunzipTransform(incoming);
-        }
-        incoming.on('data', function (data) {
-            bufs.push(data);
-        }).on('end', function () {
-            resolve(Buffer.concat(bufs));
-        })
-    })
+    if (incoming.headers['content-encoding'] === 'gzip') { // gzipped
+        incoming = zlib.gunzipTransform(incoming);
+    }
+    return stream_read(incoming)
 }
 
