@@ -1,7 +1,7 @@
 const ozlib = require('zlib');
 
 export function gzip(buffer) {
-    return co.async(ozlib.gzip, [buffer]);
+    return co.async(ozlib.gzip, buffer);
 }
 
 export function gzipTransform(stream) {

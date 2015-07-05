@@ -1,6 +1,6 @@
-import * as http from 'module/http.js';
-import * as file from 'module/file.js';
-import {md5} from 'module/crypto.js';
+import * as http from '../src/module/http.js';
+import * as file from '../src/module/file.js';
+import {md5} from '../src/module/crypto.js';
 
 const storage = co.yield(
     System.import(require('path').join(__dirname, 'module/' + manifest.config.storage.name + '.js'))

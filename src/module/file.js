@@ -9,11 +9,11 @@ const ofs = require('fs');
  * @returns {Buffer}
  */
 export function read(path) {
-    return co.async(ofs.readFile, [path]);
+    return co.async(ofs.readFile, path);
 }
 
 export function write(path, content) {
-    return co.async(ofs.writeFile, [path, content]);
+    return co.async(ofs.writeFile, path, content);
 }
 
 export function unlink(path) {
