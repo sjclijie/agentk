@@ -1,9 +1,9 @@
-###-begin-agentk-completion-###
+###-begin-__CMD-completion-###
 #
-# agentk command completion script
+# __CMD command completion script
 #
-# Installation: agentk completion >> ~/.bashrc  (or ~/.zshrc)
-# Or, maybe: agentk completion > /usr/local/etc/bash_completion.d/agentk
+# Installation: __CMD completion >> ~/.bashrc  (or ~/.zshrc)
+# Or, maybe: __CMD completion > /usr/local/etc/bash_completion.d/__CMD
 #
 
 COMP_WORDBREAKS=${COMP_WORDBREAKS/=/}
@@ -11,29 +11,29 @@ COMP_WORDBREAKS=${COMP_WORDBREAKS/@/}
 export COMP_WORDBREAKS
 
 if type complete &>/dev/null; then
-  _agentk_completion () {
+  ___CMD_completion () {
     local si="$IFS"
     IFS=$'\n' COMPREPLY=($(COMP_CWORD="$COMP_CWORD" \
                            COMP_LINE="$COMP_LINE" \
                            COMP_POINT="$COMP_POINT" \
-                           agentk completion -- "${COMP_WORDS[@]}" \
+                           __CMD completion -- "${COMP_WORDS[@]}" \
                            2>/dev/null)) || return $?
     IFS="$si"
   }
-  complete -o default -F _agentk_completion agentk
+  complete -o default -F ___CMD_completion __CMD
 elif type compdef &>/dev/null; then
-  _agentk_completion() {
+  ___CMD_completion() {
     local si=$IFS
     compadd -- $(COMP_CWORD=$((CURRENT-1)) \
                  COMP_LINE=$BUFFER \
                  COMP_POINT=0 \
-                 agentk completion -- "${words[@]}" \
+                 __CMD completion -- "${words[@]}" \
                  2>/dev/null)
     IFS=$si
   }
-  compdef _agentk_completion agentk
+  compdef ___CMD_completion __CMD
 elif type compctl &>/dev/null; then
-  _agentk_completion () {
+  ___CMD_completion () {
     local cword line point words si
     read -Ac words
     read -cn cword
@@ -44,10 +44,10 @@ elif type compctl &>/dev/null; then
     IFS=$'\n' reply=($(COMP_CWORD="$cword" \
                        COMP_LINE="$line" \
                        COMP_POINT="$point" \
-                       agentk completion -- "${words[@]}" \
+                       __CMD completion -- "${words[@]}" \
                        2>/dev/null)) || return $?
     IFS="$si"
   }
-  compctl -K _agentk_completion agentk
+  compctl -K ___CMD_completion __CMD
 fi
-###-end-agentk-completion-###
+###-end-__CMD-completion-###

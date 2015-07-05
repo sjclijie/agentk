@@ -2,10 +2,12 @@
 ":" // ; exec /usr/bin/env node --harmony "$0" "$@"
 "use strict";
 
+let exec = 'ak';
+
 let min_version = 'v0.12.2';
 
 if (process.version < min_version) {
-    throw new Error("agentk runs on Node.js " + min_version + " or higher, please upgrade your installation and try again.");
+    throw new Error(exec + " runs on Node.js " + min_version + " or higher, please upgrade your installation and try again.");
 }
 
 let cp = require('child_process');
@@ -29,10 +31,31 @@ let colors = {
     'W': '7;1'
 };
 
+let cmd = process.argv[2];
+
+
 function xtermEscape(str) {
     return str.replace(/\$#[rgbcmykw]{2}<(.+?)>/gi, function (m, text) {
         return '\x1b[3' + colors[m[2]] + ';4' + colors[m[3]] + 'm' + text + '\x1b[0m';
     });
+}
+
+function callService() {
+    require('../index.js').load(require('path').join(__dirname, '../src/service.js')).then(function(module) {
+        module[cmd]()
+    }).done()
+}
+
+function service(dir) {
+    if(dir === '--all') {
+        if(cmd === 'start') {
+            return console.error(exec + ' start --all is not supported');
+        }
+        cmd += 'All';
+    } else if(dir!== undefined) {
+        process.chdir(dir);
+    }
+    callService()
 }
 
 let commands = {
@@ -42,13 +65,13 @@ let commands = {
         "desc": "display help message.",
         func: function (subcmd) {
             let cmd = process.argv[2];
-            if (cmd === 'help' && arguments.length && subcmd in commands) { // agentk help <cmd>
+            if (cmd === 'help' && arguments.length && subcmd in commands) { // help <cmd>
                 let command = commands[subcmd];
-                console.log(xtermEscape("$#Gk<usage>: $#Bk<agentk> " + subcmd + " " + (command.args || "") + "\n"));
+                console.log(xtermEscape("$#Gk<usage>: $#Bk<" + exec + "> " + subcmd + " " + (command.args || "") + "\n"));
                 console.log(xtermEscape(command.desc));
                 return;
             } else if (!cmd || cmd === 'help' && !subcmd) { // agentk help?
-                console.log(xtermEscape("$#Gk<usage>: $#Bk<agentk> <command> [<args>]\n"));
+                console.log(xtermEscape("$#Gk<usage>: $#Bk<" + exec + "> <command> [<args>]\n"));
             } else {
                 if (cmd === 'help') { // agentk help xxx
                     cmd = subcmd
@@ -60,7 +83,7 @@ let commands = {
             Object.keys(commands).forEach(function (cmd) {
                 console.log(xtermEscape("  $#yk<" + cmd + ">" + "           ".substr(cmd.length) + commands[cmd].help))
             });
-            console.log(xtermEscape("\ntype $#Bk<agentk> help <command> to get more info"));
+            console.log(xtermEscape("\ntype $#Bk<" + exec + "> help <command> to get more info"));
         }, completion: function(prefix) {
 			if(arguments.length > 1) return;
 			let output = '';
@@ -87,42 +110,32 @@ let commands = {
         "args": "[<program directory>]",
         "desc": "run the program located in the directory (or current directory, if none specified), guarded by the " +
         "service. If something bad happened, the program will be restarted. Outputs will be written to log files",
-        func: function () {
-
-        }
+        func: service
     },
     "stop": {
         help: "stop program",
-        "args": "[<program directory> | $#Ck<all>]",
+        "args": "[<program directory> | $#Ck<--all>]",
         "desc": "stop one or all programs started. All listening socket ports will be released",
-        func: function () {
-
-        }
+        func: service
     },
     "restart": {
         help: "restart program",
-        "args": "[<program directory> | $#Ck<all>]",
+        "args": "[<program directory> | $#Ck<--all>]",
         "desc": "restart one or all programs started. The old child process will be detached and killed soon after " +
         "several seconds, and new child will be spawned immediately. Listening socket ports will not be released",
-        func: function () {
-
-        }
+        func: service
     },
     "reload": {
         help: "reload program",
-        "args": "[<program directory> | $#Ck<all>]",
+        "args": "[<program directory> | $#Ck<--all>]",
         "desc": "reload one or all programs started. The old child process received a signal and will decide to exit or " +
         "do something else",
-        func: function () {
-
-        }
+        func: service
     },
     "status": {
         help: "show program status",
         args: "",
-        func: function () {
-
-        }
+        func: callService
     },
     "doc": {
         help: "generate documentation",
@@ -146,7 +159,7 @@ let commands = {
     "publish": {
         help: "publish a module",
         args: "<...module names>",
-        desc: "modules are located in current directory as <module name>.js.\nFor example:\n\n    agentk publish http file\n\n" +
+        desc: "modules are located in current directory as <module name>.js.\nFor example:\n\n    " + exec + " publish http file\n\n" +
         "will upload ‘http.js’ and ‘file.js’ to the server",
         func: function () {
             require('../server/publish.js')(arguments);
@@ -184,7 +197,8 @@ let commands = {
 		desc: "enable bash completion",
 		func: function(p, agentk, arg2, arg3) {
 			if(!arguments.length) {
-				require('fs').createReadStream(__dirname + '/completion.sh').pipe(process.stdout);
+                let content = require('fs').readFileSync(__dirname + '/completion.sh', 'utf8').replace(/__CMD/g, exec);
+				process.stdout.write(content);
 			} else if(p !== "--") {
 				return;
 			}
@@ -197,8 +211,6 @@ let commands = {
 	}
 };
 
-
-let cmd = process.argv[2];
 
 if (!cmd || !(cmd in commands)) {
     cmd = "help"

@@ -51,12 +51,23 @@ exports.wrap = function (cb) {
     return exports.yield(new Promise(cb));
 };
 
-exports.async = function (cb, args) {
+exports.async = function (fun) {
+    let args = arguments;
     return exports.yield(new Promise(function (resolve, reject) {
-        args.push(function (err, result) {
+        if(args.length === 1) {
+            fun(cb)
+        } else if(args.length === 2) {
+            fun(args[1], cb)
+        } else if(args.length === 3) {
+            fun(args[1], args[2], cb)
+        } else {
+            let arr = Array.prototype.slice.call(args, 1);
+            arr.push(cb);
+            fun.apply(null, arr)
+        }
+        function cb(err, result) {
             if (err) reject(err);
             else resolve(result)
-        });
-        cb.apply(null, args);
+        }
     }));
 };

@@ -1,12 +1,15 @@
 "use strict";
-require('./src/es6-module-loader');
 
-exports.load = function (module) {
-    System.import(module).then(null, function (err) {
+Promise.prototype.done = function() {
+    this.then(null, function(err) {
         console.error('ERROR', err.stack || err.message || err);
         process.exit(1);
-    });
-};
+    })
+}
+
+require('./src/es6-module-loader');
+
+exports.load = System.import;
 
 exports.runMain = function () {
     const programDir = process.cwd();
@@ -20,7 +23,7 @@ exports.runMain = function () {
         }
         process.chdir(workdir);
     }
-	exports.load(require('path').join(programDir, manifest.main || 'index.js'))
+	exports.load(require('path').join(programDir, manifest.main || 'index.js')).done()
 };
 
 if (process.mainModule === module) {
