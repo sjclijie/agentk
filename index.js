@@ -11,7 +11,7 @@ require('./src/es6-module-loader');
 
 exports.load = System.import;
 
-exports.runMain = function () {
+exports.run = function () {
     const programDir = process.cwd();
     // read manifest
     let manifest = global.manifest = JSON.parse(require('fs').readFileSync('manifest.json', 'utf8'));
@@ -26,6 +26,3 @@ exports.runMain = function () {
 	exports.load(require('path').join(programDir, manifest.main || 'index.js')).done()
 };
 
-if (process.mainModule === module) {
-    exports.runMain();
-}

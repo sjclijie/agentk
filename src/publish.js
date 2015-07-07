@@ -13,11 +13,12 @@ if(idx !== -1) {
 }
 
 exports.download = function(name) {
-	let manifest = global.manifest;
+	let manifest = global.manifest,
+	    dependencies = manifest && manifest.dependencies;
 	let path;
 	let shortname = name.substr(0, name.length - 3);
-	if(manifest && shortname in manifest.dependencies && manifest.dependencies[shortname] !== '*') {
-		path = '/' + shortname + '@' + manifest.dependencies[name] + '.js';
+	if(dependencies && shortname in dependencies && dependencies[shortname] !== '*') {
+		path = '/' + shortname + '@' + dependencies[name] + '.js';
 	} else {
 		path = '/' + name;
 	}
@@ -28,7 +29,7 @@ exports.download = function(name) {
 			port: port,
 			path: path
 		}, function(tres) {
-			console.log(tres.statusCode);
+			console.log('downloading ' + name + ': ' + tres.statusCode);
 			if(tres.statusCode !== 200) {
 				return reject(new Error("file not found on remote server: " + shortname));
 			}

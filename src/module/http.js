@@ -68,18 +68,22 @@ function HttpResponse(req, res) {
 }
 
 export function listen(port, cb) {
-    return ohttp.createServer(function (req, res) {
-        let resp = HttpResponse(req, res);
-        co.promise(function () {
-            cb(req, resp);
-            resp.end();
-        }).then(function () { // succ
-        }, function (err) { // on error
-            res.writeHead(500);
-            res.end(err.message);
-            console.error(err.stack);
-        })
-    }).listen(port);
+	return co.wrap(function(resolve, reject) {
+		let server = ohttp.createServer(function (req, res) {
+			let resp = HttpResponse(req, res);
+			co.promise(function () {
+				cb(req, resp);
+				resp.end();
+			}).then(function () { // succ
+			}, function (err) { // on error
+				res.writeHead(500);
+				res.end(err.message);
+				console.error(err.stack);
+			})
+		}).listen(port, function() {
+			resolve(server)
+		}).on('error', reject);
+	});
 }
 
 export function request(options, body) {

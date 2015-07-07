@@ -42,8 +42,8 @@ function include(name, __dirname) {
             return Promise.reject(e);
         }
     }
-    console.log('try to download file %s into %s', path.basename(name), name);
-    return definedModules[name] = require('./publish').download(path.basename(name)).then(function(buffer) {
+	let basename = path.basename(name);
+    return definedModules[name] = require('./publish').download(basename).then(function(buffer) {
         ensureParentDir(name);
         fs.writeFileSync(name, buffer);
         return System.module(buffer.toString(), {filename: name})

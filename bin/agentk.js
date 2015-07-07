@@ -102,7 +102,7 @@ let commands = {
             if (arguments.length !== 0) {
                 process.chdir(dir);
             }
-            require('../index.js').runMain();
+            require('../index.js').run();
         }
     },
     "start": {
@@ -194,11 +194,15 @@ let commands = {
 	"completion": {
 		help: "auto completion helper",
 		args: ">> ~/.bashrc (or ~/.zshrc)",
-		desc: "enable bash completion",
+		desc: "enable bash completion. After install, please reopen your terminal to make sure it takes effects. \nOr you can just type in current shell:\n    . " + require('path').join(__dirname, 'completion.sh'),
 		func: function(p, agentk, arg2, arg3) {
 			if(!arguments.length) {
-                let content = require('fs').readFileSync(__dirname + '/completion.sh', 'utf8').replace(/__CMD/g, exec);
-				process.stdout.write(content);
+				if(process.stdout.isTTY) {
+					process.argv[2] = cmd = 'help';
+					commands.help.func('completion');
+				} else {
+					console.log('. ' + require('path').join(__dirname, 'completion.sh'))
+				}
 			} else if(p !== "--") {
 				return;
 			}

@@ -6,7 +6,7 @@ const storage = co.yield(
     System.import(require('path').join(__dirname, 'module/' + manifest.config.storage.name + '.js'))
 )[moduleDefault](manifest.config.storage);
 
-http.listen(manifest.config.port, function (req, res) {
+let server = http.listen(manifest.config.port, function (req, res) {
     console.log(req.method, req.url);
     let m = /^\/(\w+)(?:@([0-9a-z]{32}))?\.js$/.exec(req.url);
     if (!m) {
@@ -36,3 +36,5 @@ http.listen(manifest.config.port, function (req, res) {
         res.status = 400;
     }
 });
+
+console.log('server listening on ', server.address());
