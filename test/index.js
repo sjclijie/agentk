@@ -9,6 +9,8 @@ let a = System.module('export let a=1234; export let b;' +
     ' export function c(x) {b=x}' +
     ' export function d() {return b}' +
     ' export default 0');
+console.log('test module a');
+
 assertEqual(a.a, 1234);
 
 let rnd = Math.random();
@@ -24,6 +26,8 @@ System.set('a', a);
 let b = System.module('import zero, * as a from "a";' +
     ' export function getA() {return a}' +
     ' export function getDefault() {return zero}');
-
-assertEqual(b.getA(), a);
-assertEqual(b.getDefault(), 0);
+setTimeout(function() {
+	console.log('test module b');
+	assertEqual(b.getA(), a);
+	assertEqual(b.getDefault(), 0);
+})
