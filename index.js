@@ -26,3 +26,9 @@ exports.run = function () {
 	exports.load(require('path').join(programDir, manifest.main || 'index.js')).done()
 };
 
+if(process.mainModule === module) {
+	if(process.argv.length === 2) {
+		throw new Error("full bootstrap file path is required")
+	}
+	exports.load(process.argv[2]).done();
+}

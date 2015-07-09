@@ -71,3 +71,9 @@ exports.async = function (fun) {
         }
     }));
 };
+
+exports.sleep = function(timeout) {
+	exports.yield(new Promise(function(resolve) {
+		setTimeout(resolve, timeout);
+	}))
+}

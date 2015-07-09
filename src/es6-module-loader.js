@@ -121,7 +121,12 @@ const parseOption = {
 };
 
 function compile(source, option) {
-    let parsed = esprima.parse(source, parseOption);
+	let parsed;
+	try {
+        parsed = esprima.parse(source, parseOption);
+	} catch(e) {
+		throw new Error("Error parsing file " + option.filename + ": " + e.message)
+	}
     let replaces = [], globals = {};
     option = option || {filename: '/'};
     option.dir = path.dirname(option.filename);

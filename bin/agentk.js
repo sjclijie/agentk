@@ -41,8 +41,8 @@ function xtermEscape(str) {
 }
 
 function callService() {
-    require('../index.js').load(require('path').join(__dirname, '../src/service.js')).then(function(module) {
-        module[cmd]()
+    require('../index.js').load(require('path').join(__dirname, '../src/service/controller.js')).then(function(module) {
+		require('../src/co.js').promise(module[cmd]);
     }).done()
 }
 

@@ -1,39 +1,36 @@
 import * as http from '../src/module/http.js';
+import * as response from '../src/module/http_response.js';
 import * as file from '../src/module/file.js';
 import {md5} from '../src/module/crypto.js';
 
 const storage = co.yield(
-    System.import(require('path').join(__dirname, 'module/' + manifest.config.storage.name + '.js'))
+    System.import(require('path').join(__dirname, '../src/module/' + manifest.config.storage.name + '.js'))
 )[moduleDefault](manifest.config.storage);
 
-let server = http.listen(manifest.config.port, function (req, res) {
+let server = http.listen(manifest.config.port, function (req) {
     console.log(req.method, req.url);
     let m = /^\/(\w+)(?:@([0-9a-z]{32}))?\.js$/.exec(req.url);
     if (!m) {
-        res.status = 404;
-        return;
+        return response.error(404);
     }
     if (req.method === 'PUT') {
         let buf = http.read(req),
             sum = md5(buf, 'hex');
         if (sum !== m[2]) { // client error
-            res.status = 400;
-            res.write('md5sum mismatch');
-            return;
+			return response.error(400, 'md5sum mismatch');
         }
         let tres = storage.put(buf, req.url);
         if (tres.statusCode >= 300) { // not OK
-            res.status = tres.statusCode;
-            return res.stream(tres);
+			return response.stream(tres).setStatus(tres.statusCode);
         }
 		console.log('upload success');
 		tres = storage.copy(req.url, '/' + m[1] + '.js');
         if (tres.statusCode >= 300) { // not OK
-            res.status = tres.statusCode;
-            return res.stream(tres);
+            return response.stream(tres).setStatus(tres.statusCode);
         }
+		return response.ok();
     } else {
-        res.status = 400;
+		return response.error(401, 'method not implemented')
     }
 });
 
