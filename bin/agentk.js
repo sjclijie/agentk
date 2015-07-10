@@ -42,9 +42,9 @@ function xtermEscape(str) {
 }
 
 function callService() {
-    require('../index.js').load(path.join(__dirname, '../src/service/controller.js')).then(function(module) {
-		require('../src/co.js').promise(module[cmd]).then(null, function(err) {
-            if(err.code === 'ECONNREFUSED') {
+    require('../index.js').load(path.join(__dirname, '../src/service/controller.js')).then(function (module) {
+        require('../src/co.js').promise(module[cmd]).then(null, function (err) {
+            if (err.code === 'ECONNREFUSED') {
                 console.error('command \'' + cmd + '\' failed, maybe service not started?')
             } else {
                 console.error(err.message)
@@ -55,12 +55,12 @@ function callService() {
 }
 
 function service(dir) {
-    if(dir === '--all') {
-        if(cmd === 'start') {
+    if (dir === '--all') {
+        if (cmd === 'start') {
             return console.error(exec + ' start --all is not supported');
         }
         cmd += 'All';
-    } else if(dir!== undefined) {
+    } else if (dir !== undefined) {
         process.chdir(dir);
     }
     callService()
@@ -92,14 +92,14 @@ let commands = {
                 console.log(xtermEscape("  $#yk<" + cmd + ">" + "           ".substr(cmd.length) + commands[cmd].help))
             });
             console.log(xtermEscape("\ntype $#Bk<" + exec + "> help <command> to get more info"));
-        }, completion: function(prefix) {
-			if(arguments.length > 1) return;
-			let output = '';
-			for (let txt of Object.keys(commands)) {
-				if(!prefix || txt.substr(0, prefix.length) === prefix) output += txt + '\n'
-			}
-			console.log(output);
-		}
+        }, completion: function (prefix) {
+            if (arguments.length > 1) return;
+            let output = '';
+            for (let txt of Object.keys(commands)) {
+                if (!prefix || txt.substr(0, prefix.length) === prefix) output += txt + '\n'
+            }
+            console.log(output);
+        }
     },
     "run": {
         help: "run program without crash respawn",
@@ -107,7 +107,7 @@ let commands = {
         "desc": "run the program located in the directory (or current directory, if none specified) directly in current " +
         "terminal, outputs will be printed into stdout/stderr.\nHit Ctrl-c to terminate execution",
         func: function (dir) {
-            if(dir.substr(dir.length - 3) === '.js') {
+            if (dir.substr(dir.length - 3) === '.js') {
                 require('../index.js').load(path.resolve(dir));
             } else {
                 require('../index.js').run(dir);
@@ -173,20 +173,20 @@ let commands = {
         func: function () {
             require('../server/publish.js')(arguments);
         },
-		completion: function() {
-			let added = {};
-			for(let i = arguments.length - 1; i--; ) added[arguments[i] + '.js'] = true;
-			let last = arguments[arguments.length - 1];
-			
-			let files = require('fs').readdirSync('.');
-			let rFile = /^\w+\.js$/;
-			let output = '';
-			for(let file of files) {
-				if(!rFile.test(file) || file in added) continue;
-				if(!last || file.substr(0, last.length) === last) output += file.substr(0, file.length - 3) + '\n';
-			}
-			console.log(output);
-		}
+        completion: function () {
+            let added = {};
+            for (let i = arguments.length - 1; i--;) added[arguments[i] + '.js'] = true;
+            let last = arguments[arguments.length - 1];
+
+            let files = require('fs').readdirSync('.');
+            let rFile = /^\w+\.js$/;
+            let output = '';
+            for (let file of files) {
+                if (!rFile.test(file) || file in added) continue;
+                if (!last || file.substr(0, last.length) === last) output += file.substr(0, file.length - 3) + '\n';
+            }
+            console.log(output);
+        }
     },
     "rc-install": {
         help: "create init.rc script",
@@ -200,28 +200,28 @@ let commands = {
 
         }
     },
-	"completion": {
-		help: "auto completion helper",
-		args: ">> ~/.bashrc (or ~/.zshrc)",
-		desc: "enable bash completion. After install, please reopen your terminal to make sure it takes effects. \nOr you can just type in current shell:\n    . " + require('path').join(__dirname, 'completion.sh'),
-		func: function(p, agentk, arg2, arg3) {
-			if(!arguments.length) {
-				if(process.stdout.isTTY) {
-					process.argv[2] = cmd = 'help';
-					commands.help.func('completion');
-				} else {
-					console.log('. ' + require('path').join(__dirname, 'completion.sh'))
-				}
-			} else if(p !== "--") {
-				return;
-			}
-			if(arguments.length === 3) {
-				commands.help.completion(arg2);
-			} else if(arguments.length > 3 && arg2 in commands && commands[arg2].completion) {
-				commands[arg2].completion.apply(null, [].slice.call(arguments, 3));
-			}
-		}
-	}
+    "completion": {
+        help: "auto completion helper",
+        args: ">> ~/.bashrc (or ~/.zshrc)",
+        desc: "enable bash completion. After install, please reopen your terminal to make sure it takes effects. \nOr you can just type in current shell:\n    . " + require('path').join(__dirname, 'completion.sh'),
+        func: function (p, agentk, arg2, arg3) {
+            if (!arguments.length) {
+                if (process.stdout.isTTY) {
+                    process.argv[2] = cmd = 'help';
+                    commands.help.func('completion');
+                } else {
+                    console.log('. ' + require('path').join(__dirname, 'completion.sh'))
+                }
+            } else if (p !== "--") {
+                return;
+            }
+            if (arguments.length === 3) {
+                commands.help.completion(arg2);
+            } else if (arguments.length > 3 && arg2 in commands && commands[arg2].completion) {
+                commands[arg2].completion.apply(null, [].slice.call(arguments, 3));
+            }
+        }
+    }
 };
 
 

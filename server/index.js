@@ -17,20 +17,20 @@ let server = http.listen(manifest.config.port, function (req) {
         let buf = http.read(req),
             sum = md5(buf, 'hex');
         if (sum !== m[2]) { // client error
-			return response.error(400, 'md5sum mismatch');
+            return response.error(400, 'md5sum mismatch');
         }
         let tres = storage.put(buf, req.url);
         if (tres.statusCode >= 300) { // not OK
-			return response.stream(tres).setStatus(tres.statusCode);
+            return response.stream(tres).setStatus(tres.statusCode);
         }
-		console.log('upload success');
-		tres = storage.copy(req.url, '/' + m[1] + '.js');
+        console.log('upload success');
+        tres = storage.copy(req.url, '/' + m[1] + '.js');
         if (tres.statusCode >= 300) { // not OK
             return response.stream(tres).setStatus(tres.statusCode);
         }
-		return response.ok();
+        return response.ok();
     } else {
-		return response.error(401, 'method not implemented')
+        return response.error(401, 'method not implemented')
     }
 });
 

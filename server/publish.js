@@ -5,8 +5,8 @@ let fs = require('fs'), crypto = require('crypto'), http = require('http');
 module.exports = function (args) {
     let host = process.env.MODULE_SERVER_HOST, port;
     if (!host) {
-		console.error("WARN: MODULE_SERVER_HOST environment varible is not set, using localhost:8800");
-		host = "localhost:8800"
+        console.error("WARN: MODULE_SERVER_HOST environment varible is not set, using localhost:8800");
+        host = "localhost:8800"
     }
     let idx = host.lastIndexOf(':');
     if (idx === -1) {

@@ -19,7 +19,7 @@ export function restart() {
 }
 
 function getData(result) {
-    if(result.code !== 200) {
+    if (result.code !== 200) {
         throw new Error(result.msg)
     }
     return JSON.parse(result.msg)
@@ -28,7 +28,7 @@ function getData(result) {
 export function status() {
     let data = getData(callService('status'))
 
-    if(!data.length) {
+    if (!data.length) {
         console.log('no program is currently running');
     }
 
@@ -40,9 +40,9 @@ export function status() {
         buf6 = ' |\n\x1b[36m    reloaded\x1b[0m',
         buf7 = ' |\n\x1b[36m last reload\x1b[0m';
 
-    for(let obj of data) {
+    for (let obj of data) {
         let pathLen = obj.path.length;
-        if(pathLen < 19) {
+        if (pathLen < 19) {
             pathLen = 19
         }
         let suffix = ' '.repeat(pathLen);
@@ -50,16 +50,16 @@ export function status() {
         buf2 += '-|-' + '-'.repeat(pathLen);
         buf3 += append(formatTime(obj.startup), suffix);
         buf4 += append(obj.restarted, suffix);
-        buf5 += obj.restarted ? append(formatTime(obj.lastRestart), suffix): ' | ' + suffix;
+        buf5 += obj.restarted ? append(formatTime(obj.lastRestart), suffix) : ' | ' + suffix;
         buf6 += append(obj.reloaded, suffix);
-        buf7 += obj.reloaded ? append(formatTime(obj.lastReload), suffix): ' | ' + suffix;
+        buf7 += obj.reloaded ? append(formatTime(obj.lastReload), suffix) : ' | ' + suffix;
     }
     console.log(buf1 + buf2 + buf3 + buf4 + buf5 + buf6 + buf7 + ' |');
 
 
     function formatTime(t) {
         let time = new Date(t);
-        return `${time.getFullYear()}-${tens(time.getMonth() + 1)}-${tens(time.getDate())} ${time.toTimeString().substr(0,8)}`
+        return `${time.getFullYear()}-${tens(time.getMonth() + 1)}-${tens(time.getDate())} ${time.toTimeString().substr(0, 8)}`
     }
 
     function tens(num) {
@@ -81,7 +81,7 @@ function callService(name, data) {
     let headers = {
         'Content-Length': '0'
     }
-    if(data) {
+    if (data) {
         headers.data = JSON.stringify(data)
     }
     let resp = http.request({
@@ -95,14 +95,14 @@ function callService(name, data) {
 }
 
 function tryCallService(name, data) {
-    if(!file.exists(listen_path)) {
+    if (!file.exists(listen_path)) {
         console.error('starting service...');
         return forkAndCall(name, data);
     }
     try {
         return callService(name, data);
     } catch (e) {
-        if(e.code === 'ECONNREFUSED') {
+        if (e.code === 'ECONNREFUSED') {
             console.error('service not started, restarting...');
             file.rm(listen_path);
             return forkAndCall(name, data); // retry

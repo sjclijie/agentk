@@ -59,7 +59,7 @@ function request(oss, method, object, body, options) {
         let signedStr = `${method}\n\n${mimeType}\n${date}\n${signedHeaders}/${conf.bucket}${object}`;
         headers.Authorization = "OSS " + conf.key.ak + ":" + crypto.hmac_sha1(conf.key.secret, signedStr, 'base64');
     }
-	console.log(headers);
+    console.log(headers);
     return http.request({
         method: method,
         host: conf.host,
@@ -76,12 +76,12 @@ Oss.prototype.put = function (buf, object, options) {
     return request(this, 'PUT', object, buf, options);
 };
 
-Oss.prototype.copy = function(src, dest) {
-	return request(this, 'PUT', dest, undefined, {
-		type: '',
-		length: 0,
-		headers: {
-			'x-oss-copy-source': '/' + this.conf.bucket + src
-		}
-	});
+Oss.prototype.copy = function (src, dest) {
+    return request(this, 'PUT', dest, undefined, {
+        type: '',
+        length: 0,
+        headers: {
+            'x-oss-copy-source': '/' + this.conf.bucket + src
+        }
+    });
 };

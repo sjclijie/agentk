@@ -29,8 +29,8 @@ const loadProgress = Symbol('loadProgress'),
  */
 function include(name, __dirname) {
     if (name in definedModules) return definedModules[name];
-    if (name[0] !== '/') {
-        name = path.join(__dirname, name);
+    if (__dirname) {
+        name = path.resolve(__dirname, name);
         if (name in definedModules) return definedModules[name];
     }
 
@@ -42,8 +42,8 @@ function include(name, __dirname) {
             return Promise.reject(e);
         }
     }
-	let basename = path.basename(name);
-    return definedModules[name] = require('./publish').download(basename).then(function(buffer) {
+    let basename = path.basename(name);
+    return definedModules[name] = require('./publish').download(basename).then(function (buffer) {
         ensureParentDir(name);
         fs.writeFileSync(name, buffer);
         return System.module(buffer.toString(), {filename: name})
@@ -52,7 +52,7 @@ function include(name, __dirname) {
 
 function ensureParentDir(name) {
     let dir = path.dirname(name);
-    if(fs.existsSync(dir)) return;
+    if (fs.existsSync(dir)) return;
     ensureParentDir(dir);
     fs.mkdirSync(dir);
 }
@@ -121,12 +121,12 @@ const parseOption = {
 };
 
 function compile(source, option) {
-	let parsed;
-	try {
+    let parsed;
+    try {
         parsed = esprima.parse(source, parseOption);
-	} catch(e) {
-		throw new Error("Error parsing file " + option.filename + ": " + e.message)
-	}
+    } catch (e) {
+        throw new Error("Error parsing file " + option.filename + ": " + e.message)
+    }
     let replaces = [], globals = {};
     option = option || {filename: '/'};
     option.dir = path.dirname(option.filename);

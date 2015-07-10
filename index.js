@@ -1,14 +1,11 @@
 "use strict";
 
-
-require('heapdump');
-
-Promise.prototype.done = function() {
-    this.then(null, function(err) {
+Promise.prototype.done = function () {
+    this.then(null, function (err) {
         console.error('ERROR', err.stack || err.message || err);
         process.exit(1);
     })
-}
+};
 
 require('./src/es6-module-loader');
 
@@ -25,18 +22,18 @@ exports.run = function (programDir) {
         workdir = path.resolve(programDir, manifest.directory);
     }
     process.chdir(workdir);
-	exports.load(main).done()
+    exports.load(main).done()
 };
 
-if(process.mainModule === module) {
-	if(process.argv.length === 2) {
-		throw new Error("full bootstrap file path is required")
-	}
+if (process.mainModule === module) {
+    if (process.argv.length === 2) {
+        throw new Error("full bootstrap file path is required")
+    }
     let target = process.argv[2];
 
-    if(target === 'start') {
+    if (target === 'start') {
         exports.run(process.argv[3])
-    } else if(target.substr(target.length - 3) === '.js') {
-	   exports.load(require('path').resolve(target)).done();
+    } else if (target.substr(target.length - 3) === '.js') {
+        exports.load(require('path').resolve(target)).done();
     }
 }

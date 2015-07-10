@@ -26,8 +26,8 @@ System.set('a', a);
 let b = System.module('import zero, * as a from "a";' +
     ' export function getA() {return a}' +
     ' export function getDefault() {return zero}');
-setTimeout(function() {
-	console.log('test module b');
-	assertEqual(b.getA(), a);
-	assertEqual(b.getDefault(), 0);
-})
+setTimeout(function () {
+    console.log('test module b');
+    assertEqual(b.getA(), a);
+    assertEqual(b.getDefault(), 0);
+});

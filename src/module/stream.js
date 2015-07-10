@@ -1,4 +1,3 @@
-
 export function read(incoming) {
     return co.wrap(function (resolve, reject) {
         let bufs = [];

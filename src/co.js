@@ -54,11 +54,11 @@ exports.wrap = function (cb) {
 exports.async = function (fun) {
     let args = arguments;
     return exports.yield(new Promise(function (resolve, reject) {
-        if(args.length === 1) {
+        if (args.length === 1) {
             fun(cb)
-        } else if(args.length === 2) {
+        } else if (args.length === 2) {
             fun(args[1], cb)
-        } else if(args.length === 3) {
+        } else if (args.length === 3) {
             fun(args[1], args[2], cb)
         } else {
             let arr = Array.prototype.slice.call(args, 1);
@@ -72,8 +72,8 @@ exports.async = function (fun) {
     }));
 };
 
-exports.sleep = function(timeout) {
-	exports.yield(new Promise(function(resolve) {
-		setTimeout(resolve, timeout);
-	}))
+exports.sleep = function (timeout) {
+    exports.yield(new Promise(function (resolve) {
+        setTimeout(resolve, timeout);
+    }))
 }

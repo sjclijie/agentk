@@ -1,26 +1,26 @@
 /*
-  Copyright (c) jQuery Foundation, Inc. and Contributors, All Rights Reserved.
+ Copyright (c) jQuery Foundation, Inc. and Contributors, All Rights Reserved.
 
-  Redistribution and use in source and binary forms, with or without
-  modification, are permitted provided that the following conditions are met:
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions are met:
 
-    * Redistributions of source code must retain the above copyright
-      notice, this list of conditions and the following disclaimer.
-    * Redistributions in binary form must reproduce the above copyright
-      notice, this list of conditions and the following disclaimer in the
-      documentation and/or other materials provided with the distribution.
+ * Redistributions of source code must retain the above copyright
+ notice, this list of conditions and the following disclaimer.
+ * Redistributions in binary form must reproduce the above copyright
+ notice, this list of conditions and the following disclaimer in the
+ documentation and/or other materials provided with the distribution.
 
-  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-  ARE DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
-  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
-  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ ARE DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
+ DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 
 (function (root, factory) {
     'use strict';
@@ -95,14 +95,14 @@
 
     // A function following one of those tokens is an expression.
     FnExprTokens = ['(', '{', '[', 'in', 'typeof', 'instanceof', 'new',
-                    'return', 'case', 'delete', 'throw', 'void',
-                    // assignment operators
-                    '=', '+=', '-=', '*=', '/=', '%=', '<<=', '>>=', '>>>=',
-                    '&=', '|=', '^=', ',',
-                    // binary/unary operators
-                    '+', '-', '*', '/', '%', '++', '--', '<<', '>>', '>>>', '&',
-                    '|', '^', '!', '~', '&&', '||', '?', ':', '===', '==', '>=',
-                    '<=', '<', '>', '!=', '!=='];
+        'return', 'case', 'delete', 'throw', 'void',
+        // assignment operators
+        '=', '+=', '-=', '*=', '/=', '%=', '<<=', '>>=', '>>>=',
+        '&=', '|=', '^=', ',',
+        // binary/unary operators
+        '+', '-', '*', '/', '%', '++', '--', '<<', '>>', '>>>', '&',
+        '|', '^', '!', '~', '&&', '||', '?', ':', '===', '==', '>=',
+        '<=', '<', '>', '!=', '!=='];
 
     Syntax = {
         AssignmentExpression: 'AssignmentExpression',
@@ -266,8 +266,8 @@
             // 3 digits are only allowed when string starts
             // with 0, 1, 2, 3
             if ('0123'.indexOf(ch) >= 0 &&
-                    index < length &&
-                    isOctalDigit(source[index])) {
+                index < length &&
+                isOctalDigit(source[index])) {
                 code = code * 8 + '01234567'.indexOf(source[index++]);
             }
         }
@@ -314,13 +314,13 @@
 
     function isFutureReservedWord(id) {
         switch (id) {
-        case 'enum':
-        case 'export':
-        case 'import':
-        case 'super':
-            return true;
-        default:
-            return false;
+            case 'enum':
+            case 'export':
+            case 'import':
+            case 'super':
+                return true;
+            default:
+                return false;
         }
     }
 
@@ -328,18 +328,18 @@
 
     function isStrictModeReservedWord(id) {
         switch (id) {
-        case 'implements':
-        case 'interface':
-        case 'package':
-        case 'private':
-        case 'protected':
-        case 'public':
-        case 'static':
-        case 'yield':
-        case 'let':
-            return true;
-        default:
-            return false;
+            case 'implements':
+            case 'interface':
+            case 'package':
+            case 'private':
+            case 'protected':
+            case 'public':
+            case 'static':
+            case 'yield':
+            case 'let':
+                return true;
+            default:
+                return false;
         }
     }
 
@@ -356,29 +356,29 @@
         // Some others are from future reserved words.
 
         switch (id.length) {
-        case 2:
-            return (id === 'if') || (id === 'in') || (id === 'do');
-        case 3:
-            return (id === 'var') || (id === 'for') || (id === 'new') ||
-                (id === 'try') || (id === 'let');
-        case 4:
-            return (id === 'this') || (id === 'else') || (id === 'case') ||
-                (id === 'void') || (id === 'with') || (id === 'enum');
-        case 5:
-            return (id === 'while') || (id === 'break') || (id === 'catch') ||
-                (id === 'throw') || (id === 'const') || (id === 'yield') ||
-                (id === 'class') || (id === 'super');
-        case 6:
-            return (id === 'return') || (id === 'typeof') || (id === 'delete') ||
-                (id === 'switch') || (id === 'export') || (id === 'import');
-        case 7:
-            return (id === 'default') || (id === 'finally') || (id === 'extends');
-        case 8:
-            return (id === 'function') || (id === 'continue') || (id === 'debugger');
-        case 10:
-            return (id === 'instanceof');
-        default:
-            return false;
+            case 2:
+                return (id === 'if') || (id === 'in') || (id === 'do');
+            case 3:
+                return (id === 'var') || (id === 'for') || (id === 'new') ||
+                    (id === 'try') || (id === 'let');
+            case 4:
+                return (id === 'this') || (id === 'else') || (id === 'case') ||
+                    (id === 'void') || (id === 'with') || (id === 'enum');
+            case 5:
+                return (id === 'while') || (id === 'break') || (id === 'catch') ||
+                    (id === 'throw') || (id === 'const') || (id === 'yield') ||
+                    (id === 'class') || (id === 'super');
+            case 6:
+                return (id === 'return') || (id === 'typeof') || (id === 'delete') ||
+                    (id === 'switch') || (id === 'export') || (id === 'import');
+            case 7:
+                return (id === 'default') || (id === 'finally') || (id === 'extends');
+            case 8:
+                return (id === 'function') || (id === 'continue') || (id === 'debugger');
+            case 10:
+                return (id === 'instanceof');
+            default:
+                return false;
         }
     }
 
@@ -729,77 +729,77 @@
         str = source[index];
         switch (str) {
 
-        case '(':
-            if (extra.tokenize) {
-                extra.openParenToken = extra.tokens.length;
-            }
-            ++index;
-            break;
+            case '(':
+                if (extra.tokenize) {
+                    extra.openParenToken = extra.tokens.length;
+                }
+                ++index;
+                break;
 
-        case '{':
-            if (extra.tokenize) {
-                extra.openCurlyToken = extra.tokens.length;
-            }
-            state.curlyStack.push('{');
-            ++index;
-            break;
+            case '{':
+                if (extra.tokenize) {
+                    extra.openCurlyToken = extra.tokens.length;
+                }
+                state.curlyStack.push('{');
+                ++index;
+                break;
 
-        case '.':
-            ++index;
-            if (source[index] === '.' && source[index + 1] === '.') {
-                // Spread operator: ...
-                index += 2;
-                str = '...';
-            }
-            break;
+            case '.':
+                ++index;
+                if (source[index] === '.' && source[index + 1] === '.') {
+                    // Spread operator: ...
+                    index += 2;
+                    str = '...';
+                }
+                break;
 
-        case '}':
-            ++index;
-            state.curlyStack.pop();
-            break;
-        case ')':
-        case ';':
-        case ',':
-        case '[':
-        case ']':
-        case ':':
-        case '?':
-        case '~':
-            ++index;
-            break;
+            case '}':
+                ++index;
+                state.curlyStack.pop();
+                break;
+            case ')':
+            case ';':
+            case ',':
+            case '[':
+            case ']':
+            case ':':
+            case '?':
+            case '~':
+                ++index;
+                break;
 
-        default:
-            // 4-character punctuator.
-            str = source.substr(index, 4);
-            if (str === '>>>=') {
-                index += 4;
-            } else {
-
-                // 3-character punctuators.
-                str = str.substr(0, 3);
-                if (str === '===' || str === '!==' || str === '>>>' ||
-                    str === '<<=' || str === '>>=') {
-                    index += 3;
+            default:
+                // 4-character punctuator.
+                str = source.substr(index, 4);
+                if (str === '>>>=') {
+                    index += 4;
                 } else {
 
-                    // 2-character punctuators.
-                    str = str.substr(0, 2);
-                    if (str === '&&' || str === '||' || str === '==' || str === '!=' ||
-                        str === '+=' || str === '-=' || str === '*=' || str === '/=' ||
-                        str === '++' || str === '--' || str === '<<' || str === '>>' ||
-                        str === '&=' || str === '|=' || str === '^=' || str === '%=' ||
-                        str === '<=' || str === '>=' || str === '=>') {
-                        index += 2;
+                    // 3-character punctuators.
+                    str = str.substr(0, 3);
+                    if (str === '===' || str === '!==' || str === '>>>' ||
+                        str === '<<=' || str === '>>=') {
+                        index += 3;
                     } else {
 
-                        // 1-character punctuators.
-                        str = source[index];
-                        if ('<>=!+-*%&|^/'.indexOf(str) >= 0) {
-                            ++index;
+                        // 2-character punctuators.
+                        str = str.substr(0, 2);
+                        if (str === '&&' || str === '||' || str === '==' || str === '!=' ||
+                            str === '+=' || str === '-=' || str === '*=' || str === '/=' ||
+                            str === '++' || str === '--' || str === '<<' || str === '>>' ||
+                            str === '&=' || str === '|=' || str === '^=' || str === '%=' ||
+                            str === '<=' || str === '>=' || str === '=>') {
+                            index += 2;
+                        } else {
+
+                            // 1-character punctuators.
+                            str = source[index];
+                            if ('<>=!+-*%&|^/'.indexOf(str) >= 0) {
+                                ++index;
+                            }
                         }
                     }
                 }
-            }
         }
 
         if (index === token.start) {
@@ -1037,51 +1037,51 @@
                 ch = source[index++];
                 if (!ch || !isLineTerminator(ch.charCodeAt(0))) {
                     switch (ch) {
-                    case 'u':
-                    case 'x':
-                        if (source[index] === '{') {
-                            ++index;
-                            str += scanUnicodeCodePointEscape();
-                        } else {
-                            unescaped = scanHexEscape(ch);
-                            if (!unescaped) {
-                                throw throwUnexpectedToken();
+                        case 'u':
+                        case 'x':
+                            if (source[index] === '{') {
+                                ++index;
+                                str += scanUnicodeCodePointEscape();
+                            } else {
+                                unescaped = scanHexEscape(ch);
+                                if (!unescaped) {
+                                    throw throwUnexpectedToken();
+                                }
+                                str += unescaped;
                             }
-                            str += unescaped;
-                        }
-                        break;
-                    case 'n':
-                        str += '\n';
-                        break;
-                    case 'r':
-                        str += '\r';
-                        break;
-                    case 't':
-                        str += '\t';
-                        break;
-                    case 'b':
-                        str += '\b';
-                        break;
-                    case 'f':
-                        str += '\f';
-                        break;
-                    case 'v':
-                        str += '\x0B';
-                        break;
-                    case '8':
-                    case '9':
-                        throw throwUnexpectedToken();
+                            break;
+                        case 'n':
+                            str += '\n';
+                            break;
+                        case 'r':
+                            str += '\r';
+                            break;
+                        case 't':
+                            str += '\t';
+                            break;
+                        case 'b':
+                            str += '\b';
+                            break;
+                        case 'f':
+                            str += '\f';
+                            break;
+                        case 'v':
+                            str += '\x0B';
+                            break;
+                        case '8':
+                        case '9':
+                            throw throwUnexpectedToken();
 
-                    default:
-                        if (isOctalDigit(ch)) {
-                            octToDec = octalToDecimal(ch);
+                        default:
+                            if (isOctalDigit(ch)) {
+                                octToDec = octalToDecimal(ch);
 
-                            octal = octToDec.octal || octal;
-                            str += String.fromCharCode(octToDec.code);
-                        } else {
-                            str += ch;
-                        }
-                        break;
+                                octal = octToDec.octal || octal;
+                                str += String.fromCharCode(octToDec.code);
+                            } else {
+                                str += ch;
+                            }
+                            break;
                     }
                 } else {
                     ++lineNumber;
@@ -1142,55 +1142,55 @@
                 ch = source[index++];
                 if (!isLineTerminator(ch.charCodeAt(0))) {
                     switch (ch) {
-                    case 'n':
-                        cooked += '\n';
-                        break;
-                    case 'r':
-                        cooked += '\r';
-                        break;
-                    case 't':
-                        cooked += '\t';
-                        break;
-                    case 'u':
-                    case 'x':
-                        if (source[index] === '{') {
-                            ++index;
-                            cooked += scanUnicodeCodePointEscape();
-                        } else {
-                            restore = index;
-                            unescaped = scanHexEscape(ch);
-                            if (unescaped) {
-                                cooked += unescaped;
+                        case 'n':
+                            cooked += '\n';
+                            break;
+                        case 'r':
+                            cooked += '\r';
+                            break;
+                        case 't':
+                            cooked += '\t';
+                            break;
+                        case 'u':
+                        case 'x':
+                            if (source[index] === '{') {
+                                ++index;
+                                cooked += scanUnicodeCodePointEscape();
                             } else {
-                                index = restore;
+                                restore = index;
+                                unescaped = scanHexEscape(ch);
+                                if (unescaped) {
+                                    cooked += unescaped;
+                                } else {
+                                    index = restore;
+                                    cooked += ch;
+                                }
+                            }
+                            break;
+                        case 'b':
+                            cooked += '\b';
+                            break;
+                        case 'f':
+                            cooked += '\f';
+                            break;
+                        case 'v':
+                            cooked += '\v';
+                            break;
+
+                        default:
+                            if (ch === '0') {
+                                if (isDecimalDigit(source.charCodeAt(index))) {
+                                    // Illegal: \01 \02 and so on
+                                    throwError(Messages.TemplateOctalLiteral);
+                                }
+                                cooked += '\0';
+                            } else if (isOctalDigit(ch)) {
+                                // Illegal: \1 \2
+                                throwError(Messages.TemplateOctalLiteral);
+                            } else {
                                 cooked += ch;
                             }
-                        }
-                        break;
-                    case 'b':
-                        cooked += '\b';
-                        break;
-                    case 'f':
-                        cooked += '\f';
-                        break;
-                    case 'v':
-                        cooked += '\v';
-                        break;
-
-                    default:
-                        if (ch === '0') {
-                            if (isDecimalDigit(source.charCodeAt(index))) {
-                                // Illegal: \01 \02 and so on
-                                throwError(Messages.TemplateOctalLiteral);
-                            }
-                            cooked += '\0';
-                        } else if (isOctalDigit(ch)) {
-                            // Illegal: \1 \2
-                            throwError(Messages.TemplateOctalLiteral);
-                        } else {
-                            cooked += ch;
-                        }
-                        break;
+                            break;
                     }
                 } else {
                     ++lineNumber;
@@ -1264,9 +1264,9 @@
                 // avoid throwing on regular expressions that are only valid in
                 // combination with the "u" flag.
                 .replace(
-                    /[\uD800-\uDBFF][\uDC00-\uDFFF]/g,
-                    astralSubstitute
-                );
+                /[\uD800-\uDBFF][\uDC00-\uDFFF]/g,
+                astralSubstitute
+            );
         }
 
         // First, detect invalid regular expressions.
@@ -1485,11 +1485,11 @@
             if (prevToken.value === ')') {
                 checkToken = extra.tokens[extra.openParenToken - 1];
                 if (checkToken &&
-                        checkToken.type === 'Keyword' &&
-                        (checkToken.value === 'if' ||
-                         checkToken.value === 'while' ||
-                         checkToken.value === 'for' ||
-                         checkToken.value === 'with')) {
+                    checkToken.type === 'Keyword' &&
+                    (checkToken.value === 'if' ||
+                    checkToken.value === 'while' ||
+                    checkToken.value === 'for' ||
+                    checkToken.value === 'with')) {
                     return collectRegex();
                 }
                 return scanPunctuator();
@@ -1498,14 +1498,14 @@
                 // Dividing a function by anything makes little sense,
                 // but we have to check for that.
                 if (extra.tokens[extra.openCurlyToken - 3] &&
-                        extra.tokens[extra.openCurlyToken - 3].type === 'Keyword') {
+                    extra.tokens[extra.openCurlyToken - 3].type === 'Keyword') {
                     // Anonymous function.
                     checkToken = extra.tokens[extra.openCurlyToken - 4];
                     if (!checkToken) {
                         return scanPunctuator();
                     }
                 } else if (extra.tokens[extra.openCurlyToken - 4] &&
-                        extra.tokens[extra.openCurlyToken - 4].type === 'Keyword') {
+                    extra.tokens[extra.openCurlyToken - 4].type === 'Keyword') {
                     // Named function.
                     checkToken = extra.tokens[extra.openCurlyToken - 5];
                     if (!checkToken) {
@@ -2189,7 +2189,7 @@
             this.type = Syntax.TryStatement;
             this.block = block;
             this.guardedHandlers = [];
-            this.handlers = handler ? [ handler ] : [];
+            this.handlers = handler ? [handler] : [];
             this.handler = handler;
             this.finalizer = finalizer;
             this.finish();
@@ -2385,10 +2385,10 @@
             if (!message) {
                 msg = (token.type === Token.EOF) ? Messages.UnexpectedEOS :
                     (token.type === Token.Identifier) ? Messages.UnexpectedIdentifier :
-                    (token.type === Token.NumericLiteral) ? Messages.UnexpectedNumber :
-                    (token.type === Token.StringLiteral) ? Messages.UnexpectedString :
-                    (token.type === Token.Template) ? Messages.UnexpectedTemplate :
-                    Messages.UnexpectedToken;
+                        (token.type === Token.NumericLiteral) ? Messages.UnexpectedNumber :
+                            (token.type === Token.StringLiteral) ? Messages.UnexpectedString :
+                                (token.type === Token.Template) ? Messages.UnexpectedTemplate :
+                                    Messages.UnexpectedToken;
 
                 if (token.type === Token.Keyword) {
                     if (isFutureReservedWord(token.value)) {
@@ -2766,39 +2766,39 @@
         // EOF and Punctuator tokens are already filtered out.
 
         switch (token.type) {
-        case Token.StringLiteral:
-        case Token.NumericLiteral:
-            if (strict && token.octal) {
-                tolerateUnexpectedToken(token, Messages.StrictOctalLiteral);
-            }
-            return node.finishLiteral(token);
-        case Token.Identifier:
-        case Token.BooleanLiteral:
-        case Token.NullLiteral:
-        case Token.Keyword:
-            return node.finishIdentifier(token.value);
-        case Token.Punctuator:
-            if (token.value === '[') {
-                expr = isolateCoverGrammar(parseAssignmentExpression);
-                expect(']');
-                return expr;
-            }
-            break;
+            case Token.StringLiteral:
+            case Token.NumericLiteral:
+                if (strict && token.octal) {
+                    tolerateUnexpectedToken(token, Messages.StrictOctalLiteral);
+                }
+                return node.finishLiteral(token);
+            case Token.Identifier:
+            case Token.BooleanLiteral:
+            case Token.NullLiteral:
+            case Token.Keyword:
+                return node.finishIdentifier(token.value);
+            case Token.Punctuator:
+                if (token.value === '[') {
+                    expr = isolateCoverGrammar(parseAssignmentExpression);
+                    expect(']');
+                    return expr;
+                }
+                break;
         }
         throwUnexpectedToken(token);
     }
 
     function lookaheadPropertyName() {
         switch (lookahead.type) {
-        case Token.Identifier:
-        case Token.StringLiteral:
-        case Token.BooleanLiteral:
-        case Token.NullLiteral:
-        case Token.NumericLiteral:
-        case Token.Keyword:
-            return true;
-        case Token.Punctuator:
-            return lookahead.value === '[';
+            case Token.Identifier:
+            case Token.StringLiteral:
+            case Token.BooleanLiteral:
+            case Token.NullLiteral:
+            case Token.NumericLiteral:
+            case Token.Keyword:
+                return true;
+            case Token.Punctuator:
+                return lookahead.value === '[';
         }
         return false;
     }
@@ -2966,36 +2966,36 @@
     function reinterpretExpressionAsPattern(expr) {
         var i;
         switch (expr.type) {
-        case Syntax.Identifier:
-        case Syntax.MemberExpression:
-        case Syntax.RestElement:
-        case Syntax.AssignmentPattern:
-            break;
-        case Syntax.SpreadElement:
-            expr.type = Syntax.RestElement;
-            reinterpretExpressionAsPattern(expr.argument);
-            break;
-        case Syntax.ArrayExpression:
-            expr.type = Syntax.ArrayPattern;
-            for (i = 0; i < expr.elements.length; i++) {
-                if (expr.elements[i] !== null) {
-                    reinterpretExpressionAsPattern(expr.elements[i]);
+            case Syntax.Identifier:
+            case Syntax.MemberExpression:
+            case Syntax.RestElement:
+            case Syntax.AssignmentPattern:
+                break;
+            case Syntax.SpreadElement:
+                expr.type = Syntax.RestElement;
+                reinterpretExpressionAsPattern(expr.argument);
+                break;
+            case Syntax.ArrayExpression:
+                expr.type = Syntax.ArrayPattern;
+                for (i = 0; i < expr.elements.length; i++) {
+                    if (expr.elements[i] !== null) {
+                        reinterpretExpressionAsPattern(expr.elements[i]);
+                    }
                 }
-            }
-            break;
-        case Syntax.ObjectExpression:
-            expr.type = Syntax.ObjectPattern;
-            for (i = 0; i < expr.properties.length; i++) {
-                reinterpretExpressionAsPattern(expr.properties[i].value);
-            }
-            break;
-        case Syntax.AssignmentExpression:
-            expr.type = Syntax.AssignmentPattern;
-            reinterpretExpressionAsPattern(expr.left);
-            break;
-        default:
-            // Allow other node type for tolerant parsing.
-            break;
+                break;
+            case Syntax.ObjectExpression:
+                expr.type = Syntax.ObjectPattern;
+                for (i = 0; i < expr.properties.length; i++) {
+                    reinterpretExpressionAsPattern(expr.properties[i].value);
+                }
+                break;
+            case Syntax.AssignmentExpression:
+                expr.type = Syntax.AssignmentPattern;
+                reinterpretExpressionAsPattern(expr.left);
+                break;
+            default:
+                // Allow other node type for tolerant parsing.
+                break;
         }
     }
 
@@ -3009,19 +3009,19 @@
         node = new Node();
         token = lex();
 
-        return node.finishTemplateElement({ raw: token.value.raw, cooked: token.value.cooked }, token.tail);
+        return node.finishTemplateElement({raw: token.value.raw, cooked: token.value.cooked}, token.tail);
     }
 
     function parseTemplateLiteral() {
         var quasi, quasis, expressions, node = new Node();
 
-        quasi = parseTemplateElement({ head: true });
-        quasis = [ quasi ];
+        quasi = parseTemplateElement({head: true});
+        quasis = [quasi];
         expressions = [];
 
         while (!quasi.tail) {
             expressions.push(parseExpression());
-            quasi = parseTemplateElement({ head: false });
+            quasi = parseTemplateElement({head: false});
             quasis.push(quasi);
         }
 
@@ -3283,7 +3283,7 @@
             expr = inheritCoverGrammar(matchKeyword('new') ? parseNewExpression : parsePrimaryExpression);
         }
 
-        for (;;) {
+        for (; ;) {
             if (match('.')) {
                 isBindingElement = false;
                 isAssignmentTarget = true;
@@ -3328,7 +3328,7 @@
             expr = inheritCoverGrammar(matchKeyword('new') ? parseNewExpression : parsePrimaryExpression);
         }
 
-        for (;;) {
+        for (; ;) {
             if (match('[')) {
                 isBindingElement = false;
                 isAssignmentTarget = true;
@@ -3428,64 +3428,64 @@
         }
 
         switch (token.value) {
-        case '||':
-            prec = 1;
-            break;
+            case '||':
+                prec = 1;
+                break;
 
-        case '&&':
-            prec = 2;
-            break;
+            case '&&':
+                prec = 2;
+                break;
 
-        case '|':
-            prec = 3;
-            break;
+            case '|':
+                prec = 3;
+                break;
 
-        case '^':
-            prec = 4;
-            break;
+            case '^':
+                prec = 4;
+                break;
 
-        case '&':
-            prec = 5;
-            break;
+            case '&':
+                prec = 5;
+                break;
 
-        case '==':
-        case '!=':
-        case '===':
-        case '!==':
-            prec = 6;
-            break;
+            case '==':
+            case '!=':
+            case '===':
+            case '!==':
+                prec = 6;
+                break;
 
-        case '<':
-        case '>':
-        case '<=':
-        case '>=':
-        case 'instanceof':
-            prec = 7;
-            break;
+            case '<':
+            case '>':
+            case '<=':
+            case '>=':
+            case 'instanceof':
+                prec = 7;
+                break;
 
-        case 'in':
-            prec = allowIn ? 7 : 0;
-            break;
+            case 'in':
+                prec = allowIn ? 7 : 0;
+                break;
 
-        case '<<':
-        case '>>':
-        case '>>>':
-            prec = 8;
-            break;
+            case '<<':
+            case '>>':
+            case '>>>':
+                prec = 8;
+                break;
 
-        case '+':
-        case '-':
-            prec = 9;
-            break;
+            case '+':
+            case '-':
+                prec = 9;
+                break;
 
-        case '*':
-        case '/':
-        case '%':
-            prec = 11;
-            break;
+            case '*':
+            case '/':
+            case '%':
+                prec = 11;
+                break;
 
-        default:
-            break;
+            default:
+                break;
         }
 
         return prec;
@@ -3589,30 +3589,31 @@
     function checkPatternParam(options, param) {
         var i;
         switch (param.type) {
-        case Syntax.Identifier:
-            validateParam(options, param, param.name);
-            break;
-        case Syntax.RestElement:
-            checkPatternParam(options, param.argument);
-            break;
-        case Syntax.AssignmentPattern:
-            checkPatternParam(options, param.left);
-            break;
-        case Syntax.ArrayPattern:
-            for (i = 0; i < param.elements.length; i++) {
-                if (param.elements[i] !== null) {
-                    checkPatternParam(options, param.elements[i]);
+            case Syntax.Identifier:
+                validateParam(options, param, param.name);
+                break;
+            case Syntax.RestElement:
+                checkPatternParam(options, param.argument);
+                break;
+            case Syntax.AssignmentPattern:
+                checkPatternParam(options, param.left);
+                break;
+            case Syntax.ArrayPattern:
+                for (i = 0; i < param.elements.length; i++) {
+                    if (param.elements[i] !== null) {
+                        checkPatternParam(options, param.elements[i]);
+                    }
                 }
-            }
-            break;
-        default:
-            assert(param.type === Syntax.ObjectPattern, 'Invalid type');
-            for (i = 0; i < param.properties.length; i++) {
-                checkPatternParam(options, param.properties[i].value);
-            }
-            break;
+                break;
+            default:
+                assert(param.type === Syntax.ObjectPattern, 'Invalid type');
+                for (i = 0; i < param.properties.length; i++) {
+                    checkPatternParam(options, param.properties[i].value);
+                }
+                break;
         }
     }
+
     function reinterpretAsCoverFormalsList(expr) {
         var i, len, param, params, defaults, defaultCount, options, token;
 
@@ -3621,13 +3622,13 @@
         params = [expr];
 
         switch (expr.type) {
-        case Syntax.Identifier:
-            break;
-        case PlaceHolders.ArrowParameterPlaceHolder:
-            params = expr.params;
-            break;
-        default:
-            return null;
+            case Syntax.Identifier:
+                break;
+            case PlaceHolders.ArrowParameterPlaceHolder:
+                params = expr.params;
+                break;
+            default:
+                return null;
         }
 
         options = {
@@ -3637,17 +3638,17 @@
         for (i = 0, len = params.length; i < len; i += 1) {
             param = params[i];
             switch (param.type) {
-            case Syntax.AssignmentPattern:
-                params[i] = param.left;
-                defaults.push(param.right);
-                ++defaultCount;
-                checkPatternParam(options, param.left);
-                break;
-            default:
-                checkPatternParam(options, param);
-                params[i] = param;
-                defaults.push(null);
-                break;
+                case Syntax.AssignmentPattern:
+                    params[i] = param.left;
+                    defaults.push(param.right);
+                    ++defaultCount;
+                    checkPatternParam(options, param.left);
+                    break;
+                default:
+                    checkPatternParam(options, param);
+                    params[i] = param;
+                    defaults.push(null);
+                    break;
             }
         }
 
@@ -3800,23 +3801,23 @@
     function parseStatementListItem() {
         if (lookahead.type === Token.Keyword) {
             switch (lookahead.value) {
-            case 'export':
-                if (sourceType !== 'module') {
-                    tolerateUnexpectedToken(lookahead, Messages.IllegalExportDeclaration);
-                }
-                return parseExportDeclaration();
-            case 'import':
-                if (sourceType !== 'module') {
-                    tolerateUnexpectedToken(lookahead, Messages.IllegalImportDeclaration);
-                }
-                return parseImportDeclaration();
-            case 'const':
-            case 'let':
-                return parseLexicalDeclaration({inFor: false});
-            case 'function':
-                return parseFunctionDeclaration(new Node());
-            case 'class':
-                return parseClassDeclaration();
+                case 'export':
+                    if (sourceType !== 'module') {
+                        tolerateUnexpectedToken(lookahead, Messages.IllegalExportDeclaration);
+                    }
+                    return parseExportDeclaration();
+                case 'import':
+                    if (sourceType !== 'module') {
+                        tolerateUnexpectedToken(lookahead, Messages.IllegalImportDeclaration);
+                    }
+                    return parseImportDeclaration();
+                case 'const':
+                case 'let':
+                    return parseLexicalDeclaration({inFor: false});
+                case 'function':
+                    return parseFunctionDeclaration(new Node());
+                case 'class':
+                    return parseClassDeclaration();
             }
         }
 
@@ -4197,9 +4198,9 @@
         state.inIteration = oldInIteration;
 
         return (typeof left === 'undefined') ?
-                node.finishForStatement(init, test, update, body) :
-                forIn ? node.finishForInStatement(left, right, body) :
-                    node.finishForOfStatement(left, right, body);
+            node.finishForStatement(init, test, update, body) :
+            forIn ? node.finishForInStatement(left, right, body) :
+                node.finishForOfStatement(left, right, body);
     }
 
     // 12.7 The continue statement
@@ -4514,45 +4515,45 @@
 
         if (type === Token.Punctuator) {
             switch (lookahead.value) {
-            case ';':
-                return parseEmptyStatement(node);
-            case '(':
-                return parseExpressionStatement(node);
-            default:
-                break;
+                case ';':
+                    return parseEmptyStatement(node);
+                case '(':
+                    return parseExpressionStatement(node);
+                default:
+                    break;
             }
         } else if (type === Token.Keyword) {
             switch (lookahead.value) {
-            case 'break':
-                return parseBreakStatement(node);
-            case 'continue':
-                return parseContinueStatement(node);
-            case 'debugger':
-                return parseDebuggerStatement(node);
-            case 'do':
-                return parseDoWhileStatement(node);
-            case 'for':
-                return parseForStatement(node);
-            case 'function':
-                return parseFunctionDeclaration(node);
-            case 'if':
-                return parseIfStatement(node);
-            case 'return':
-                return parseReturnStatement(node);
-            case 'switch':
-                return parseSwitchStatement(node);
-            case 'throw':
-                return parseThrowStatement(node);
-            case 'try':
-                return parseTryStatement(node);
-            case 'var':
-                return parseVariableStatement(node);
-            case 'while':
-                return parseWhileStatement(node);
-            case 'with':
-                return parseWithStatement(node);
-            default:
-                break;
+                case 'break':
+                    return parseBreakStatement(node);
+                case 'continue':
+                    return parseContinueStatement(node);
+                case 'debugger':
+                    return parseDebuggerStatement(node);
+                case 'do':
+                    return parseDoWhileStatement(node);
+                case 'for':
+                    return parseForStatement(node);
+                case 'function':
+                    return parseFunctionDeclaration(node);
+                case 'if':
+                    return parseIfStatement(node);
+                case 'return':
+                    return parseReturnStatement(node);
+                case 'switch':
+                    return parseSwitchStatement(node);
+                case 'throw':
+                    return parseThrowStatement(node);
+                case 'try':
+                    return parseTryStatement(node);
+                case 'var':
+                    return parseVariableStatement(node);
+                case 'while':
+                    return parseWhileStatement(node);
+                case 'with':
+                    return parseWithStatement(node);
+                default:
+                    break;
             }
         }
 
@@ -5026,7 +5027,7 @@
             // covering:
             // export {default}; // missing fromClause
             throwError(lookahead.value ?
-                    Messages.UnexpectedToken : Messages.MissingFromClause, lookahead.value);
+                Messages.UnexpectedToken : Messages.MissingFromClause, lookahead.value);
         } else {
             // cover
             // export {foo};
@@ -5082,7 +5083,7 @@
         expect('*');
         if (!matchContextualKeyword('from')) {
             throwError(lookahead.value ?
-                    Messages.UnexpectedToken : Messages.MissingFromClause, lookahead.value);
+                Messages.UnexpectedToken : Messages.MissingFromClause, lookahead.value);
         }
         lex();
         src = parseModuleSpecifier();
@@ -5198,7 +5199,7 @@
 
         if (!matchContextualKeyword('from')) {
             throwError(lookahead.value ?
-                    Messages.UnexpectedToken : Messages.MissingFromClause, lookahead.value);
+                Messages.UnexpectedToken : Messages.MissingFromClause, lookahead.value);
         }
         lex();
         src = parseModuleSpecifier();

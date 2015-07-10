@@ -26,16 +26,16 @@ export function symlink(src, dst) {
 }
 
 export function exists(file) {
-	return ofs.existsSync(file)
+    return ofs.existsSync(file)
 }
 
 export function mkdir(file) {
-	ofs.mkdirSync(file);
+    ofs.mkdirSync(file);
 }
 
 export function mkParentDir(file) {
-	let dir = path.dirname(file);
-	if(ofs.existsSync(dir)) return;
-	mkParentDir(dir);
-	ofs.mkdirSync(dir);
+    let dir = path.dirname(file);
+    if (ofs.existsSync(dir)) return;
+    mkParentDir(dir);
+    ofs.mkdirSync(dir);
 }
