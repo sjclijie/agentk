@@ -61,32 +61,32 @@ maching is rebooted. Type `ak help` to get help message.
  
  Available commands are:
  
-  - help:       print this help message
-  - run:        run program without crash respawn
-  - start:      start program
-  - stop:       stop program
-  - restart:    restart program
-  - reload:     reload program (partial implemented)
-  - status:     show program status
-  - doc:        generate documentation (not implemented)
-  - init:       initialize project structure (not implemented)
-  - publish:    publish a module
-  - logs:       print program stdout/stderr log message
-  - rc-install: create init.rc script (not implemented)
-  - rc-purge:   remove init.rc script (not implemented)
-  - completion: auto completion helper
+  - `help`       print this help message
+  - `run`        run program without crash respawn
+  - `start`      start program
+  - `stop`       stop program
+  - `restart`    restart program
+  - `reload`     reload program (partial implemented)
+  - `status`     show program status
+  - `doc`        generate documentation (not implemented)
+  - `init`       initialize project structure (not implemented)
+  - `publish`    publish a module
+  - `logs`       print program stdout/stderr log message
+  - `rc-install` create init.rc script (not implemented)
+  - `rc-purge`   remove init.rc script (not implemented)
+  - `completion` auto completion helper
 
 When using `ak start program` to enable guarding of the process, a `manifest.json` must be created in the program directory (see [test/manifest.json](test/manifest.json)),
 and the name of the program directory is supplied to the command line.
 
 `manifest.json` contains:
 
-  - main: the entry module path of the program. Default to "index.js"
-  - directory: the work directory of the program. Default to the program directory
-  - workers: number of processes to be spawned to run the program, default `1`
-  - stdout: the path of the stdout log file to be appended, default to `~/.agentk/out.log`
-  - stderr: the path of the stderr log file to be appended, default to `~/.agentk/err.log`
-  - dependencies: map the depended modules of the program to is revision.
+  - `main` the entry module path of the program. Default to "index.js"
+  - `directory` the work directory of the program. Default to the program directory
+  - `workers` number of processes to be spawned to run the program, default `1`
+  - `stdout` the path of the stdout log file to be appended, default to `~/.agentk/out.log`
+  - `stderr` the path of the stderr log file to be appended, default to `~/.agentk/err.log`
+  - `dependencies` map the depended modules of the program to is revision.
 
 All paths are relative to the program directory.
 
