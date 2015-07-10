@@ -1,3 +1,5 @@
+import {gzip, gzipTransform} from 'zlib.js';
+
 const ofs = require('fs');
 
 export let gzip_min_buf_len = 1024;
@@ -52,7 +54,7 @@ export function data(buffer) {
     if (typeof buffer === 'string') buffer = new Buffer(buffer);
 	return handler(function(req, res) {
 		if(buffer.length > gzip_min_buf_len && testGzip(this, req, res)) {
-			buffer = zlib.gzip(buffer);
+			buffer = gzip(buffer);
 		}
 		res.setHeader('Content-Length', '' + buffer.length);
 		res.end(buffer)
@@ -76,14 +78,17 @@ export function json(json) {
 export function stream(stream) {
 	return handler(function(req, res) {
 		if(testGzip(this, req, res)) {
-			stream = zlib.gzipTransform(stream)
+			stream = gzipTransform(stream)
 		}
 		stream.pipe(res)
 	})
 }
 
-export function file(file) {
-	return stream(ofs.createReadStream(file));
+export function file(file) {console.log('file', process.cwd(), require('path').resolve(file))
+	return stream(ofs.createReadStream(file).on('error', function(err) {
+		console.error('unexpected file error', err);
+		this.push(null)
+	}));
 }
 
 export function ok() {

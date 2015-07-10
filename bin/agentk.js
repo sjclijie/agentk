@@ -10,7 +10,8 @@ if (process.version < min_version) {
     throw new Error(exec + " runs on Node.js " + min_version + " or higher, please upgrade your installation and try again.");
 }
 
-let cp = require('child_process');
+const cp = require('child_process'),
+    path = require('path');
 
 let colors = {
     'k': '0',
@@ -41,8 +42,15 @@ function xtermEscape(str) {
 }
 
 function callService() {
-    require('../index.js').load(require('path').join(__dirname, '../src/service/controller.js')).then(function(module) {
-		require('../src/co.js').promise(module[cmd]);
+    require('../index.js').load(path.join(__dirname, '../src/service/controller.js')).then(function(module) {
+		require('../src/co.js').promise(module[cmd]).then(null, function(err) {
+            if(err.code === 'ECONNREFUSED') {
+                console.error('command \'' + cmd + '\' failed, maybe service not started?')
+            } else {
+                console.error(err.message)
+            }
+            process.exit(-1)
+        });
     }).done()
 }
 
@@ -95,14 +103,15 @@ let commands = {
     },
     "run": {
         help: "run program without crash respawn",
-        "args": "[<program directory>]",
+        "args": "[<program directory> | <main module>]",
         "desc": "run the program located in the directory (or current directory, if none specified) directly in current " +
         "terminal, outputs will be printed into stdout/stderr.\nHit Ctrl-c to terminate execution",
         func: function (dir) {
-            if (arguments.length !== 0) {
-                process.chdir(dir);
+            if(dir.substr(dir.length - 3) === '.js') {
+                require('../index.js').load(path.resolve(dir));
+            } else {
+                require('../index.js').run(dir);
             }
-            require('../index.js').run();
         }
     },
     "start": {

@@ -4,6 +4,7 @@ const fs = require('fs');
 const path = require('path');
 
 export function fork(module, options) {
+	options = options || {};
 	const opts = {};
 	if(options.directory) {
 		opts.cwd = options.directory
@@ -17,5 +18,8 @@ export function fork(module, options) {
 	for(let param of ['detached', 'uid', 'gid']) {
 		if(param in options) opts[param] = options[param]
 	}
-	return cp.spawn(process.execPath, process.execArgv.concat([path.join(__dirname, '../../index.js'), module]), opts)
+	let args = [path.join(__dirname, '../../index.js'), module];
+	if(options.args) args = args.concat(options.args);
+
+	return cp.spawn(process.execPath, process.execArgv.concat(args), opts)
 }
