@@ -44,7 +44,7 @@ function xtermEscape(str) {
 
 function callService() {
     require('../index.js').load(path.join(__dirname, '../src/service/controller.js')).then(function (module) {
-        require('../src/co.js').promise(module[cmd]).then(null, function (err) {
+        require('../src/co.js').promise(module[cmd.replace(/-/g, '_')]).then(null, function (err) {
             if (err.code === 'ECONNREFUSED' || err.code === 'ENOENT') {
                 console.error('command \'' + cmd + '\' failed, maybe service not started?')
             } else {
@@ -152,7 +152,6 @@ let commands = {
     },
     "status": {
         help: "show program status",
-        args: "",
         desc: "display the status of running programs",
         func: callService
     },
@@ -167,7 +166,6 @@ let commands = {
     },
     "init": {
         help: "initialize project structure",
-        args: "",
         desc: "Generate default project structure with a default config file, module and resource directories, and so on",
         func: function () {
             // TODO generate manifest.json
@@ -205,7 +203,7 @@ let commands = {
     },
     "logs": {
         help: "print program stdout/stderr log message",
-        args: "<service path>",
+        args: "<program path>",
         func: function (dir) {
             if (!arguments.length) {
                 return showHelp();
@@ -238,15 +236,21 @@ let commands = {
     },
     "rc-install": {
         help: "create init.rc script",
-        func: function () {
-
-        }
+        func: rcScript
     },
     "rc-purge": {
         help: "remove init.rc script",
-        func: function () {
-
-        }
+        func: rcScript
+    },
+    "svc-start": {
+        help: "start service daemon",
+        desc: "starts service daemon. If daemon is already started, do nothing",
+        func: callService
+    },
+    "svc-stop": {
+        help: "stop service daemon",
+        desc: "stops service daemon. If daemon is not started, do nothing",
+        func: callService
     },
     "completion": {
         help: "auto completion helper",
@@ -283,6 +287,32 @@ function getCompletionFile() {
         }
     }
     return file;
+}
+
+function rcScript() {
+    if (process.platform === 'win32')
+        return console.log(cmd + ' is not supported on windows');
+    if (process.getuid()) {
+        return console.log(cmd + ' must be run with root privilege')
+    }
+    let inittab = '/etc/inittab',
+        script = 'ak:2345:respawn:' + process.execPath + ' --harmony ' + __filename + ' svc-start\n',
+        current = fs.readFileSync(inittab, 'utf8');
+
+    let installed = current.indexOf(script) !== -1;
+
+    if (cmd === 'rc-install') {
+        if (installed) {
+            return console.log('rc script already installed')
+        }
+        fs.appendFileSync(inittab, script);
+    } else if (cmd === 'rc-purge') {
+        if (installed) {
+            fs.writeFileSync(inittab, current.replace(script, ''))
+        } else {
+            console.log('rc script not installed')
+        }
+    }
 }
 
 function completeRunningJobs(arg) {

@@ -5,10 +5,10 @@ import {fork} from '../module/child_process.js'
 
 const path = require('path');
 
-let listen_path;
+let server, listen_path, win32 = process.platform === 'win32';
 
 console.log('starting service...');
-if (process.platform === 'win32') {
+if (win32) {
     listen_path = 32761;
 } else {
     listen_path = 'daemon.sock';
@@ -18,9 +18,17 @@ if (process.platform === 'win32') {
 const programs = {};
 
 const actions = {
+    alive: function () {
+        return true
+    },
+    exit: function () {
+        server.close();
+        if (!win32) file.rm(listen_path);
+        setTimeout(process.exit, 200);
+    },
     start: function (dir) {
         console.log('start', dir);
-        if (dir in programs) throw new Error(`program '${dir}' already started`)
+        if (dir in programs) throw new Error(`program '${dir}' already started`);
         return startProgram(dir)
     },
     status: function () {
@@ -75,14 +83,8 @@ const actions = {
     }
 };
 
-function getProgram(dir) {
-    if (!(dir in programs)) {
-        throw new Error(`program '${dir}' not started`)
-    }
-    return programs[dir];
-}
 
-let server = http.listen(listen_path, function (req) {
+server = http.listen(listen_path, function (req) {
     console.log(req.method, req.url);
     let action = req.url.substr(1);
     if (!(action in actions)) {
@@ -120,6 +122,13 @@ function resumeJobs() {
             startProgram(program.dir);
         }
     }
+}
+
+function getProgram(dir) {
+    if (!(dir in programs)) {
+        throw new Error(`program '${dir}' not started`)
+    }
+    return programs[dir];
 }
 
 function updateLog() {

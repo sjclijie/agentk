@@ -23,6 +23,23 @@ export function restart() {
     getData(callService('restart', process.cwd()))
 }
 
+export function svc_start() {
+    getData(tryCallService('alive'));
+}
+
+export function svc_stop() {
+    try {
+        callService('exit');
+    } catch (e) {
+        if (e.code === 'ECONNREFUSED' || e.code === 'ENOENT') {
+            console.log('service not started');
+            return;
+        }
+        throw e;
+    }
+    console.log('done');
+}
+
 function getData(result) {
     if (result.code !== 200) {
         throw new Error(result.msg)
@@ -78,11 +95,6 @@ export function status() {
         str = '' + str;
         return ' | ' + str + suffix.substr(str.length)
     }
-}
-
-
-export function startService() {
-    tryCallService('alive')
 }
 
 function callService(name, data) {
