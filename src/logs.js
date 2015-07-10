@@ -2,10 +2,10 @@
 
 module.exports = function (program) {
     if (program.stdout) {
-        tail(program.stdout, '\x1b[32m[out]\x1b[0m ')
+        tail(program.stdout, '\x1b[32mout|\x1b[0m')
     }
     if (program.stderr) {
-        tail(program.stderr, '\x1b[31m[err]\x1b[0m ');
+        tail(program.stderr, '\x1b[31merr|\x1b[0m');
     }
 };
 
