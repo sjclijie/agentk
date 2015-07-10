@@ -9,22 +9,23 @@ const storage = co.yield(
 
 let server = http.listen(manifest.config.port, function (req) {
     console.log(req.method, req.url);
-    let m = /^\/(\w+)(?:@([0-9a-z]{32}))?\.js$/.exec(req.url);
+    let m = /^\/([^\/]+)\.js$/.exec(req.url);
     if (!m) {
         return response.error(404);
     }
     if (req.method === 'PUT') {
         let buf = http.read(req),
             sum = md5(buf, 'hex');
-        if (sum !== m[2]) { // client error
+        if (sum !== req.headers['content-md5']) { // client error
             return response.error(400, 'md5sum mismatch');
         }
-        let tres = storage.put(buf, req.url);
+        let fullname = `/${m[1]}@${sum}.js`;
+        let tres = storage.put(buf, fullname);
         if (tres.statusCode >= 300) { // not OK
             return response.stream(tres).setStatus(tres.statusCode);
         }
         console.log('upload success');
-        tres = storage.copy(req.url, '/' + m[1] + '.js');
+        tres = storage.copy(fullname, req.url);
         if (tres.statusCode >= 300) { // not OK
             return response.stream(tres).setStatus(tres.statusCode);
         }

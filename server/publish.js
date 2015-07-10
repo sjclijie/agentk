@@ -30,8 +30,9 @@ export default function (args) {
         let buf = read(name + '.js'),
             sum = md5(buf, 'hex');
 
-        options.path = `/${name}@${sum}.js`;
+        options.path = `/${name}.js`;
         options.headers['Content-Length'] = buf.length;
+        options.headers['Content-MD5'] = sum;
 
         let tres = http.request(options, buf);
         if (tres.statusCode !== 200) {
