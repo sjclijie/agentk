@@ -28,8 +28,13 @@ function onres(tres) {
     tres.on('data', Boolean).on('end', run)
 }
 
-process.on('SIGINT', function () {
-    let ms = Date.now() - startTime;
-    console.log('%d ms, %d requests sent (%d q/s)', ms, reqs, reqs * 1000 / ms | 0);
-    process.exit(0)
+
+process.stdin.resume();
+process.stdin.setRawMode(true);
+process.stdin.on('data', function (data) {
+    if (data[0] === 0x71) {
+        let ms = Date.now() - startTime;
+        console.log('%d ms, %d requests sent (%d q/s)', ms, reqs, reqs * 1000 / ms | 0);
+        process.exit(0)
+    }
 });

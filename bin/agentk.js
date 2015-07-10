@@ -11,6 +11,7 @@ if (process.version < min_version) {
 }
 
 const cp = require('child_process'),
+    fs = require('fs'),
     path = require('path');
 
 let colors = {
@@ -44,7 +45,7 @@ function xtermEscape(str) {
 function callService() {
     require('../index.js').load(path.join(__dirname, '../src/service/controller.js')).then(function (module) {
         require('../src/co.js').promise(module[cmd]).then(null, function (err) {
-            if (err.code === 'ECONNREFUSED') {
+            if (err.code === 'ECONNREFUSED' || err.code === 'ENOENT') {
                 console.error('command \'' + cmd + '\' failed, maybe service not started?')
             } else {
                 console.error(err.message)
@@ -57,10 +58,15 @@ function callService() {
 function service(dir) {
     if (dir === '--all') {
         if (cmd === 'start') {
-            return console.error(exec + ' start --all is not supported');
+            console.error(exec + ' start --all is not supported');
+            process.exit(-1);
         }
         cmd += 'All';
     } else if (dir !== undefined) {
+        if (!require('fs').statSync(dir).isDirectory()) {
+            console.error(exec + ' ' + cmd + ' requires directory name as parameter')
+            process.exit(-1);
+        }
         process.chdir(dir);
     }
     callService()
@@ -70,13 +76,13 @@ let commands = {
     "help": {
         help: "print this help message",
         "args": "[<command>]",
-        "desc": "display help message.",
+        "desc": "display usage of commands",
         func: function (subcmd) {
             let cmd = process.argv[2];
             if (cmd === 'help' && arguments.length && subcmd in commands) { // help <cmd>
                 let command = commands[subcmd];
                 console.log(xtermEscape("$#Gk<usage>: $#Bk<" + exec + "> " + subcmd + " " + (command.args || "") + "\n"));
-                console.log(xtermEscape(command.desc));
+                console.log(xtermEscape('desc' in command ? command.desc : command.help));
                 return;
             } else if (!cmd || cmd === 'help' && !subcmd) { // agentk help?
                 console.log(xtermEscape("$#Gk<usage>: $#Bk<" + exec + "> <command> [<args>]\n"));
@@ -125,25 +131,29 @@ let commands = {
         help: "stop program",
         "args": "[<program directory> | $#Ck<--all>]",
         "desc": "stop one or all programs started. All listening socket ports will be released",
-        func: service
+        func: service,
+        completion: completeRunningJobs
     },
     "restart": {
         help: "restart program",
         "args": "[<program directory> | $#Ck<--all>]",
         "desc": "restart one or all programs started. The old child process will be detached and killed soon after " +
         "several seconds, and new child will be spawned immediately. Listening socket ports will not be released",
-        func: service
+        func: service,
+        completion: completeRunningJobs
     },
     "reload": {
         help: "reload program",
         "args": "[<program directory> | $#Ck<--all>]",
         "desc": "reload one or all programs started. The old child process received a signal and will decide to exit or " +
         "do something else",
-        func: service
+        func: service,
+        completion: completeRunningJobs
     },
     "status": {
         help: "show program status",
         args: "",
+        desc: "display the status of running programs",
         func: callService
     },
     "doc": {
@@ -171,14 +181,19 @@ let commands = {
         desc: "modules are located in current directory as <module name>.js.\nFor example:\n\n    " + exec + " publish http file\n\n" +
         "will upload ‘http.js’ and ‘file.js’ to the server",
         func: function () {
-            require('../server/publish.js')(arguments);
+            let args = arguments;
+            let module = require('../index.js').load(path.join(__dirname, '../server/publish.js'));
+            let co = require('../src/co.js');
+            co.promise(function () {
+                co.yield(module)[Symbol.for('default')](args)
+            }).done()
         },
         completion: function () {
             let added = {};
             for (let i = arguments.length - 1; i--;) added[arguments[i] + '.js'] = true;
             let last = arguments[arguments.length - 1];
 
-            let files = require('fs').readdirSync('.');
+            let files = fs.readdirSync('.');
             let rFile = /^\w+\.js$/;
             let output = '';
             for (let file of files) {
@@ -187,6 +202,39 @@ let commands = {
             }
             console.log(output);
         }
+    },
+    "logs": {
+        help: "print program stdout/stderr log message",
+        args: "<service path>",
+        func: function (dir) {
+            if (!arguments.length) {
+                return showHelp();
+            }
+            let file = path.join(process.env.HOME, '.agentk/programs');
+            if (!fs.existsSync(file)) return;
+            let arr = JSON.parse(fs.readFileSync(file, 'utf8'));
+            dir = path.resolve(dir);
+            let found;
+            for (let program of arr) {
+                if (program.dir === dir) {
+                    found = program;
+                    break
+                }
+            }
+            if (!found) {
+                console.error("'" + dir + "' not found in running programs");
+                return
+            }
+
+            if (!found.stdout && !found.stderr) {
+                console.error("'" + dir + "' stdout/stderr not redirected to file");
+                return
+            }
+
+            require('../src/logs.js')(found);
+
+        },
+        completion: completeRunningJobs
     },
     "rc-install": {
         help: "create init.rc script",
@@ -203,14 +251,15 @@ let commands = {
     "completion": {
         help: "auto completion helper",
         args: ">> ~/.bashrc (or ~/.zshrc)",
-        desc: "enable bash completion. After install, please reopen your terminal to make sure it takes effects. \nOr you can just type in current shell:\n    . " + require('path').join(__dirname, 'completion.sh'),
+        get desc() {
+            return "enable bash completion. After install, please reopen your terminal to make sure it takes effects. \nOr you can just type in current shell:\n    . " + getCompletionFile();
+        },
         func: function (p, agentk, arg2, arg3) {
             if (!arguments.length) {
                 if (process.stdout.isTTY) {
-                    process.argv[2] = cmd = 'help';
-                    commands.help.func('completion');
+                    showHelp()
                 } else {
-                    console.log('. ' + require('path').join(__dirname, 'completion.sh'))
+                    console.log('. ' + getCompletionFile())
                 }
             } else if (p !== "--") {
                 return;
@@ -224,6 +273,43 @@ let commands = {
     }
 };
 
+function getCompletionFile() {
+    let file = path.join(__dirname, 'completion.sh');
+    if (process.platform === 'win32') {
+        if (process.env.MSYSTEM === 'MINGW32') {
+            file = '/' + file.replace(/[:\\]+/g, '/');
+        } else {
+            throw new Error("completion is not supported in this shell, Install MinGW32 and try again")
+        }
+    }
+    return file;
+}
+
+function completeRunningJobs(arg) {
+    if (arg) return;
+    // read active jobs from file
+    let file = path.join(process.env.HOME, '.agentk/programs');
+    if (!fs.existsSync(file)) return;
+    let arr = JSON.parse(fs.readFileSync(file, 'utf8')),
+        curr = process.cwd(),
+        output = '';
+    for (let program of arr) {
+        let dir = program.dir;
+        if (dir === curr) {
+            output += '.\n';
+        } else if (dir.substr(0, curr.length) === curr) {
+            output += dir.substr(curr.length + 1).replace(/\\/g, '/') + '\n';
+        } else {
+            output += dir.replace(/\\/g, '/') + '\n';
+        }
+    }
+    process.stdout.write(output);
+}
+
+function showHelp() {
+    process.argv[2] = 'help';
+    commands.help.func(cmd);
+}
 
 if (!cmd || !(cmd in commands)) {
     cmd = "help"

@@ -45,4 +45,4 @@ exports.download = function (name) {
             }).on('error', reject)
         }).on('error', reject).end();
     })
-}
+};

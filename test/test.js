@@ -2,7 +2,8 @@ import {listen, request, read} from '../src/module/http.js';
 import * as response from '../src/module/http_response.js';
 
 
-listen(3000, function (req) {
+let server = listen(3000, function (req) {
+    console.log(req.method, req.url);
     var m = /^\/([^\/]+)(\/.*)/.exec(req.url);
     if (!m) {
         return response.error(404)
@@ -17,3 +18,5 @@ listen(3000, function (req) {
         return response.stream(tres).setStatus(tres.statusCode).setHeaders(tres.headers)
     }
 });
+
+console.log('test listening on', server.address());

@@ -5,13 +5,14 @@ import {fork} from '../module/child_process.js'
 
 const path = require('path');
 
-const listen_path = 'daemon.sock';
+let listen_path;
 
 console.log('starting service...');
-if (file.exists(listen_path)) {
-    file.rm(listen_path);
+if (process.platform === 'win32') {
+    listen_path = 32761;
 } else {
-    file.mkParentDir(listen_path);
+    listen_path = 'daemon.sock';
+    if (file.exists(listen_path)) file.rm(listen_path);
 }
 
 const programs = {};
@@ -32,30 +33,45 @@ const actions = {
                 restarted: program.restarted,
                 reloaded: program.reloaded,
                 lastRestart: program.lastRestart,
-                lastReload: program.lastReload,
+                lastReload: program.lastReload
             }
         })
     },
     stop: function (dir) {
         let program = getProgram(dir);
+        program.stopped = true;
+        delete programs[dir];
+        updateLog();
 
-        // TODO kill program
         for (let worker of program.workers) {
-            worker.kill();
+            if (!worker) continue;
+
+            try {
+                worker.removeAllListeners('exit');
+                worker.kill();
+            } catch (e) {
+            }
         }
 
-        delete programs[dir];
 
         return true;
     },
     restart: function (dir) {
         let program = getProgram(dir);
 
-        // TODO restart program
+        for (let worker of program.workers) {
+            if (!worker) continue;
 
-        program.lastRestart = Date.now();
-        program.restarted++;
+            try {
+                worker.kill();
+            } catch (e) {
+            }
+        }
         return true
+    },
+    reload: function (dir) {
+        // TODO reload support
+        return actions.restart(dir)
     }
 };
 
@@ -88,10 +104,39 @@ let server = http.listen(listen_path, function (req) {
 
 console.log('service started at', server.address());
 
+resumeJobs();
+
+function resumeJobs() {
+// resume jobs
+    if (file.exists('programs')) {
+        let programs;
+        try {
+            programs = JSON.parse('' + file.read('programs'));
+        } catch (e) {
+            return
+        }
+        for (let program of programs) {
+            console.log('resuming ' + program.dir);
+            startProgram(program.dir);
+        }
+    }
+}
+
+function updateLog() {
+    let arr = Object.keys(programs).map(function (dir) {
+        let program = programs[dir];
+        return {
+            dir: dir,
+            stdout: program.stdout,
+            stderr: program.stderr
+        }
+    });
+    file.write('programs', JSON.stringify(arr));
+}
 
 function startProgram(dir) {
     // try read manifest
-    let manifest, main;
+    let manifest, main, workerCount = 1;
     try {
         manifest = JSON.parse('' + file.read(path.join(dir, 'manifest.json')));
     } catch (e) { // no manifest
@@ -118,25 +163,67 @@ function startProgram(dir) {
             option.stderr = path.resolve(workDir, manifest.stderr);
             file.mkParentDir(option.stderr);
         }
+        if ('workers' in manifest) {
+            workerCount = +manifest.workers;
+        }
     }
 
-    let workers = [];
 
-    programs[dir] = {
+    let workers = [], restarted = [];
+
+    let program = programs[dir] = {
+        stdout: option.stdout || null,
+        stderr: option.stderr || null,
         workers: workers,
         startup: Date.now(),
-        restarted: 0,
+        restarted: restarted,
         reloaded: 0,
         lastReload: 0,
-        lastRestart: 0
-    }
+        lastRestart: 0,
+        stopped: false
+    };
+    updateLog();
 
-    respawn(0);
-    return true
+    for (let i = 0; i < workerCount; i++) {
+        restarted[i] = -1;
+        respawn(i);
+    }
+    return true;
 
 
     function respawn(i) {
-        console.log('respawn', i, main, option);
-        let worker = workers[i] = fork(main, option);
+        let lastRespawn = 0, fastRespawn = 0;
+        onExit();
+
+        function onExit() {
+            if (program.stopped) return;
+            let now = Date.now();
+            if (now - lastRespawn < 3000) {
+                fastRespawn++;
+                if (fastRespawn === 3) {
+                    console.error(`${formatTime(now)} - ${dir}: respawn too fast, disabled for 10 secs`);
+                    workers[i] = null;
+                    setTimeout(onExit, 10e3);
+                    return;
+                }
+            } else {
+                lastRespawn = now;
+                fastRespawn = 0;
+            }
+            console.log(`${formatTime(now)} - ${dir}: respawn worker ${i}`);
+            restarted[i]++;
+            program.lastRestart = Date.now();
+            let worker = workers[i] = fork(main, option);
+            worker.on('exit', onExit);
+        }
     }
+}
+
+function formatTime(t) {
+    let time = new Date(t);
+    return `${time.getFullYear()}-${tens(time.getMonth() + 1)}-${tens(time.getDate())} ${time.toTimeString().substr(0, 8)}`
+}
+
+function tens(num) {
+    return (num < 10 ? '0' : '') + num;
 }

@@ -1,8 +1,10 @@
 "use strict";
 
-let fs = require('fs'), crypto = require('crypto'), http = require('http');
+import * as http from '../src/module/http.js';
+import {read} from '../src/module/file.js';
+import {md5} from '../src/module/crypto.js';
 
-module.exports = function (args) {
+export default function (args) {
     let host = process.env.MODULE_SERVER_HOST, port;
     if (!host) {
         console.error("WARN: MODULE_SERVER_HOST environment varible is not set, using localhost:8800");
@@ -16,29 +18,28 @@ module.exports = function (args) {
         host = host.substr(0, idx);
     }
 
-    next(0);
-    function next(i) {
-        if (i === args.length) return;
-        let name = args[i];
-        let buf = fs.readFileSync(name + '.js'),
-            sum = crypto.createHash('md5').update(buf).digest('hex');
+    let options = {
+        method: 'PUT',
+        host: host,
+        port: port,
+        headers: {}
+    };
 
-        http.request({
-            method: 'PUT',
-            host: host,
-            port: port,
-            path: '/' + name + '@' + sum + '.js',
-            headers: {
-                'Content-Length': buf.length
-            }
-        }, function (tres) {
-            if (tres.statusCode === 200) {
-                console.log('publish ' + name + ': OK');
-                next(i + 1);
-            } else {
-                console.log('publish ' + name + ': error ' + tres.statusCode + ' ' + tres.statusMessage);
-                tres.pipe(process.stdout);
-            }
-        }).end(buf)
+    for (let i = 0; i < args.length; i++) {
+        let name = args[i];
+        let buf = read(name + '.js'),
+            sum = md5(buf, 'hex');
+
+        options.path = `/${name}@${sum}.js`;
+        options.headers['Content-Length'] = buf.length;
+
+        let tres = http.request(options, buf);
+        if (tres.statusCode !== 200) {
+            console.log('publish ' + name + ': error ' + tres.statusCode + ' ' + tres.statusMessage);
+            tres.pipe(process.stdout);
+            break;
+        } else {
+            console.log('publish ' + name + ': OK');
+        }
     }
-};
+}
