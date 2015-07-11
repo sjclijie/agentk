@@ -7,20 +7,22 @@ const path = require('path');
 const win32 = process.platform === 'win32';
 const listen_path = path.join(process.env.HOME, '.agentk/daemon.sock');
 
+const dir = win32 ? process.cwd().replace(/\\/g, '/').toLowerCase() : process.cwd();
+
 export function start() {
-    getData(tryCallService('start', process.cwd()));
+    getData(tryCallService('start', dir));
 }
 
 export function stop() {
-    getData(callService('stop', process.cwd()))
+    getData(callService('stop', dir))
 }
 
 export function reload() {
-    getData(callService('reload', process.cwd()))
+    getData(callService('reload', dir))
 }
 
 export function restart() {
-    getData(callService('restart', process.cwd()))
+    getData(callService('restart', dir))
 }
 
 export function svc_start() {
@@ -64,20 +66,45 @@ export function status() {
         buf6 = ' |\n\x1b[36m    reloaded\x1b[0m',
         buf7 = ' |\n\x1b[36m last reload\x1b[0m';
 
-    for (let obj of data) {
-        let pathLen = obj.path.length;
-        if (pathLen < 19) {
-            pathLen = 19
+    let maxNameLines = 1, nameLines = [];
+
+    for (let i = 0, L = data.length; i < L; i++) {
+        let obj = data[i],
+            path = obj.path,
+            width,
+            pathLines = 1;
+
+        if (path.length < 20) {
+            path += '                    '.substr(path.length);
+        } else if (path.length > 20) {
+            pathLines = (path.length + 19) / 20 | 0;
+            path += '                    '.substr(0, pathLines * 20 - path.length);
+            if(pathLines > maxNameLines) {
+                do {
+                    nameLines[maxNameLines++] = '            ' + ' |                     '.repeat(i)
+                } while(maxNameLines < pathLines);
+            }
         }
-        let suffix = ' '.repeat(pathLen);
-        buf1 += ' | \x1b[32m' + obj.path + '\x1b[0m' + suffix.substr(obj.path.length);
-        buf2 += '-|-' + '-'.repeat(pathLen);
+        let suffix = '                    ';
+        console.log(obj.path, obj.path.length, path.length, pathLines);
+        if(pathLines === 1) {
+            buf1 += ' | \x1b[32m' + path + '\x1b[0m';
+        } else {
+            buf1 += ' | \x1b[32m' + path.substr(0, 20) + '\x1b[0m';
+            for(let j = 1; j < pathLines; j++) {
+                nameLines[j] += ' | \x1b[32m' + path.substr(j * 20, 20) + '\x1b[0m';
+            }
+        }
+        buf2 += '-|---------------------';
         buf8 += append(obj.workers, suffix);
         buf3 += append(formatTime(obj.startup), suffix);
         buf4 += append(obj.restarted, suffix);
         buf5 += append(formatTime(obj.lastRestart), suffix);
         buf6 += append(obj.reloaded, suffix);
         buf7 += obj.reloaded ? append(formatTime(obj.lastReload), suffix) : ' | ' + suffix;
+    }
+    for(let i = 1; i < maxNameLines; i++) {
+        buf1 += ' |\n' + nameLines[i];
     }
     console.log(buf1 + buf2 + buf8 + buf3 + buf4 + buf5 + buf6 + buf7 + ' |');
 
@@ -109,7 +136,7 @@ function callService(name, data) {
         path: '/' + name,
         headers: headers
     };
-    if (process.platform === 'win32') {
+    if (win32) {
         options.host = '127.0.0.1';
         options.port = 32761;
     } else {

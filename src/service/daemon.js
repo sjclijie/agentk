@@ -23,8 +23,13 @@ const actions = {
     },
     exit: function () {
         server.close();
-        if (!win32) file.rm(listen_path);
+        if (!win32) try {
+            file.rm(listen_path)
+        } catch (e) {
+            console.error('failed cleaning up: ' + e.message);
+        }
         setTimeout(process.exit, 200);
+        return true
     },
     start: function (dir) {
         console.log('start', dir);

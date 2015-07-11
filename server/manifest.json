@@ -8,7 +8,7 @@
       "name": "aliyun_oss",
       "bucket": "agent-k",
       "host": "agent-k.oss-cn-beijing.aliyuncs.com",
-      "keyfile": "/home/kyriosli/oss.json"
+      "keyfile": "/Users/kyriosli/oss.json"
     },
     "port": "8800"
   }

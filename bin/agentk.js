@@ -14,6 +14,8 @@ const cp = require('child_process'),
     fs = require('fs'),
     path = require('path');
 
+const win32 = process.platform === 'win32';
+
 let colors = {
     'k': '0',
     'K': '0;1',
@@ -235,11 +237,18 @@ let commands = {
         completion: completeRunningJobs
     },
     "rc-install": {
-        help: "create init.rc script",
+        help: "add daemon to Linux's inittab",
+        args: "[<username>]",
+        desc: "use Linux's inittab to guard the daemon process. When the daemon is killed or crashed due to unexpected errors, the system will respawn the daemon and the daemon will restart all running programs.\n" +
+        "Specify a username to run the daemon, otherwise root will be used.\n" +
+        "After installation, you can run `sudo init q` to make it work immediately",
         func: rcScript
     },
     "rc-purge": {
-        help: "remove init.rc script",
+        help: "remove daemon from Linux's inittab",
+        args: "[<username>]",
+        desc: "contrary to rc-install, this command removes the daemon guardian from the inittab.\nYou should supply the username which you supplied when running rc-install.\n" +
+        "You can run `sudo init q` to stop the guardian immediately",
         func: rcScript
     },
     "svc-start": {
@@ -279,7 +288,7 @@ let commands = {
 
 function getCompletionFile() {
     let file = path.join(__dirname, 'completion.sh');
-    if (process.platform === 'win32') {
+    if (win32) {
         if (process.env.MSYSTEM === 'MINGW32') {
             file = '/' + file.replace(/[:\\]+/g, '/');
         } else {
@@ -289,14 +298,18 @@ function getCompletionFile() {
     return file;
 }
 
-function rcScript() {
-    if (process.platform === 'win32')
-        return console.log(cmd + ' is not supported on windows');
+function rcScript(uname) {
+    if (process.platform !== 'linux')
+        return console.log(cmd + ' is only supported on linux');
     if (process.getuid()) {
         return console.log(cmd + ' must be run with root privilege')
     }
+    if(!uname) {
+        uname = process.env.USER;
+        console.log(xtermEscape('$#ry<WARN> username not specified, using ' + uname));
+    }
     let inittab = '/etc/inittab',
-        script = 'ak:2345:respawn:' + process.execPath + ' --harmony ' + __filename + ' svc-start\n',
+        script = 'ak:2345:respawn:/bin/sh "' + __dirname + '/daemon.sh" "' + uname + '" "' + process.execPath + '" "' + path.join(__dirname, '..') + '"\n',
         current = fs.readFileSync(inittab, 'utf8');
 
     let installed = current.indexOf(script) !== -1;
@@ -316,24 +329,37 @@ function rcScript() {
 }
 
 function completeRunningJobs(arg) {
-    if (arg) return;
+    if(arguments.length > 1) return;
     // read active jobs from file
     let file = path.join(process.env.HOME, '.agentk/programs');
     if (!fs.existsSync(file)) return;
     let arr = JSON.parse(fs.readFileSync(file, 'utf8')),
-        curr = process.cwd(),
+        curr = win32 ? process.cwd().replace(/\\/g, '/').toLowerCase() : process.cwd(),
         output = '';
+
+
     for (let program of arr) {
         let dir = program.dir;
         if (dir === curr) {
-            output += '.\n';
+            output = completion(output, arg, '.', dir);
         } else if (dir.substr(0, curr.length) === curr) {
-            output += dir.substr(curr.length + 1).replace(/\\/g, '/') + '\n';
+            output = completion(output, arg, dir.substr(curr.length + 1), dir);
         } else {
-            output += dir.replace(/\\/g, '/') + '\n';
+            output = completion(output, arg, dir);
         }
     }
     process.stdout.write(output);
+}
+
+function completion(buf, arg0) {
+    for(let i = 2, L = arguments.length; i < L; i++) {
+        let str = arguments[i];
+        if(!arg0 || str.substr(0, arg0.length) === arg0) {
+            return buf + str + '\n'
+        }
+    }
+    return buf
+    
 }
 
 function showHelp() {
