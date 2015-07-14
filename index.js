@@ -16,7 +16,7 @@ exports.run = function (programDir) {
     // read manifest
     let manifest = global.manifest = JSON.parse(require('fs').readFileSync(path.join(programDir, 'manifest.json'), 'utf8'));
     let main = path.resolve(programDir, manifest.main || 'index.js');
-    console.log('run', main, manifest);
+    // console.log('run', main, manifest);
     let workdir = programDir;
     if (manifest.directory) {
         workdir = path.resolve(programDir, manifest.directory);
@@ -32,7 +32,10 @@ if (process.mainModule === module) {
     let target = process.argv[2];
 
     if (target === 'start') {
-        exports.run(process.argv[3])
+        exports.run(process.argv[3]);
+        if(process.argv[4] === '--slave') {
+            require('./src/service/slave.js')
+        }
     } else if (target.substr(target.length - 3) === '.js') {
         exports.load(require('path').resolve(target)).done();
     }

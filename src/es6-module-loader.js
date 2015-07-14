@@ -133,7 +133,7 @@ function compile(source, option) {
     let hasAliasedImport = findImports(parsed, globals, replace, option);
     let exports = findExports(parsed, replace);
 
-    if (hasAliasedImport) {
+    if (hasAliasedImport || handleTemplate) {
         handleScope(parsed, globals, replace);
     }
     //console.log(globals, replaces);

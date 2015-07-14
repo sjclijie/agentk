@@ -98,7 +98,7 @@ let commands = {
 
             console.log(xtermEscape("possible commands are:"));
             Object.keys(commands).forEach(function (cmd) {
-                console.log(xtermEscape("  $#yk<" + cmd + ">" + "           ".substr(cmd.length) + commands[cmd].help))
+                console.log(xtermEscape("  $#yk<" + cmd + ">" + "            ".substr(cmd.length) + commands[cmd].help))
             });
             console.log(xtermEscape("\ntype $#Bk<" + exec + "> help <command> to get more info"));
         }, completion: function (prefix) {
@@ -240,7 +240,7 @@ let commands = {
         },
         completion: completeRunningJobs
     },
-    "rc-install": {
+    "svc-install": {
         help: "add daemon to Linux's inittab",
         args: "[<username>]",
         maxArgs: 1,
@@ -251,17 +251,17 @@ let commands = {
         completion: function (prefix) {
             let buf = '';
             for (let line of fs.readFileSync('/etc/passwd', 'binary').split('\n')) {
-                if (!line || line.substr(line.length - 8) === '/nologin') continue;
+                if (!line || line.substr(line.length - 8) === '/nologin' || line.substr(line.length - 6) === '/false') continue;
                 buf = completion(buf, prefix, line.substr(0, line.indexOf(':')))
             }
             process.stdout.write(buf);
         }
     },
-    "rc-purge": {
+    "svc-purge": {
         help: "remove daemon from Linux's inittab",
         args: "[<username>]",
         maxArgs: 1,
-        desc: "contrary to rc-install, this command removes the daemon guardian from the inittab.\nYou should supply the username which you supplied when running rc-install.\n" +
+        desc: "contrary to svc-install, this command removes the daemon guardian from the inittab.\nYou should supply the username which you supplied when running svc-install.\n" +
         "You can run `sudo init q` to stop the guardian immediately",
         func: rcScript,
         completion: function (prefix) {
@@ -342,16 +342,16 @@ function rcScript(uname) {
 
     let installed = current.indexOf(script) !== -1;
 
-    if (cmd === 'rc-install') {
+    if (cmd === 'svc-install') {
         if (installed) {
             return console.log('rc script already installed')
         }
         fs.appendFileSync(inittab, script);
-    } else if (cmd === 'rc-purge') {
+    } else if (cmd === 'svc-purge') {
         if (installed) {
             fs.writeFileSync(inittab, current.replace(script, ''))
         } else {
-            console.log('rc script not installed')
+            console.log('init script not installed')
         }
     }
 }
@@ -369,7 +369,7 @@ function completeRunningJobs(arg) {
         let dir = program.dir;
         if (dir === curr) {
             output = completion(output, arg, '.', dir);
-        } else if (dir.substr(0, curr.length) === curr) {
+        } else if (curr !== '/' && dir.substr(0, curr.length) === curr) {
             output = completion(output, arg, dir.substr(curr.length + 1), dir);
         } else {
             output = completion(output, arg, dir);
