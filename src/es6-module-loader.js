@@ -31,15 +31,15 @@ function include(name, __dirname) {
     if (name in definedModules) return definedModules[name];
     if (__dirname) {
         name = path.resolve(__dirname, name);
+
         if (name in definedModules) return definedModules[name];
     }
 
-
     if (fs.existsSync(name)) {
         try {
-            return Promise.resolve(System.module(fs.readFileSync(name, 'utf8'), {filename: name}));
+            return definedModules[name] = Promise.resolve(System.module(fs.readFileSync(name, 'utf8'), {filename: name}));
         } catch (e) { // file IO error, or module compilation failed
-            return Promise.reject(e);
+            return definedModules[name] = Promise.reject(e);
         }
     }
     let basename = path.basename(name);
@@ -130,25 +130,33 @@ function compile(source, option) {
     let replaces = [], globals = {};
     option = option || {filename: '/'};
     option.dir = path.dirname(option.filename);
-    findImports(parsed, globals, replace, option);
+    let hasAliasedImport = findImports(parsed, globals, replace, option);
     let exports = findExports(parsed, replace);
 
-    handleScope(parsed, globals, replace);
+    if (hasAliasedImport) {
+        handleScope(parsed, globals, replace);
+    }
     //console.log(globals, replaces);
-    replaces.sort(function (a, b) {
-        return a[0] - b[0];
-    });
+
     let result = '(function(module, co, include, require, __filename, __dirname, moduleDefault, initModule) {"use strict";',
         currentPos = 0;
-    if (exports) result += exports[0];
+    if (replaces.length) {
+        if (exports) result += exports[0];
+        replaces.sort(function (a, b) {
+            return a[0] - b[0];
+        });
 
-    for (let repl of replaces) {
-        result += source.substring(currentPos, repl[0]) + repl[2];
-        currentPos = repl[1];
+
+        for (let repl of replaces) {
+            result += source.substring(currentPos, repl[0]) + repl[2];
+            currentPos = repl[1];
+        }
+        result += source.substring(currentPos);
+
+        if (exports) result += exports[1];
+    } else {
+        result += source;
     }
-    result += source.substring(currentPos);
-
-    if (exports) result += exports[1];
     result += '\nreturn module})';
     //console.log(option.filename, result);
     return result;
@@ -216,6 +224,7 @@ function findExports(body, replace) {
 
 const VARIABLE_TYPE = {type: 'variable'};
 function findImports(body, globals, replace, option) {
+    let hasAliasedImport = false;
     let definedModules = {}, lastModuleUid = 0;
     for (let stmt of body.body) {
         if (stmt.type != Syntax.ImportDeclaration) continue;
@@ -236,7 +245,8 @@ function findImports(body, globals, replace, option) {
             moduleId = lastSpecifier.local.name;
             globals[moduleId] = VARIABLE_TYPE;
         } else {
-            stmt.specifiers.push(lastSpecifier);
+            hasAliasedImport = true;
+            stmt.specifiers.push(lastSpecifier); // put it back
             if (moduleId in definedModules) {
                 moduleId += '$' + lastModuleUid++;
             }
@@ -261,6 +271,7 @@ function findImports(body, globals, replace, option) {
         definedModules[moduleId] = true;
         replace(stmt, 'let ' + moduleId + '=include(' + stmt.source.raw + ',__dirname);');
     }
+    return hasAliasedImport;
 }
 function handleScope(body, locals, replace) {
     //console.log('handle scope', body.type, body.range);

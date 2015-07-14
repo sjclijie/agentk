@@ -78,6 +78,7 @@ let commands = {
     "help": {
         help: "print this help message",
         "args": "[<command>]",
+        maxArgs: 1,
         "desc": "display usage of commands",
         func: function (subcmd) {
             let cmd = process.argv[2];
@@ -101,12 +102,11 @@ let commands = {
             });
             console.log(xtermEscape("\ntype $#Bk<" + exec + "> help <command> to get more info"));
         }, completion: function (prefix) {
-            if (arguments.length > 1) return;
             let output = '';
             for (let txt of Object.keys(commands)) {
-                if (!prefix || txt.substr(0, prefix.length) === prefix) output += txt + '\n'
+                output = completion(output, prefix, txt);
             }
-            console.log(output);
+            process.stdout.write(output);
         }
     },
     "run": {
@@ -132,6 +132,7 @@ let commands = {
     "stop": {
         help: "stop program",
         "args": "[<program directory> | $#Ck<--all>]",
+        maxArgs: 1,
         "desc": "stop one or all programs started. All listening socket ports will be released",
         func: service,
         completion: completeRunningJobs
@@ -139,6 +140,7 @@ let commands = {
     "restart": {
         help: "restart program",
         "args": "[<program directory> | $#Ck<--all>]",
+        maxArgs: 1,
         "desc": "restart one or all programs started. The old child process will be detached and killed soon after " +
         "several seconds, and new child will be spawned immediately. Listening socket ports will not be released",
         func: service,
@@ -147,6 +149,7 @@ let commands = {
     "reload": {
         help: "reload program",
         "args": "[<program directory> | $#Ck<--all>]",
+        maxArgs: 1,
         "desc": "reload one or all programs started. The old child process received a signal and will decide to exit or " +
         "do something else",
         func: service,
@@ -200,12 +203,13 @@ let commands = {
                 if (!rFile.test(file) || file in added) continue;
                 if (!last || file.substr(0, last.length) === last) output += file.substr(0, file.length - 3) + '\n';
             }
-            console.log(output);
+            process.stdout.write(output);
         }
     },
     "logs": {
         help: "print program stdout/stderr log message",
         args: "<program path>",
+        maxArgs: 1,
         func: function (dir) {
             if (!arguments.length) {
                 return showHelp();
@@ -239,17 +243,35 @@ let commands = {
     "rc-install": {
         help: "add daemon to Linux's inittab",
         args: "[<username>]",
+        maxArgs: 1,
         desc: "use Linux's inittab to guard the daemon process. When the daemon is killed or crashed due to unexpected errors, the system will respawn the daemon and the daemon will restart all running programs.\n" +
         "Specify a username to run the daemon, otherwise root will be used.\n" +
         "After installation, you can run `sudo init q` to make it work immediately",
-        func: rcScript
+        func: rcScript,
+        completion: function (prefix) {
+            let buf = '';
+            for (let line of fs.readFileSync('/etc/passwd', 'binary').split('\n')) {
+                if (!line || line.substr(line.length - 8) === '/nologin') continue;
+                buf = completion(buf, prefix, line.substr(0, line.indexOf(':')))
+            }
+            process.stdout.write(buf);
+        }
     },
     "rc-purge": {
         help: "remove daemon from Linux's inittab",
         args: "[<username>]",
+        maxArgs: 1,
         desc: "contrary to rc-install, this command removes the daemon guardian from the inittab.\nYou should supply the username which you supplied when running rc-install.\n" +
         "You can run `sudo init q` to stop the guardian immediately",
-        func: rcScript
+        func: rcScript,
+        completion: function (prefix) {
+            let buf = '';
+            let inittab = fs.readFileSync('/etc/inittab', 'binary'), r = /^ak:2345:respawn:\S+ \S+ "([^"]+)"/gm, m;
+            while (m = r.exec(inittab)) {
+                buf = completion(buf, prefix, m[1]);
+            }
+            process.stdout.write(buf);
+        }
     },
     "svc-start": {
         help: "start service daemon",
@@ -267,7 +289,7 @@ let commands = {
         get desc() {
             return "enable bash completion. After install, please reopen your terminal to make sure it takes effects. \nOr you can just type in current shell:\n    . " + getCompletionFile();
         },
-        func: function (p, agentk, arg2, arg3) {
+        func: function (p, agentk, arg2) {
             if (!arguments.length) {
                 if (process.stdout.isTTY) {
                     showHelp()
@@ -280,6 +302,11 @@ let commands = {
             if (arguments.length === 3) {
                 commands.help.completion(arg2);
             } else if (arguments.length > 3 && arg2 in commands && commands[arg2].completion) {
+                let command = commands[arg2];
+                if ('maxArgs' in command && arguments.length > command.maxArgs + 3) {
+                    console.log(command.maxArgs, arguments);
+                    return;
+                }
                 commands[arg2].completion.apply(null, [].slice.call(arguments, 3));
             }
         }
@@ -298,18 +325,19 @@ function getCompletionFile() {
     return file;
 }
 
+
 function rcScript(uname) {
     if (process.platform !== 'linux')
         return console.log(cmd + ' is only supported on linux');
     if (process.getuid()) {
         return console.log(cmd + ' must be run with root privilege')
     }
-    if(!uname) {
+    if (!uname) {
         uname = process.env.USER;
         console.log(xtermEscape('$#ry<WARN> username not specified, using ' + uname));
     }
     let inittab = '/etc/inittab',
-        script = 'ak:2345:respawn:/bin/sh "' + __dirname + '/daemon.sh" "' + uname + '" "' + process.execPath + '" "' + path.join(__dirname, '..') + '"\n',
+        script = 'ak:2345:respawn:/bin/sh "' + __dirname + '/daemon.sh" "' + uname + '" "' + process.execPath + '"\n',
         current = fs.readFileSync(inittab, 'utf8');
 
     let installed = current.indexOf(script) !== -1;
@@ -329,7 +357,6 @@ function rcScript(uname) {
 }
 
 function completeRunningJobs(arg) {
-    if(arguments.length > 1) return;
     // read active jobs from file
     let file = path.join(process.env.HOME, '.agentk/programs');
     if (!fs.existsSync(file)) return;
@@ -352,14 +379,13 @@ function completeRunningJobs(arg) {
 }
 
 function completion(buf, arg0) {
-    for(let i = 2, L = arguments.length; i < L; i++) {
+    for (let i = 2, L = arguments.length; i < L; i++) {
         let str = arguments[i];
-        if(!arg0 || str.substr(0, arg0.length) === arg0) {
+        if (!arg0 || str.substr(0, arg0.length) === arg0) {
             return buf + str + '\n'
         }
     }
     return buf
-    
 }
 
 function showHelp() {
