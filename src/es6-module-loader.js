@@ -196,15 +196,18 @@ function findExports(body, replace) {
             }
         } else if (stmt.type === Syntax.ExportDefaultDeclaration) {
             //console.log(stmt);
-            replace({range: [stmt.range[0], stmt.declaration.range[0]]}, 'module[moduleDefault]=');
+            let defaultName = null;
             if (stmt.declaration.type === Syntax.FunctionDeclaration) {
                 arr[i] = stmt.declaration;
+                defaultName = stmt.declaration.id;
             } else {
                 arr[i] = {
                     type: Syntax.ExpressionStatement,
                     expression: stmt.declaration
                 }
             }
+
+            replace({range: [stmt.range[0], stmt.declaration.range[0]]}, 'module[moduleDefault]=' + (defaultName ? defaultName.name + ';' : ''));
         }
     }
 

@@ -10,8 +10,9 @@ export let maxSockets = 5;
 export function listen(port, cb) {
     return co.wrap(function (resolve, reject) {
         let server = ohttp.createServer(function (req, res) {
+            req.originalUrl = req.url;
             co.promise(function () {
-                return cb(req);
+                return cb.apply(req, [req]);
             }).then(function (resp) { // succ
                 if (!resp) return res.end();
 
