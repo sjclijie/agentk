@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta name="description" content="Agentk : synchronous Node.js network service framework">
+
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+
+    <title>Agentk</title>
+  </head>
+
+  <body>
+
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/kyriosli/agentk">View on GitHub</a>
+
+          <h1 id="project_title">Agentk</h1>
+          <h2 id="project_tagline">synchronous Node.js network service framework</h2>
+
+            <section id="downloads">
+              <a class="zip_download_link" href="https://github.com/kyriosli/agentk/zipball/master">Download this project as a .zip file</a>
+              <a class="tar_download_link" href="https://github.com/kyriosli/agentk/tarball/master">Download this project as a tar.gz file</a>
+            </section>
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
+        <h1>
+<a id="agentk-synchronous-nodejs-web-service-framework" class="anchor" href="#agentk-synchronous-nodejs-web-service-framework" aria-hidden="true"><span class="octicon octicon-link"></span></a>AgentK: Synchronous Node.JS web service framework</h1>
+
+<h2>
+<a id="features" class="anchor" href="#features" aria-hidden="true"><span class="octicon octicon-link"></span></a>features</h2>
+
+<ul>
+<li>support for new ES6 style module loading</li>
+<li>write async scripts synchronously</li>
+<li>intergreted process monitor supporting clusters </li>
+<li>support for view engines</li>
+</ul>
+
+<h2>
+<a id="getting-started" class="anchor" href="#getting-started" aria-hidden="true"><span class="octicon octicon-link"></span></a>Getting started</h2>
+
+<h3>
+<a id="installation" class="anchor" href="#installation" aria-hidden="true"><span class="octicon octicon-link"></span></a>Installation</h3>
+
+<p>Open a terminal and type:</p>
+
+<pre><code>npm install kyriosli/agentk -g
+</code></pre>
+
+<p>If you are using linux/osx, or mingw32 on windows, you can also enable bash/zsh auto completion by typing:</p>
+
+<pre><code>ak completion &gt;&gt; ~/.bashrc (or ~/.zshrc)
+</code></pre>
+
+<h3>
+<a id="writing-code" class="anchor" href="#writing-code" aria-hidden="true"><span class="octicon octicon-link"></span></a>Writing code</h3>
+
+<p>AgentK uses modern ES6 features including:</p>
+
+<ul>
+<li><a href="https://github.com/lukehoban/es6features#modules">modules and importing/exporting</a></li>
+<li><a href="https://github.com/lukehoban/es6features#promises">Promise</a></li>
+</ul>
+
+<p>It uses <a href="https://github.com/laverdet/node-fibers">Fibers</a> to get around callbacks in Node.JS development. The example
+below shows a simple http server that returns static file as well as forward proxy web pages (See <a href="test/test.js">test/test.js</a>):</p>
+
+<div class="highlight highlight-js"><pre><span class="pl-c">// test.js</span>
+<span class="pl-k">import</span> {listen, request, read} <span class="pl-k">from</span> <span class="pl-s"><span class="pl-pds">'</span>../src/module/http.js<span class="pl-pds">'</span></span>;
+<span class="pl-k">import</span> * <span class="pl-k">as</span> response <span class="pl-k">from</span> <span class="pl-s"><span class="pl-pds">'</span>../src/module/http_response.js<span class="pl-pds">'</span></span>;
+<span class="pl-k">import</span> Router <span class="pl-k">from</span> <span class="pl-s"><span class="pl-pds">'</span>../src/module/router.js<span class="pl-pds">'</span></span>;
+<span class="pl-k">import</span> * <span class="pl-k">as</span> view <span class="pl-k">from</span> <span class="pl-s"><span class="pl-pds">'</span>../src/module/view.js<span class="pl-pds">'</span></span>;
+
+<span class="pl-k">const</span> <span class="pl-c1">route</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">Router</span>();
+
+route.<span class="pl-c1">prefix</span>(<span class="pl-s"><span class="pl-pds">'</span>/static<span class="pl-pds">'</span></span>, <span class="pl-k">function</span> (<span class="pl-smi">req</span>) {
+    <span class="pl-en">console</span><span class="pl-c1">.log</span>(req.timeStart, req.url);
+    <span class="pl-k">return</span> response.<span class="pl-c1">file</span>(req.url.<span class="pl-c1">substr</span>(<span class="pl-c1">1</span>))
+        .setHeader(<span class="pl-s"><span class="pl-pds">'</span>Content-Type<span class="pl-pds">'</span></span>, <span class="pl-s"><span class="pl-pds">'</span>text/javascript<span class="pl-pds">'</span></span>)
+        .enableGzip();
+});
+
+route.<span class="pl-c1">match</span>(<span class="pl-sr"><span class="pl-pds">/</span><span class="pl-k">^</span><span class="pl-cce">\/</span>(<span class="pl-c1">[<span class="pl-k">^</span><span class="pl-cce">\/</span>]</span><span class="pl-k">+</span>)(<span class="pl-cce">\/</span><span class="pl-c1">.</span><span class="pl-k">*</span>)<span class="pl-pds">/</span></span>, <span class="pl-k">function</span> (<span class="pl-smi">req</span>, <span class="pl-smi">host</span>, <span class="pl-smi">path</span>) {
+    <span class="pl-en">console</span><span class="pl-c1">.log</span>(host, path);
+    <span class="pl-k">var</span> tres <span class="pl-k">=</span> request({
+        method<span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">'</span>GET<span class="pl-pds">'</span></span>,
+        host<span class="pl-k">:</span> host,
+        path<span class="pl-k">:</span> path
+    });
+    <span class="pl-k">return</span> response.stream(tres)
+        .setStatus(tres.statusCode)
+        .setHeaders(tres.<span class="pl-c1">headers</span>)
+});
+
+<span class="pl-k">let</span> server <span class="pl-k">=</span> listen(<span class="pl-c1">3000</span>, route);
+<span class="pl-en">console</span><span class="pl-c1">.log</span>(<span class="pl-s"><span class="pl-pds">'</span>test listening on<span class="pl-pds">'</span></span>, server.address());</pre></div>
+
+<p>Type <code>ak run test.js</code> to run the program</p>
+
+<h3>
+<a id="running-the-program" class="anchor" href="#running-the-program" aria-hidden="true"><span class="octicon octicon-link"></span></a>Running the program</h3>
+
+<p>Agentk can run the program directly, as well as guard its process to prevent system down, and restarts it when the server
+maching is rebooted. Type <code>ak help</code> to get help message.</p>
+
+<p>Available commands are:</p>
+
+<ul>
+<li>
+<code>help</code>        print this help message</li>
+<li>
+<code>run</code>         run program without crash respawn</li>
+<li>
+<code>start</code>       start program</li>
+<li>
+<code>stop</code>        stop program</li>
+<li>
+<code>restart</code>     restart program</li>
+<li>
+<code>reload</code>      reload program (partial implemented)</li>
+<li>
+<code>status</code>      show program status</li>
+<li>
+<code>doc</code>         generate documentation (not implemented)</li>
+<li>
+<code>init</code>        initialize project structure (not implemented)</li>
+<li>
+<code>publish</code>     publish a module</li>
+<li>
+<code>logs</code>        print program stdout/stderr log message</li>
+<li>
+<code>svc-install</code> create init.rc script (not implemented)</li>
+<li>
+<code>svc-purge</code>   remove init.rc script (not implemented)</li>
+<li>
+<code>svc-start</code>   start service daemon</li>
+<li>
+<code>svc-stop</code>    stop service daemon</li>
+<li>
+<code>completion</code>  auto completion helper</li>
+</ul>
+
+<p>When using <code>ak start program</code> to enable guarding of the process, a <code>manifest.json</code> must be created in the program directory (see <a href="test/manifest.json">test/manifest.json</a>),
+and the name of the program directory is supplied to the command line.</p>
+
+<p><code>manifest.json</code> contains:</p>
+
+<ul>
+<li>
+<code>main</code> the entry module path of the program. Default to "index.js"</li>
+<li>
+<code>directory</code> the work directory of the program. Default to the program directory</li>
+<li>
+<code>workers</code> number of processes to be spawned to run the program, default <code>1</code>
+</li>
+<li>
+<code>stdout</code> the path of the stdout log file to be appended, default to <code>~/.agentk/out.log</code>
+</li>
+<li>
+<code>stderr</code> the path of the stderr log file to be appended, default to <code>~/.agentk/err.log</code>
+</li>
+<li>
+<code>dependencies</code> map the depended modules of the program to is revision.</li>
+</ul>
+
+<p>All paths are relative to the program directory.</p>
+
+<p>Use <code>ak init</code> to create an empty program structure. (NOT implemented)</p>
+
+<h2>
+<a id="writing-modules" class="anchor" href="#writing-modules" aria-hidden="true"><span class="octicon octicon-link"></span></a>Writing modules</h2>
+
+<p>TODO</p>
+
+<h3>
+<a id="module-server" class="anchor" href="#module-server" aria-hidden="true"><span class="octicon octicon-link"></span></a>Module server</h3>
+
+<p>TODO</p>
+
+<h3>
+<a id="publishing-modules" class="anchor" href="#publishing-modules" aria-hidden="true"><span class="octicon octicon-link"></span></a>Publishing modules</h3>
+
+<p>TODO</p>
+
+<h3>
+<a id="module-auto-loading" class="anchor" href="#module-auto-loading" aria-hidden="true"><span class="octicon octicon-link"></span></a>Module auto loading</h3>
+
+<p>TODO</p>
+      </section>
+    </div>
+
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">Agentk maintained by <a href="https://github.com/kyriosli">kyriosli</a></p>
+        <p>Published with <a href="https://pages.github.com">GitHub Pages</a></p>
+      </footer>
+    </div>
+
+    
+
+  </body>
+</html>
