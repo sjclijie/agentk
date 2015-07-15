@@ -1,77 +1,76 @@
 <!DOCTYPE html>
-<html>
-
+<html lang="en-us">
   <head>
-    <meta charset='utf-8'>
-    <meta http-equiv="X-UA-Compatible" content="chrome=1">
-    <meta name="description" content="Agentk : synchronous Node.js network service framework">
-
-    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
-
-    <title>Agentk</title>
+    <meta charset="UTF-8">
+    <title>AgentK by kyriosli</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" href="stylesheets/normalize.css" media="screen">
+    <link href='http://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/github-light.css" media="screen">
   </head>
-
   <body>
+    <section class="page-header">
+      <h1 class="project-name">AgentK</h1>
+      <h2 class="project-tagline">Node.JS web开发框架</h2>
+      <a href="https://github.com/kyriosli/agentk" class="btn">View on GitHub</a>
+      <a href="https://github.com/kyriosli/agentk/zipball/master" class="btn">Download .zip</a>
+      <a href="https://github.com/kyriosli/agentk/tarball/master" class="btn">Download .tar.gz</a>
+    </section>
 
-    <!-- HEADER -->
-    <div id="header_wrap" class="outer">
-        <header class="inner">
-          <a id="forkme_banner" href="https://github.com/kyriosli/agentk">View on GitHub</a>
-
-          <h1 id="project_title">Agentk</h1>
-          <h2 id="project_tagline">synchronous Node.js network service framework</h2>
-
-            <section id="downloads">
-              <a class="zip_download_link" href="https://github.com/kyriosli/agentk/zipball/master">Download this project as a .zip file</a>
-              <a class="tar_download_link" href="https://github.com/kyriosli/agentk/tarball/master">Download this project as a tar.gz file</a>
-            </section>
-        </header>
-    </div>
-
-    <!-- MAIN CONTENT -->
-    <div id="main_content_wrap" class="outer">
-      <section id="main_content" class="inner">
-        <h1>
-<a id="agentk-synchronous-nodejs-web-service-framework" class="anchor" href="#agentk-synchronous-nodejs-web-service-framework" aria-hidden="true"><span class="octicon octicon-link"></span></a>AgentK: Synchronous Node.JS web service framework</h1>
+    <section class="main-content">
+      <h1>
+<a id="agentk-全新的nodejs开发框架" class="anchor" href="#agentk-%E5%85%A8%E6%96%B0%E7%9A%84nodejs%E5%BC%80%E5%8F%91%E6%A1%86%E6%9E%B6" aria-hidden="true"><span class="octicon octicon-link"></span></a>AgentK: 全新的<code>Node.JS</code>开发框架</h1>
 
 <h2>
-<a id="features" class="anchor" href="#features" aria-hidden="true"><span class="octicon octicon-link"></span></a>features</h2>
+<a id="简介" class="anchor" href="#%E7%AE%80%E4%BB%8B" aria-hidden="true"><span class="octicon octicon-link"></span></a>简介</h2>
+
+<p>AgentK 是一个集开发流程和运维于一体的<code>Node.JS</code>开发框架，旨在解决快速搭建<code>Node.JS</code>项目过程中常见的难题。如果我们从头搭建一个项目，或者从未接触过<code>Node.JS</code>开发，往往需要考虑：</p>
 
 <ul>
-<li>support for new ES6 style module loading</li>
-<li>write async scripts synchronously</li>
-<li>intergreted process monitor supporting clusters </li>
-<li>support for view engines</li>
+<li>如何组织代码</li>
+<li>如何规范代码格式，选择可靠的模块化和异步回调解决方案</li>
+<li>如何实现可伸缩与服务可靠性</li>
 </ul>
 
+<p>等等诸如此类问题。单纯一个集群配置和宕机重启可能都要花费很多精力；而回调地狱更是让新手老手都头痛不已，但<code>Promise</code>等其它的编程范式又存在学习成本。</p>
+
+<p>AgentK从四个角度解决上述问题：</p>
+
+<ol>
+<li>支持全新的ES6风格的模块书写和加载方式，使得代码书写更加规范</li>
+<li>通过协程方案解决了回调问题，异步代码可以同步书写，函数的封装对调用者不透明，不需要学习新的编程范式</li>
+<li>集成进程管理和集群功能，提供操作系统级别的进程守护，防止意外宕机或被误杀</li>
+<li>集成路由/模版引擎等常见功能，规范化开发细节</li>
+</ol>
+
 <h2>
-<a id="getting-started" class="anchor" href="#getting-started" aria-hidden="true"><span class="octicon octicon-link"></span></a>Getting started</h2>
+<a id="快速上手" class="anchor" href="#%E5%BF%AB%E9%80%9F%E4%B8%8A%E6%89%8B" aria-hidden="true"><span class="octicon octicon-link"></span></a>快速上手</h2>
 
 <h3>
-<a id="installation" class="anchor" href="#installation" aria-hidden="true"><span class="octicon octicon-link"></span></a>Installation</h3>
+<a id="安装篇" class="anchor" href="#%E5%AE%89%E8%A3%85%E7%AF%87" aria-hidden="true"><span class="octicon octicon-link"></span></a>安装篇</h3>
 
-<p>Open a terminal and type:</p>
+<p>AgentK可以通过<code>npm</code>进行安装。打开一个终端，输入:</p>
 
 <pre><code>npm install kyriosli/agentk -g
 </code></pre>
 
-<p>If you are using linux/osx, or mingw32 on windows, you can also enable bash/zsh auto completion by typing:</p>
+<p>当然如果您正在使用 linux/osx，可能会遇到没有权限的问题，请自行加sudo解决。</p>
 
-<pre><code>ak completion &gt;&gt; ~/.bashrc (or ~/.zshrc)
+<p>AgentK还支持<code>bash</code>/<code>zsh</code>的自动补全，所以如果您正在使用 linux/osx，或者 windows下的 mingw32等环境，可以配置一下自动补全，输入：</p>
+
+<pre><code>ak completion &gt;&gt; ~/.bashrc (或者 ~/.zshrc如果您正在使用zsh)
 </code></pre>
 
+<p>如果要自动补全生效，还需要重新打开终端或重新登录</p>
+
 <h3>
-<a id="writing-code" class="anchor" href="#writing-code" aria-hidden="true"><span class="octicon octicon-link"></span></a>Writing code</h3>
+<a id="代码编写篇" class="anchor" href="#%E4%BB%A3%E7%A0%81%E7%BC%96%E5%86%99%E7%AF%87" aria-hidden="true"><span class="octicon octicon-link"></span></a>代码编写篇</h3>
 
-<p>AgentK uses modern ES6 features including:</p>
+<p>AgentK使用<code>ES6</code>(即<code>ECMAScript 2015</code>, 最新的JavaScript规范)包含的<a href="https://github.com/lukehoban/es6features#modules">module</a>和<a href="https://github.com/lukehoban/es6features#promises">Promise</a>来组织代码和异步接口调用。关于<code>module</code>和<code>Promise</code>的相关教程可以参考
+<a href="#TODO">TODO</a> 和 <a href="#TODO">TODO</a></p>
 
-<ul>
-<li><a href="https://github.com/lukehoban/es6features#modules">modules and importing/exporting</a></li>
-<li><a href="https://github.com/lukehoban/es6features#promises">Promise</a></li>
-</ul>
-
-<p>It uses <a href="https://github.com/laverdet/node-fibers">Fibers</a> to get around callbacks in Node.JS development. The example
-below shows a simple http server that returns static file as well as forward proxy web pages (See <a href="test/test.js">test/test.js</a>):</p>
+<p>同时，它使用了 <a href="https://github.com/laverdet/node-fibers">Fibers</a> 来规避 Node.JS的回调问题。下面的一段代码展示了一个简单的http服务器，它提供了两个接口：一个静态文件接口和一个反向代理。(完整代码参考 <a href="https://github.com/kyriosli/agentk/blob/master/test/test.js">test.js</a>)</p>
 
 <div class="highlight highlight-js"><pre><span class="pl-c">// test.js</span>
 <span class="pl-k">import</span> {listen, request, read} <span class="pl-k">from</span> <span class="pl-s"><span class="pl-pds">'</span>../src/module/http.js<span class="pl-pds">'</span></span>;
@@ -103,7 +102,7 @@ route.<span class="pl-c1">match</span>(<span class="pl-sr"><span class="pl-pds">
 <span class="pl-k">let</span> server <span class="pl-k">=</span> listen(<span class="pl-c1">3000</span>, route);
 <span class="pl-en">console</span><span class="pl-c1">.log</span>(<span class="pl-s"><span class="pl-pds">'</span>test listening on<span class="pl-pds">'</span></span>, server.address());</pre></div>
 
-<p>Type <code>ak run test.js</code> to run the program</p>
+<p>将以上代码保存为<code>test.js</code>，并在当前目录运行<code>ak run test.js</code>即可运行该程序。</p>
 
 <h3>
 <a id="running-the-program" class="anchor" href="#running-the-program" aria-hidden="true"><span class="octicon octicon-link"></span></a>Running the program</h3>
@@ -194,18 +193,16 @@ and the name of the program directory is supplied to the command line.</p>
 <a id="module-auto-loading" class="anchor" href="#module-auto-loading" aria-hidden="true"><span class="octicon octicon-link"></span></a>Module auto loading</h3>
 
 <p>TODO</p>
-      </section>
-    </div>
 
-    <!-- FOOTER  -->
-    <div id="footer_wrap" class="outer">
-      <footer class="inner">
-        <p class="copyright">Agentk maintained by <a href="https://github.com/kyriosli">kyriosli</a></p>
-        <p>Published with <a href="https://pages.github.com">GitHub Pages</a></p>
+      <footer class="site-footer">
+        <span class="site-footer-owner"><a href="https://github.com/kyriosli/agentk">AgentK</a> is maintained by <a href="https://github.com/kyriosli">kyriosli</a>.</span>
+
+        <span class="site-footer-credits">This page was generated by <a href="https://pages.github.com">GitHub Pages</a> using the <a href="https://github.com/jasonlong/cayman-theme">Cayman theme</a> by <a href="https://twitter.com/jasonlong">Jason Long</a>.</span>
       </footer>
-    </div>
 
-    
+    </section>
 
+  
   </body>
 </html>
+
