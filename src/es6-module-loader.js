@@ -6,6 +6,7 @@ const esprima = require('./esprima'),
     vm = require('vm'),
     co = require('./co'),
     Module = require('module');
+const modulePaths = module.paths;
 
 const definedModules = {}; // name: Primise(module)
 
@@ -102,6 +103,7 @@ System.module = function (source, option) {
 
     let module = {};
     module[loadProgress] = co.promise(function () {
+        option.paths = modulePaths;
         return ctor(module, co, importer, Module.prototype.require.bind(option), option.filename, option.dir, moduleDefault, initModule);
     });
     return module;

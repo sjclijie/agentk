@@ -2,13 +2,21 @@ import {listen, request, read} from '../src/module/http.js';
 import * as response from '../src/module/http_response.js';
 import Router from '../src/module/router.js';
 
+import * as view from '../src/module/view.js';
+
 const route = new Router(function (req) {
     req.timeStart = Date.now();
+});
+
+
+route.exact('/', function (req) {
+    return view.render('index', {process: process, req: req})
 });
 
 route.exact('/favicon.ico', function () {
     return response.error(404);
 });
+
 
 route.prefix('/static', function (req) {
     console.log(req.timeStart, req.url);
