@@ -6,8 +6,6 @@ const esprima = require('./esprima'),
     vm = require('vm'),
     co = require('./co'),
     Module = require('module');
-const modulePaths = module.paths;
-
 const definedModules = {}; // name: Primise(module)
 
 let handleTemplate = false;
@@ -95,15 +93,29 @@ function importer(name, __dirname) {
     return co.yield(include(name, __dirname))
 }
 
+const resolvedPaths = {};
+
+function resolveModulePath(dir) {
+    if(dir in resolvedPaths) return resolvedPaths[dir];
+
+    let paths = dir === '/' || dir[dir.length - 1] === '\\' ? [] : resolveModulePath(path.dirname(dir)),
+        curr = path.join(dir, 'node_modules');
+    if(fs.existsSync(curr)) {
+        paths = paths.slice();
+        paths.unshift(curr)
+    }
+    return resolvedPaths[dir] = paths
+}
+
 System.module = function (source, option) {
-    option = option || {filename: '/'};
+    option = option || {filename: '/', dir: '/'};
     let result = compile(source, option);
     //console.log(result);
     let ctor = vm.runInThisContext(result, option);
 
     let module = {};
     module[loadProgress] = co.promise(function () {
-        option.paths = modulePaths;
+        option.paths = resolveModulePath(option.dir);
         return ctor(module, co, importer, Module.prototype.require.bind(option), option.filename, option.dir, moduleDefault, initModule);
     });
     return module;
