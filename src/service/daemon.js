@@ -1,19 +1,15 @@
 import * as http from "../module/http.js";
 import * as response from "../module/http_response.js";
 import * as file from '../module/file.js';
-import {fork} from '../module/child_process.js'
+import {fork} from '../module/child_process.js';
+import {onWorker} from 'scheduler.js';
 
 const path = require('path');
 
-let server, listen_path, win32 = process.platform === 'win32';
+let server, listen_path = 'daemon.sock', win32 = process.platform === 'win32';
+const main = process.argv[1];
 
-console.log('starting service...');
-if (win32) {
-    listen_path = 32761;
-} else {
-    listen_path = 'daemon.sock';
-    if (file.exists(listen_path)) file.rm(listen_path);
-}
+if (file.exists(listen_path)) file.rm(listen_path);
 
 const programs = {};
 
@@ -60,7 +56,6 @@ const actions = {
             if (!worker) continue;
 
             try {
-                worker.removeAllListeners('exit');
                 worker.kill();
             } catch (e) {
             }
@@ -88,8 +83,10 @@ const actions = {
     }
 };
 
+resumeJobs();
 
-server = http.listen(listen_path, function (req) {
+console.log('starting service...');
+server = http.listen(win32 ? 32761 : listen_path, function (req) {
     console.log(req.method, req.url);
     let action = req.url.substr(1);
     if (!(action in actions)) {
@@ -110,8 +107,9 @@ server = http.listen(listen_path, function (req) {
 });
 
 console.log('service started at', server.address());
-
-resumeJobs();
+if (win32) {
+    file.close(file.open(listen_path, 'w'));
+}
 
 function resumeJobs() {
 // resume jobs
@@ -150,21 +148,24 @@ function updateLog() {
 
 function startProgram(dir) {
     // try read manifest
-    let manifest, main, workerCount = 1;
+    let manifest, workerCount = 1;
+    let option = {
+        args: [],
+        ipc: true
+    };
     try {
         manifest = JSON.parse('' + file.read(path.join(dir, 'manifest.json')));
     } catch (e) { // no manifest
         manifest = null;
-        main = path.join(dir, 'index.js');
-        if (!file.exists(main)) {
+        let module = path.join(dir, 'index.js');
+        if (!file.exists(module)) {
             throw new Error(`no manifest.json or index.js found in '${dir}'`)
         }
+        option.args.push('load', module);
     }
 
-    let option = {};
     if (manifest) {
-        main = 'start';
-        option.args = [dir];
+        option.args.push('run', dir);
         let workDir = dir;
         if (manifest.directory) {
             workDir = path.resolve(workDir, manifest.directory)
@@ -194,7 +195,8 @@ function startProgram(dir) {
         reloaded: 0,
         lastReload: 0,
         lastRestart: 0,
-        stopped: false
+        stopped: false,
+        schedulers: {}
     };
     updateLog();
 
@@ -229,6 +231,8 @@ function startProgram(dir) {
             program.lastRestart = Date.now();
             let worker = workers[i] = fork(main, option);
             worker.on('exit', onExit);
+            onWorker(worker, program);
+
         }
     }
 }

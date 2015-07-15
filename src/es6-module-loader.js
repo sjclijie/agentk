@@ -304,7 +304,6 @@ function handleScope(body, locals, replace) {
                 handleExpr(stmt.expression);
                 break;
             case Syntax.ImportDeclaration:
-                console.trace(stmt);
                 throw new Error('unexpected import declaration');
             case Syntax.VariableDeclaration:
                 for (let decl of stmt.declarations) {

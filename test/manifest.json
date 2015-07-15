@@ -1,5 +1,6 @@
 {
   "main": "test.js",
+  "workers": 4,
   "directory": "",
   "stdout": "log/stdout.log",
   "stderr": "log/stderr.log",

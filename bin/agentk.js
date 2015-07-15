@@ -218,6 +218,7 @@ let commands = {
             if (!fs.existsSync(file)) return;
             let arr = JSON.parse(fs.readFileSync(file, 'utf8'));
             dir = path.resolve(dir);
+            if (win32) dir = dir.replace(/\\/g, '/').toLowerCase();
             let found;
             for (let program of arr) {
                 if (program.dir === dir) {
@@ -369,7 +370,7 @@ function completeRunningJobs(arg) {
         let dir = program.dir;
         if (dir === curr) {
             output = completion(output, arg, '.', dir);
-        } else if (curr !== '/' && dir.substr(0, curr.length) === curr) {
+        } else if (curr[curr.length - 1] !== '/' && dir.substr(0, curr.length) === curr) {
             output = completion(output, arg, dir.substr(curr.length + 1), dir);
         } else {
             output = completion(output, arg, dir);

@@ -39,3 +39,11 @@ export function mkParentDir(file) {
     mkParentDir(dir);
     ofs.mkdirSync(dir);
 }
+
+export function open(path, flags) {
+    return ofs.openSync(path, flags);
+}
+
+export function close(fd) {
+    ofs.closeSync(fd);
+}

@@ -26,7 +26,10 @@ export function restart() {
 }
 
 export function svc_start() {
-    getData(tryCallService('alive'));
+    let alive = getData(tryCallService('alive'));
+    if (alive !== true) {
+        throw new Error('start failed');
+    }
 }
 
 export function svc_stop() {
@@ -79,19 +82,18 @@ export function status() {
         } else if (path.length > 20) {
             pathLines = (path.length + 19) / 20 | 0;
             path += '                    '.substr(0, pathLines * 20 - path.length);
-            if(pathLines > maxNameLines) {
+            if (pathLines > maxNameLines) {
                 do {
                     nameLines[maxNameLines++] = '            ' + ' |                     '.repeat(i)
-                } while(maxNameLines < pathLines);
+                } while (maxNameLines < pathLines);
             }
         }
         let suffix = '                    ';
-        console.log(obj.path, obj.path.length, path.length, pathLines);
-        if(pathLines === 1) {
+        if (pathLines === 1) {
             buf1 += ' | \x1b[32m' + path + '\x1b[0m';
         } else {
             buf1 += ' | \x1b[32m' + path.substr(0, 20) + '\x1b[0m';
-            for(let j = 1; j < pathLines; j++) {
+            for (let j = 1; j < pathLines; j++) {
                 nameLines[j] += ' | \x1b[32m' + path.substr(j * 20, 20) + '\x1b[0m';
             }
         }
@@ -103,7 +105,7 @@ export function status() {
         buf6 += append(obj.reloaded, suffix);
         buf7 += obj.reloaded ? append(formatTime(obj.lastReload), suffix) : ' | ' + suffix;
     }
-    for(let i = 1; i < maxNameLines; i++) {
+    for (let i = 1; i < maxNameLines; i++) {
         buf1 += ' |\n' + nameLines[i];
     }
     console.log(buf1 + buf2 + buf8 + buf3 + buf4 + buf5 + buf6 + buf7 + ' |');
@@ -170,14 +172,17 @@ function forkAndCall(name, data) {
         stdout = path.join(service_dir, 'out.log'),
         stderr = path.join(service_dir, 'err.log');
 
-    fork(path.join(__dirname, 'daemon.js'), {
+    fork(path.join(__dirname, '../../index.js'), {
+        args: ['load', path.join(__dirname, 'daemon.js')],
         directory: service_dir,
         stdout: stdout,
         stderr: stderr,
         detached: true
     }).unref();
+    do {
+        co.sleep(10);
+    } while (!file.exists(listen_path));
 
-    co.sleep(300);
     return callService(name, data);
 }
 

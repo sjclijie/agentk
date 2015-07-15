@@ -26,17 +26,14 @@ exports.run = function (programDir) {
 };
 
 if (process.mainModule === module) {
-    if (process.argv.length === 2) {
-        throw new Error("full bootstrap file path is required")
-    }
-    let target = process.argv[2];
+    let target = process.argv[2], path = require('path').resolve(process.argv[3]);
 
-    if (target === 'start') {
-        exports.run(process.argv[3]);
-        if(process.argv[4] === '--slave') {
-            require('./src/service/slave.js')
-        }
-    } else if (target.substr(target.length - 3) === '.js') {
-        exports.load(require('path').resolve(target)).done();
+    if (target === 'run') {
+        process.env.NODE_UNIQUE_ID = '';
+        require('cluster')._setupWorker();
+        delete process.env.NODE_UNIQUE_ID;
+        exports.run(path);
+    } else if (target === 'load') {
+        exports.load(path).done();
     }
 }
