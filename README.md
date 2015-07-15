@@ -4,6 +4,8 @@
 
   - support for new ES6 style module loading
   - write async scripts synchronously
+  - intergreted process monitor supporting clusters 
+  - support for view engines
 
 ## Getting started
 
@@ -31,25 +33,31 @@ below shows a simple http server that returns static file as well as forward pro
 // test.js
 import {listen, request, read} from '../src/module/http.js';
 import * as response from '../src/module/http_response.js';
+import Router from '../src/module/router.js';
+import * as view from '../src/module/view.js';
 
+const route = new Router();
 
-let server = listen(3000, function (req) {
-    console.log(req.method, req.url);
-    var m = /^\/([^\/]+)(\/.*)/.exec(req.url);
-    if (!m) {
-        return response.error(404)
-    } else if (m[1] === 'static') {
-        return response.file(m[2].substr(1)).setHeader('Content-Type', 'text/javascript').enableGzip();
-    } else {
-        var tres = request({
-            method: 'GET',
-            host: m[1],
-            path: m[2]
-        });
-        return response.stream(tres).setStatus(tres.statusCode).setHeaders(tres.headers)
-    }
+route.prefix('/static', function (req) {
+    console.log(req.timeStart, req.url);
+    return response.file(req.url.substr(1))
+        .setHeader('Content-Type', 'text/javascript')
+        .enableGzip();
 });
 
+route.match(/^\/([^\/]+)(\/.*)/, function (req, host, path) {
+    console.log(host, path);
+    var tres = request({
+        method: 'GET',
+        host: host,
+        path: path
+    });
+    return response.stream(tres)
+        .setStatus(tres.statusCode)
+        .setHeaders(tres.headers)
+});
+
+let server = listen(3000, route);
 console.log('test listening on', server.address());
 ```
 Type `ak run test.js` to run the program
@@ -61,20 +69,22 @@ maching is rebooted. Type `ak help` to get help message.
  
  Available commands are:
  
-  - `help`       print this help message
-  - `run`        run program without crash respawn
-  - `start`      start program
-  - `stop`       stop program
-  - `restart`    restart program
-  - `reload`     reload program (partial implemented)
-  - `status`     show program status
-  - `doc`        generate documentation (not implemented)
-  - `init`       initialize project structure (not implemented)
-  - `publish`    publish a module
-  - `logs`       print program stdout/stderr log message
-  - `rc-install` create init.rc script (not implemented)
-  - `rc-purge`   remove init.rc script (not implemented)
-  - `completion` auto completion helper
+  - `help`        print this help message
+  - `run`         run program without crash respawn
+  - `start`       start program
+  - `stop`        stop program
+  - `restart`     restart program
+  - `reload`      reload program (partial implemented)
+  - `status`      show program status
+  - `doc`         generate documentation (not implemented)
+  - `init`        initialize project structure (not implemented)
+  - `publish`     publish a module
+  - `logs`        print program stdout/stderr log message
+  - `svc-install` create init.rc script (not implemented)
+  - `svc-purge`   remove init.rc script (not implemented)
+  - `svc-start`   start service daemon
+  - `svc-stop`    stop service daemon
+  - `completion`  auto completion helper
 
 When using `ak start program` to enable guarding of the process, a `manifest.json` must be created in the program directory (see [test/manifest.json](test/manifest.json)),
 and the name of the program directory is supplied to the command line.
