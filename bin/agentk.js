@@ -176,6 +176,7 @@ let commands = {
         help: "initialize project structure",
         desc: "Generate default project structure with a default config file, module and resource directories, and so on",
         func: function () {
+            require('./init.js');
             // TODO generate manifest.json
             // TODO mkdir module
             // TODO create index.js

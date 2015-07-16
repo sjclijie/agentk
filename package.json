@@ -4,7 +4,7 @@
   "description": "synchronous web service framework",
   "main": "index.js",
   "bin": {
-    "agentk": "bin/agentk.js"
+    "ak": "bin/agentk.js"
   },
   "directories": {
     "test": "test"
