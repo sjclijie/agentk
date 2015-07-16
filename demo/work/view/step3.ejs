@@ -12,13 +12,14 @@
 <p>What? Don't you even have a name? Hmmm... Let me call you... <code>
         <%= query.name = ['Sun', 'Mon', 'Tues', 'Wednes', 'Thurs', 'Fri', 'Sat'][new Date().getDay()] + 'day' %>
     </code>.</p>
+<script>history.replaceState(null, null, '?name=<%= query.name %>')</script>
 <% } %>
 
 <p>Now I have your name, but I'll too forgetful to remember it. Why don't you write down your name into cookies?</p>
 
 <h3>Step 4. write name to cookies</h3>
 
-<p>Open <code>src/route.js</code> again, add a new rule before the match rule you have just added:</p>
+<p>Open <code>src/route.js</code> again, add a new rule <b>BEFORE</b> the match rule you have just added:</p>
 
 <pre>route.exact('/step3', step3);</pre>
 
