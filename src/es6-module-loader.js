@@ -56,22 +56,34 @@ function ensureParentDir(name) {
     fs.mkdirSync(dir);
 }
 
-function initModule(module, names) {
+// init property for module default getter
+const defaultProp = {
+    configurable: true,
+    get: function () {
+        co.yield(this[loadProgress]);
+        return this[moduleDefault];
+    }
+};
+
+function initModule(module, names, hasDefault) {
     let props = {};
     names.forEach(function (name) {
         props[name] = {
             configurable: true,
             get: function () {
                 //console.log('getting ' + name);
-                co.yield(module[loadProgress]);
-                return module[name];
+                co.yield(this[loadProgress]);
+                return this[name];
             }, set: function (val) {
                 //console.log('setting ' + name);
-                co.yield(module[loadProgress]);
-                module[name] = val;
+                co.yield(this[loadProgress]);
+                this[name] = val;
             }
         }
     });
+    if (hasDefault) {
+        props[moduleDefault] = defaultProp;
+    }
     Object.defineProperties(module, props);
 }
 
@@ -96,11 +108,11 @@ function importer(name, __dirname) {
 const resolvedPaths = {};
 
 function resolveModulePath(dir) {
-    if(dir in resolvedPaths) return resolvedPaths[dir];
+    if (dir in resolvedPaths) return resolvedPaths[dir];
 
     let paths = dir === '/' || dir[dir.length - 1] === '\\' ? [] : resolveModulePath(path.dirname(dir)),
         curr = path.join(dir, 'node_modules');
-    if(fs.existsSync(curr)) {
+    if (fs.existsSync(curr)) {
         paths = paths.slice();
         paths.unshift(curr)
     }
@@ -183,7 +195,7 @@ function compile(source, option) {
 }
 
 function findExports(body, replace) {
-    let names = [], locals = {};
+    let names = [], locals = {}, hasDefault = false;
     for (let i = 0, arr = body.body, L = arr.length; i < L; i++) {
         let stmt = arr[i];
         if (stmt.type === Syntax.ExportNamedDeclaration) { // export var | export function
@@ -210,6 +222,10 @@ function findExports(body, replace) {
             }
         } else if (stmt.type === Syntax.ExportDefaultDeclaration) {
             //console.log(stmt);
+            if (hasDefault) {
+                throw new Error("export default has already been declared");
+            }
+            hasDefault = true;
             let defaultName = null;
             if (stmt.declaration.type === Syntax.FunctionDeclaration) {
                 arr[i] = stmt.declaration;
@@ -221,20 +237,29 @@ function findExports(body, replace) {
                 }
             }
 
-            replace({range: [stmt.range[0], stmt.declaration.range[0]]}, 'module[moduleDefault]=' + (defaultName ? defaultName.name + ';' : ''));
+            if (defaultName) {
+                replace({range: [stmt.range[0], stmt.declaration.range[0]]}, 'Object.defineProperty(module,moduleDefault,{value:' + defaultName.name + '});');
+            } else { // as expression
+                replace({range: [stmt.range[0], stmt.declaration.range[0]]}, 'Object.defineProperty(module,moduleDefault,{value:');
+                replace({range: [stmt.declaration.range[1], stmt.declaration.range[1]]}, '});');
+            }
         }
     }
 
     //console.log(names);
-    if (names.length) {
-        let head = 'initModule(module, ' + JSON.stringify(names) + ');';
-        let ret = ';\nObject.defineProperties(module, {\n';
-        for (let name of names) {
-            let local = name in locals ? locals[name] : name;
-            ret += '' + JSON.stringify(name) + ':{get:function(){return ' + local + '}, set:function($_){' + local + '=$_}},\n'
+    if (names.length || hasDefault) {
+        let head = 'initModule(module, ' + JSON.stringify(names) + ',' + hasDefault + ');';
+        if (names.length) {
+            let ret = ';\nObject.defineProperties(module, {\n';
+            for (let name of names) {
+                let local = name in locals ? locals[name] : name;
+                ret += '' + JSON.stringify(name) + ':{get:function(){return ' + local + '}, set:function($_){' + local + '=$_}},\n'
+            }
+            ret = ret.substr(0, ret.length - 2) + '\n});';
+            return [head, ret];
+        } else {
+            return [head, ''];
         }
-        ret = ret.substr(0, ret.length - 2) + '\n});';
-        return [head, ret];
     }
     return null;
 }

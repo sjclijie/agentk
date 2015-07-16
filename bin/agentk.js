@@ -115,6 +115,9 @@ let commands = {
         "desc": "run the program located in the directory (or current directory, if none specified) directly in current " +
         "terminal, outputs will be printed into stdout/stderr.\nHit Ctrl-c to terminate execution",
         func: function (dir) {
+            if (arguments.length === 0) {
+                dir = '.'
+            }
             if (dir.substr(dir.length - 3) === '.js') {
                 require('../index.js').load(path.resolve(dir));
             } else {

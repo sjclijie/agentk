@@ -2,3 +2,4 @@
 .DS_Store
 /server/log
 /test/log
+/demo/src/module/

@@ -16,7 +16,7 @@ Router.prototype.all = function (cb) {
 Router.prototype.exact = function (url, cb) {
     let ret = new Router(cb);
     this.nexts.push(function (req) {
-        if (req.url === url) {
+        if (req.pathname === url) {
             return ret.apply(req, arguments);
         }
     });
@@ -29,7 +29,8 @@ Router.prototype.prefix = function (prefix, cb) {
     }
     let ret = new Router(cb);
     this.nexts.push(function (req) {
-        if (req.url.substr(0, prefix.length) === prefix) {
+        if (req.pathname.substr(0, prefix.length) === prefix) {
+            req.pathname = req.pathname.substr(prefix.length - 1);
             req.url = req.url.substr(prefix.length - 1);
             return ret.apply(req, arguments);
         }
@@ -40,7 +41,7 @@ Router.prototype.prefix = function (prefix, cb) {
 Router.prototype.match = function (pattern, cb) {
     let ret = new Router(cb);
     this.nexts.push(function (req) {
-        let m = pattern.exec(req.url);
+        let m = pattern.exec(req.pathname);
         if (m) {
             m[0] = req;
             return ret.apply(req, m);
@@ -63,13 +64,14 @@ Router.prototype.catcher = function (cb) {
 
 Router.prototype.apply = function (req, args) {
     req = args[0];
-    let originalUrl = req.url;
+    let originalUrl = req.url, originalPath = req.pathname;
     for (let tester of this.nexts) {
         let result = tester.apply(req, args);
         if (result !== undefined) { // end
             return result;
         }
         req.url = originalUrl;
+        req.pathname = originalPath;
     }
 };
 

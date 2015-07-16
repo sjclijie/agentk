@@ -27,6 +27,25 @@ HttpResponse.prototype.setHeader = function (key, val) {
     return this;
 };
 
+HttpResponse.prototype.setCookie = function (name, value, options) {
+    let val = name + '=' + encodeURIComponent(value);
+    if (options) {
+        for (let key in options) {
+            val += '; ' + key + '=' + options[key]
+        }
+    }
+
+    let headers = this.headers;
+    if (!('Set-Cookie' in headers)) {
+        headers['Set-Cookie'] = val;
+    } else if (typeof headers['Set-Cookie'] === 'string') {
+        headers['Set-Cookie'] = [headers['Set-Cookie'], val];
+    } else {
+        headers['Set-Cookie'].push(val);
+    }
+    return this;
+};
+
 HttpResponse.prototype.enableGzip = function () {
     this.gzip = true;
     return this;

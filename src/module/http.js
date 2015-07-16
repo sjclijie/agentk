@@ -3,14 +3,49 @@
 import * as zlib from 'zlib.js';
 import {read as stream_read} from 'stream.js'
 
-const ohttp = require('http');
+const ohttp = require('http'),
+    ourl = require('url');
 
 export let maxSockets = 5;
+
+
+const reqGetters = {
+    pathname: {
+        configurable: true,
+        get: function () {
+            parseUrl(this);
+            return this.pathname;
+        }
+    }, search: {
+        configurable: true,
+        get: function () {
+            parseUrl(this);
+            return this.search;
+        }
+    }, query: {
+        configurable: true,
+        get: function () {
+            parseUrl(this);
+            return this.query;
+        }
+    }, body: {
+        configurable: true,
+        get: function () {
+            let body = read(this);
+            Object.defineProperty(this, 'body', {value: body});
+            return body;
+        }
+    }
+};
+
 
 export function listen(port, cb) {
     return co.wrap(function (resolve, reject) {
         let server = ohttp.createServer(function (req, res) {
+            // init req object
             req.originalUrl = req.url;
+            Object.defineProperties(req, reqGetters);
+
             co.promise(function () {
                 return cb.apply(req, [req]);
             }).then(function (resp) { // succ
@@ -46,3 +81,21 @@ export function read(incoming) {
     return stream_read(incoming)
 }
 
+
+function parseUrl(req) {
+    let url = ourl.parse(req.url, true);
+    Object.defineProperties(req, {
+        pathname: {
+            writable: true,
+            value: url.pathname
+        },
+        search: {
+            writable: true,
+            value: url.search
+        },
+        query: {
+            writable: true,
+            value: url.query
+        }
+    })
+}
