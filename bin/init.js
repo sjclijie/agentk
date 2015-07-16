@@ -18,5 +18,7 @@ if (process.platform === 'win32' && false) {
 console.log('file copied');
 let dependencies = JSON.parse(fs.readFileSync('package.json', 'utf8')).dependencies;
 if (dependencies) {
-    console.log('This project requires some other packages, run `npm install .` to install the dependencies')
+    console.log('This project requires some other packages, run `npm install .` to install the dependencies');
 }
+
+console.log('\nProject has been generated, run `ak run` and visit http://localhost:' + JSON.parse(fs.readFileSync('manifest.json')).config.port);
