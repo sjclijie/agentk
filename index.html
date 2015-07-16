@@ -20,7 +20,7 @@
 
     <section class="main-content">
       <h1>
-<a id="agentk-全新的nodejs开发框架" class="anchor" href="#agentk-%E5%85%A8%E6%96%B0%E7%9A%84nodejs%E5%BC%80%E5%8F%91%E6%A1%86%E6%9E%B6" aria-hidden="true"><span class="octicon octicon-link"></span></a>AgentK: 全新的<code>Node.JS</code>开发框架</h1>
+<a id="agentk-全新的-nodejs-开发框架" class="anchor" href="#agentk-%E5%85%A8%E6%96%B0%E7%9A%84-nodejs-%E5%BC%80%E5%8F%91%E6%A1%86%E6%9E%B6" aria-hidden="true"><span class="octicon octicon-link"></span></a>AgentK: 全新的 Node.JS 开发框架</h1>
 
 <h2>
 <a id="简介" class="anchor" href="#%E7%AE%80%E4%BB%8B" aria-hidden="true"><span class="octicon octicon-link"></span></a>简介</h2>
@@ -115,106 +115,52 @@ route.<span class="pl-c1">match</span>(<span class="pl-sr"><span class="pl-pds">
 <li>
 <code>package.json</code>, 标准<code>Node.JS</code>包文件</li>
 <li>
-<code>manifest.json</code>, 包含了项目的运行目录、log文件、模板引擎等配置信息</li>
+<code>manifest.json</code>, 包含了项目的运行目录、log文件路径、模板引擎等配置信息</li>
 <li>
-<code>index.js</code>, 作为项目入口模块</li>
+<code>src</code>目录, 存放模块文件
+
+<ul>
 <li>
-<code>route.js</code>, 作为路由配置文件</li>
+<code>src/index.js</code>, 项目入口模块, 加载配置并启动http服务</li>
 <li>
-<code>view</code>目录, 以及<code>view/index.ejs</code>文件, 存放模板文件</li>
+<code>src/route.js</code>, 作为路由配置文件</li>
 <li>
-<code>module</code>目录, 存放子模块文件</li>
+<code>src/module</code>目录, 存放子模块文件</li>
 </ul>
+</li>
+<li>
+<code>work</code>目录, 作为运行目录
+
+<ul>
+<li>
+<code>work/static</code>目录, 存放静态文件</li>
+<li>
+<code>work/view</code>目录, 存放模板文件
+
+<ul>
+<li>
+<code>work/view/*.ejs</code>, 默认的模板文件</li>
+</ul>
+</li>
+<li>
+<code>work/log</code>目录, log文件所在目录</li>
+</ul>
+</li>
+</ul>
+
+<p>默认项目使用<code>ejs</code>作为模板引擎，需要安装<code>ejs</code>模块项目才能正常展示。如果您使用<code>jade</code>等其它模板引擎，可以在<code>manifest.json</code>中修改并在<code>package.json</code>中删除依赖。</p>
+
+<p>执行<code>npm install .</code>以安装依赖的模块</p>
 
 <h3>
-<a id="running-the-program" class="anchor" href="#running-the-program" aria-hidden="true"><span class="octicon octicon-link"></span></a>Running the program</h3>
+<a id="项目运行篇" class="anchor" href="#%E9%A1%B9%E7%9B%AE%E8%BF%90%E8%A1%8C%E7%AF%87" aria-hidden="true"><span class="octicon octicon-link"></span></a>项目运行篇</h3>
 
-<p>Agentk can run the program directly, as well as guard its process to prevent system down, and restarts it when the server
-maching is rebooted. Type <code>ak help</code> to get help message.</p>
+<p>AgentK提供两个运行项目的命令：<code>run</code>和<code>start</code>。<code>run</code>命令在当前终端中执行，当收到<code>CTRL-C</code>或者远程登录断开时将被杀死。<code>start</code>命令以守护进程运行项目，并在项目意外退出时自动重启。如果要手动停止或重启项目，需要使用<code>stop</code>或<code>restart</code>命令。</p>
 
-<p>Available commands are:</p>
-
-<ul>
-<li>
-<code>help</code>        print this help message</li>
-<li>
-<code>run</code>         run program without crash respawn</li>
-<li>
-<code>start</code>       start program</li>
-<li>
-<code>stop</code>        stop program</li>
-<li>
-<code>restart</code>     restart program</li>
-<li>
-<code>reload</code>      reload program (partial implemented)</li>
-<li>
-<code>status</code>      show program status</li>
-<li>
-<code>doc</code>         generate documentation (not implemented)</li>
-<li>
-<code>init</code>        initialize project structure (not implemented)</li>
-<li>
-<code>publish</code>     publish a module</li>
-<li>
-<code>logs</code>        print program stdout/stderr log message</li>
-<li>
-<code>svc-install</code> create init.rc script (not implemented)</li>
-<li>
-<code>svc-purge</code>   remove init.rc script (not implemented)</li>
-<li>
-<code>svc-start</code>   start service daemon</li>
-<li>
-<code>svc-stop</code>    stop service daemon</li>
-<li>
-<code>completion</code>  auto completion helper</li>
-</ul>
-
-<p>When using <code>ak start program</code> to enable guarding of the process, a <code>manifest.json</code> must be created in the program directory (see <a href="test/manifest.json">test/manifest.json</a>),
-and the name of the program directory is supplied to the command line.</p>
-
-<p><code>manifest.json</code> contains:</p>
-
-<ul>
-<li>
-<code>main</code> the entry module path of the program. Default to "index.js"</li>
-<li>
-<code>directory</code> the work directory of the program. Default to the program directory</li>
-<li>
-<code>workers</code> number of processes to be spawned to run the program, default <code>1</code>
-</li>
-<li>
-<code>stdout</code> the path of the stdout log file to be appended, default to <code>~/.agentk/out.log</code>
-</li>
-<li>
-<code>stderr</code> the path of the stderr log file to be appended, default to <code>~/.agentk/err.log</code>
-</li>
-<li>
-<code>dependencies</code> map the depended modules of the program to is revision.</li>
-</ul>
-
-<p>All paths are relative to the program directory.</p>
-
-<p>Use <code>ak init</code> to create an empty program structure. (NOT implemented)</p>
+<p>在刚创建的项目下运行<code>ak run</code>, 然后访问<code>http://localhost:8080</code>, 即可看到默认的工程</p>
 
 <h2>
-<a id="writing-modules" class="anchor" href="#writing-modules" aria-hidden="true"><span class="octicon octicon-link"></span></a>Writing modules</h2>
-
-<p>TODO</p>
-
-<h3>
-<a id="module-server" class="anchor" href="#module-server" aria-hidden="true"><span class="octicon octicon-link"></span></a>Module server</h3>
-
-<p>TODO</p>
-
-<h3>
-<a id="publishing-modules" class="anchor" href="#publishing-modules" aria-hidden="true"><span class="octicon octicon-link"></span></a>Publishing modules</h3>
-
-<p>TODO</p>
-
-<h3>
-<a id="module-auto-loading" class="anchor" href="#module-auto-loading" aria-hidden="true"><span class="octicon octicon-link"></span></a>Module auto loading</h3>
-
-<p>TODO</p>
+<a id="todo" class="anchor" href="#todo" aria-hidden="true"><span class="octicon octicon-link"></span></a>TODO</h2>
 
       <footer class="site-footer">
         <span class="site-footer-owner"><a href="https://github.com/kyriosli/agentk">AgentK</a> is maintained by <a href="https://github.com/kyriosli">kyriosli</a>.</span>
