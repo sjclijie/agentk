@@ -33,6 +33,18 @@ export function mkdir(file) {
     ofs.mkdirSync(file);
 }
 
+export function readdir(file) {
+    return ofs.readdirSync(file)
+}
+
+export function isFile(file) {
+    return ofs.statSync(file).isFile();
+}
+
+export function isDirectory(file) {
+    return ofs.statSync(file).isDirectory();
+}
+
 export function mkParentDir(file) {
     let dir = path.dirname(file);
     if (ofs.existsSync(dir)) return;

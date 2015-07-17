@@ -8,13 +8,10 @@ if (fs.readdirSync('.').length) {
     console.error('directory not empty, exiting...');
 }
 
-if (process.platform === 'win32' && false) {
-
-} else {
-    cp.execSync('cp -R ' + path.join(__dirname, '../demo') + '/* .', {
-        stdio: 'inherit'
-    });
-}
+let dir = path.join(__dirname, '../demo');
+cp.execSync('cp -R ' + dir + '/* .', {
+    stdio: 'inherit'
+});
 console.log('file copied');
 let dependencies = JSON.parse(fs.readFileSync('package.json', 'utf8')).dependencies;
 if (dependencies) {

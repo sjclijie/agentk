@@ -44,17 +44,24 @@ function xtermEscape(str) {
     });
 }
 
-function callService(cmd) {
-    require('../index.js').load(path.join(__dirname, '../src/service/controller.js')).then(function (module) {
-        return require('../src/co.js').promise(module[cmd.replace(' ', '_')]);
-    }).then(null, function (err) {
-        if (err.code === 'ECONNREFUSED' || err.code === 'ENOENT') {
-            console.error('command \'' + cmd + '\' failed, maybe service not started?')
-        } else {
-            console.error('command \'' + cmd + '\' failed, ' + err.message)
+function callService(cmd, options) {
+
+    let co = require('../src/co.js'),
+        load = require('../index.js').load;
+    co.promise(function () {
+        let module = co.yield(load(path.join(__dirname, '../src/service/controller.js')));
+
+        try {
+            module[cmd.replace(' ', '_')](options);
+        } catch (err) {
+            if (err.code === 'ECONNREFUSED' || err.code === 'ENOENT') {
+                console.error('command \'' + cmd + '\' failed, maybe service not started?')
+            } else {
+                console.error('command \'' + cmd + '\' failed, ' + err.message)
+            }
+            process.exit(-1)
         }
-        process.exit(-1)
-    }).done()
+    }).done();
 }
 
 function commander(dir) {
@@ -66,7 +73,7 @@ function commander(dir) {
         cmd += 'All';
     } else if (dir !== undefined) {
         if (!require('fs').statSync(dir).isDirectory()) {
-            console.error(exec + ' ' + cmd + ' requires directory name as parameter')
+            console.error(exec + ' ' + cmd + ' requires directory name as parameter');
             process.exit(-1);
         }
         process.chdir(dir);
@@ -168,10 +175,56 @@ let commands = {
     "doc": {
         help: "generate documentation",
         args: "[<program directory>] [$#Ck<--out> <output directory>] [$#Ck<--format> <html|md>]",
-        "desc": "generate documentation for all module files in program directory. User can specify output directory " +
+        "desc": "generate documentation for all module files in <program directory>/src/module. User can specify output directory " +
         "(default to: <program directory>/doc) and format (html or md(markdown), default to md)",
         func: function () {
-
+            let target, outDir, format;
+            for (let i = 0, L = arguments.length; i < L;) {
+                let arg = arguments[i++];
+                if (arg === '--out' || arg === '--format') {
+                    if (i === L) break;
+                    if (arg === '--out') {
+                        if (outDir) throw 'out directory already set';
+                        outDir = path.resolve(arguments[i++]);
+                    } else if (arg === '--format') {
+                        if (format) throw 'format already set';
+                        format = arguments[i++];
+                        if (format !== 'html' && format !== 'md') {
+                            throw 'unsupported format'
+                        }
+                    }
+                } else {
+                    if (target) throw 'program directory already set';
+                    target = path.resolve(arg);
+                }
+            }
+            if (target) {
+                process.chdir(target);
+            }
+            if (!outDir) {
+                outDir = path.resolve('doc');
+            }
+            if (!format) {
+                format = 'md';
+            }
+            let co = require('../src/co.js'),
+                load = require('../index.js').load;
+            co.promise(function () {
+                let module = co.yield(load(path.join(__dirname, '../src/module/doc.js')));
+                module[Symbol.for('default')](outDir, format);
+            }).done();
+        },
+        completion: function () {
+            let lastArg = arguments[arguments.length - 1];
+            if (arguments[arguments.length - 2] === '--format') {
+                let buf = completion('', lastArg, 'html');
+                buf = completion(buf, lastArg, 'md');
+                return buf;
+            }
+            if (!lastArg) return;
+            let buf = completion('', lastArg, '--out');
+            buf = completion(buf, lastArg, '--format');
+            return buf;
         }
     },
     "init": {
@@ -310,7 +363,7 @@ let commands = {
                 }
                 ret = commands[arg2].completion.apply(null, [].slice.call(arguments, 3));
             }
-            process.stdout.write(ret);
+            ret && ret.length && process.stdout.write(ret);
         }
     }
 };

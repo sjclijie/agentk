@@ -128,6 +128,7 @@ System.module = function (source, option) {
     let module = {};
     module[loadProgress] = co.promise(function () {
         option.paths = resolveModulePath(option.dir);
+        option.id = option.filename;
         return ctor(module, co, importer, Module.prototype.require.bind(option), option.filename, option.dir, moduleDefault, initModule);
     });
     return module;
@@ -198,9 +199,9 @@ function findExports(body, replace) {
     let names = [], locals = {}, hasDefault = false;
     for (let i = 0, arr = body.body, L = arr.length; i < L; i++) {
         let stmt = arr[i];
-        if (stmt.type === Syntax.ExportNamedDeclaration) { // export var | export function
+        if (stmt.type === Syntax.ExportNamedDeclaration) {
             let decl = stmt.declaration;
-            if (decl) {
+            if (decl) { // export var | export function
                 if (decl.type == Syntax.FunctionDeclaration) {
                     names.push(decl.id.name);
                 } else if (decl.type === Syntax.VariableDeclaration) {
@@ -210,7 +211,7 @@ function findExports(body, replace) {
                 }
                 arr[i] = decl;
                 replace({range: [stmt.range[0], decl.range[0]]}, '');
-            } else {
+            } else { // export {xxx}
                 for (let spec of stmt.specifiers) {
                     names.push([spec.exported.name, spec.local.name]);
                     if (spec.local.name !== spec.exported.name) {
@@ -243,7 +244,7 @@ function findExports(body, replace) {
                 replace({range: [stmt.range[0], stmt.declaration.range[0]]}, 'Object.defineProperty(module,moduleDefault,{value:');
                 replace({range: [stmt.declaration.range[1], stmt.declaration.range[1]]}, '});');
             }
-        }
+        } // TODO: export all
     }
 
     //console.log(names);
