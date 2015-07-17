@@ -25,24 +25,15 @@ export function restart() {
     getData(callService('restart', dir))
 }
 
-export function svc_start() {
+export function service_start() {
     let alive = getData(tryCallService('alive'));
     if (alive !== true) {
         throw new Error('start failed');
     }
 }
 
-export function svc_stop() {
-    try {
-        callService('exit');
-    } catch (e) {
-        if (e.code === 'ECONNREFUSED' || e.code === 'ENOENT') {
-            console.log('service not started');
-            return;
-        }
-        throw e;
-    }
-    console.log('done');
+export function service_stop() {
+    callService('exit');
 }
 
 function getData(result) {
@@ -52,8 +43,41 @@ function getData(result) {
     return JSON.parse(result.msg)
 }
 
+export function description() {
+    console.log(`\x1b[32mak service <command>\x1b[0m controls service status or installs/uninstalls service from operating system. A\
+ \x1b[33mservice\x1b[0m is a background process that runs and controls the user program, restarts it when it has exited\
+ unexpectedly.
+
+\x1b[36mSYNPOSIS\x1b[0m
+
+  ak service start
+  ak service stop
+  ak service install [username]
+  ak service uninst [username]
+
+\x1b[36mDESCRIPTION\x1b[0m
+
+  \x1b[32mak service start\x1b[0m: starts the service if it has not ben started.
+    If there are running user programs when the service is stopped or killed, they will be respawned. Command \x1b[32mak start <program>\x1b[0m will also restart the service if it has not been started.
+
+  \x1b[32mak service stop\x1b[0m: stops the service.
+    All running programs will be killed, and will be respawned when the service starts again
+
+  \x1b[32mak service install [username]\x1b[0m: installs service into operating system.
+    The installed service will be automatically started when the operating system is restarted.
+    Currently we only support Linux. AgentK uses \x1b[36m'/etc/inittab'\x1b[0m to start the service on system startup,\
+ and the service will be automatically respawned when it is unexpectedly stopped or killed. So if you want to stop the\
+ running service, you should use \x1b[32mak service uninst\x1b[0m.
+    The service installation will take effect on next boot. If you want it to take effect immediately, run:
+      \x1b[36msudo init q\x1b[0m
+    A username should be supplied to run the service, otherwise \x1b[36m'root'\x1b[0m will be used.
+
+  \x1b[32mak service uninst [username]\x1b[0m: removes the service installation.
+    Type \x1b[36m'sudo init q'\x1b[0m to stop the service immediately.`);
+}
+
 export function status() {
-    let data = getData(callService('status'))
+    let data = getData(callService('status'));
 
     if (!data.length) {
         console.log('no program is currently running');

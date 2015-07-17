@@ -44,20 +44,20 @@ function xtermEscape(str) {
     });
 }
 
-function callService() {
+function callService(cmd) {
     require('../index.js').load(path.join(__dirname, '../src/service/controller.js')).then(function (module) {
-        require('../src/co.js').promise(module[cmd.replace(/-/g, '_')]).then(null, function (err) {
-            if (err.code === 'ECONNREFUSED' || err.code === 'ENOENT') {
-                console.error('command \'' + cmd + '\' failed, maybe service not started?')
-            } else {
-                console.error(err.message)
-            }
-            process.exit(-1)
-        });
+        return require('../src/co.js').promise(module[cmd.replace(' ', '_')]);
+    }).then(null, function (err) {
+        if (err.code === 'ECONNREFUSED' || err.code === 'ENOENT') {
+            console.error('command \'' + cmd + '\' failed, maybe service not started?')
+        } else {
+            console.error('command \'' + cmd + '\' failed, ' + err.message)
+        }
+        process.exit(-1)
     }).done()
 }
 
-function service(dir) {
+function commander(dir) {
     if (dir === '--all') {
         if (cmd === 'start') {
             console.error(exec + ' start --all is not supported');
@@ -71,7 +71,7 @@ function service(dir) {
         }
         process.chdir(dir);
     }
-    callService()
+    callService(cmd)
 }
 
 let commands = {
@@ -84,11 +84,12 @@ let commands = {
             let cmd = process.argv[2];
             if (cmd === 'help' && arguments.length && subcmd in commands) { // help <cmd>
                 let command = commands[subcmd];
-                console.log(xtermEscape("$#Gk<usage>: $#Bk<" + exec + "> " + subcmd + " " + (command.args || "") + "\n"));
-                console.log(xtermEscape('desc' in command ? command.desc : command.help));
+                console.log(xtermEscape("$#Gk<usage>: $#Ck<" + exec + "> " + subcmd + " " + (command.args || "") + "\n"));
+                let desc = 'desc' in command ? command.desc : command.help;
+                desc && console.log(desc);
                 return;
             } else if (!cmd || cmd === 'help' && !subcmd) { // agentk help?
-                console.log(xtermEscape("$#Gk<usage>: $#Bk<" + exec + "> <command> [<args>]\n"));
+                console.log(xtermEscape("$#Gk<usage>: $#Ck<" + exec + "> <command> [<args>]\n"));
             } else {
                 if (cmd === 'help') { // agentk help xxx
                     cmd = subcmd
@@ -100,13 +101,13 @@ let commands = {
             Object.keys(commands).forEach(function (cmd) {
                 console.log(xtermEscape("  $#yk<" + cmd + ">" + "            ".substr(cmd.length) + commands[cmd].help))
             });
-            console.log(xtermEscape("\ntype $#Bk<" + exec + "> help <command> to get more info"));
+            console.log(xtermEscape("\ntype $#Ck<" + exec + " help> <command> to get more info"));
         }, completion: function (prefix) {
             let output = '';
             for (let txt of Object.keys(commands)) {
                 output = completion(output, prefix, txt);
             }
-            process.stdout.write(output);
+            return output;
         }
     },
     "run": {
@@ -130,14 +131,14 @@ let commands = {
         "args": "[<program directory>]",
         "desc": "run the program located in the directory (or current directory, if none specified), guarded by the " +
         "service. If something bad happened, the program will be restarted. Outputs will be written to log files",
-        func: service
+        func: commander
     },
     "stop": {
         help: "stop program",
         "args": "[<program directory> | $#Ck<--all>]",
         maxArgs: 1,
         "desc": "stop one or all programs started. All listening socket ports will be released",
-        func: service,
+        func: commander,
         completion: completeRunningJobs
     },
     "restart": {
@@ -146,7 +147,7 @@ let commands = {
         maxArgs: 1,
         "desc": "restart one or all programs started. The old child process will be detached and killed soon after " +
         "several seconds, and new child will be spawned immediately. Listening socket ports will not be released",
-        func: service,
+        func: commander,
         completion: completeRunningJobs
     },
     "reload": {
@@ -155,13 +156,14 @@ let commands = {
         maxArgs: 1,
         "desc": "reload one or all programs started. The old child process received a signal and will decide to exit or " +
         "do something else",
-        func: service,
+        func: commander,
         completion: completeRunningJobs
     },
     "status": {
         help: "show program status",
+        maxArgs: 0,
         desc: "display the status of running programs",
-        func: callService
+        func: commander
     },
     "doc": {
         help: "generate documentation",
@@ -177,9 +179,6 @@ let commands = {
         desc: "Generate default project structure with a default config file, module and resource directories, and so on",
         func: function () {
             require('./init.js');
-            // TODO generate manifest.json
-            // TODO mkdir module
-            // TODO create index.js
         }
     },
     "publish": {
@@ -207,7 +206,7 @@ let commands = {
                 if (!rFile.test(file) || file in added) continue;
                 if (!last || file.substr(0, last.length) === last) output += file.substr(0, file.length - 3) + '\n';
             }
-            process.stdout.write(output);
+            return output;
         }
     },
     "logs": {
@@ -245,48 +244,44 @@ let commands = {
         },
         completion: completeRunningJobs
     },
-    "svc-install": {
-        help: "add daemon to Linux's inittab",
-        args: "[<username>]",
-        maxArgs: 1,
-        desc: "use Linux's inittab to guard the daemon process. When the daemon is killed or crashed due to unexpected errors, the system will respawn the daemon and the daemon will restart all running programs.\n" +
-        "Specify a username to run the daemon, otherwise root will be used.\n" +
-        "After installation, you can run `sudo init q` to make it work immediately",
-        func: rcScript,
-        completion: function (prefix) {
-            let buf = '';
-            for (let line of fs.readFileSync('/etc/passwd', 'binary').split('\n')) {
-                if (!line || line.substr(line.length - 8) === '/nologin' || line.substr(line.length - 6) === '/false') continue;
-                buf = completion(buf, prefix, line.substr(0, line.indexOf(':')))
+    "service": {
+        help: "service controlling scripts",
+        args: "start|stop|install|uninst",
+        maxArgs: 2,
+        get desc() {
+            callService('description');
+            return '';
+        },
+        func: function (arg0, arg1) {
+            if (arg0 === 'install' || arg0 === 'uninst') {
+                rcScript(arg0, arg1)
+            } else {
+                callService('service ' + arg0);
             }
-            process.stdout.write(buf);
-        }
-    },
-    "svc-purge": {
-        help: "remove daemon from Linux's inittab",
-        args: "[<username>]",
-        maxArgs: 1,
-        desc: "contrary to svc-install, this command removes the daemon guardian from the inittab.\nYou should supply the username which you supplied when running svc-install.\n" +
-        "You can run `sudo init q` to stop the guardian immediately",
-        func: rcScript,
-        completion: function (prefix) {
-            let buf = '';
-            let inittab = fs.readFileSync('/etc/inittab', 'binary'), r = /^ak:2345:respawn:\S+ \S+ "([^"]+)"/gm, m;
-            while (m = r.exec(inittab)) {
-                buf = completion(buf, prefix, m[1]);
+        },
+        completion: function (arg0, arg1) {
+            if (arguments.length === 1) {
+                let output = '';
+                for (let arg of commands.service.args.split('|')) {
+                    output = completion(output, arg0, arg);
+                }
+                return output;
+            } else if (arg0 === 'install') { // two arguments
+                let buf = '';
+                for (let line of fs.readFileSync('/etc/passwd', 'binary').split('\n')) {
+                    if (!line || line.substr(line.length - 8) === '/nologin' || line.substr(line.length - 6) === '/false') continue;
+                    buf = completion(buf, arg1, line.substr(0, line.indexOf(':')))
+                }
+                return buf;
+            } else if (arg0 === 'uninst') {
+                let buf = '';
+                let inittab = fs.readFileSync('/etc/inittab', 'binary'), r = /^ak:2345:respawn:\S+ \S+ "([^"]+)"/gm, m;
+                while (m = r.exec(inittab)) {
+                    buf = completion(buf, arg1, m[1]);
+                }
+                return buf;
             }
-            process.stdout.write(buf);
         }
-    },
-    "svc-start": {
-        help: "start service daemon",
-        desc: "starts service daemon. If daemon is already started, do nothing",
-        func: callService
-    },
-    "svc-stop": {
-        help: "stop service daemon",
-        desc: "stops service daemon. If daemon is not started, do nothing",
-        func: callService
     },
     "completion": {
         help: "auto completion helper",
@@ -301,19 +296,21 @@ let commands = {
                 } else {
                     console.log('. ' + getCompletionFile())
                 }
+                return;
             } else if (p !== "--") {
                 return;
             }
+            let ret;
             if (arguments.length === 3) {
-                commands.help.completion(arg2);
+                ret = commands.help.completion(arg2);
             } else if (arguments.length > 3 && arg2 in commands && commands[arg2].completion) {
                 let command = commands[arg2];
                 if ('maxArgs' in command && arguments.length > command.maxArgs + 3) {
-                    console.log(command.maxArgs, arguments);
                     return;
                 }
-                commands[arg2].completion.apply(null, [].slice.call(arguments, 3));
+                ret = commands[arg2].completion.apply(null, [].slice.call(arguments, 3));
             }
+            process.stdout.write(ret);
         }
     }
 };
@@ -331,7 +328,7 @@ function getCompletionFile() {
 }
 
 
-function rcScript(uname) {
+function rcScript(cmd, uname) {
     if (process.platform !== 'linux')
         return console.log(cmd + ' is only supported on linux');
     if (process.getuid()) {
@@ -347,12 +344,12 @@ function rcScript(uname) {
 
     let installed = current.indexOf(script) !== -1;
 
-    if (cmd === 'svc-install') {
+    if (cmd === 'install') {
         if (installed) {
             return console.log('rc script already installed')
         }
         fs.appendFileSync(inittab, script);
-    } else if (cmd === 'svc-purge') {
+    } else if (cmd === 'uninst') {
         if (installed) {
             fs.writeFileSync(inittab, current.replace(script, ''))
         } else {
@@ -380,7 +377,7 @@ function completeRunningJobs(arg) {
             output = completion(output, arg, dir);
         }
     }
-    process.stdout.write(output);
+    return output;
 }
 
 function completion(buf, arg0) {

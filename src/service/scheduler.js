@@ -21,7 +21,7 @@ function SharedScheduler(schedulers, key, option) {
     if (option.addressType === 'udp4' || option.addressType === 'udp6')
         rval = dgram._createSocketHandle(option.address, option.port, option.addressType, option.fd);
     else
-        rval = net._createServerHandle(option.address, option.port, addressType, option.fd);
+        rval = net._createServerHandle(option.address, option.port, option.addressType, option.fd);
 
     if (util.isNumber(rval))
         this.errno = rval;
