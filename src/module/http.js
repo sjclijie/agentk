@@ -1,4 +1,8 @@
-"use strict";
+/**
+ * Wrapper for http server/client API.
+ *
+ * @author kyrios
+ */
 
 import * as zlib from 'zlib.js';
 import {read as stream_read} from 'stream.js'
@@ -6,6 +10,11 @@ import {read as stream_read} from 'stream.js'
 const ohttp = require('http'),
     ourl = require('url');
 
+/**
+ * maximum socket per host when calling request
+ *
+ * @type {number}
+ */
 export let maxSockets = 5;
 
 

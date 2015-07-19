@@ -5,7 +5,24 @@ const opath = require('path');
 
 export let path = '';
 export let view_engine = 'ejs';
-export let engines = {};
+export const engines = {};
+export let module_loader = require;
+
+Object.defineProperty(engines, 'ejs', {
+    configurable: true,
+    get: function () {
+        let ejs;
+        try {
+            ejs = module_loader('ejs').__express;
+        } catch (e) {
+            ejs = require('ejs').__express;
+        }
+        Object.defineProperty(this, 'ejs', {
+            value: ejs
+        });
+        return ejs;
+    }
+});
 
 export function render(name, locals) {
     let ext = opath.extname(name),
@@ -21,7 +38,7 @@ export function render(name, locals) {
     let engine = engines[ext];
     if (!engine) {
         try {
-            engine = engines[ext] = require(ext).__express;
+            engine = engines[ext] = module_loader(ext).__express;
         } catch (e) {
         }
     }

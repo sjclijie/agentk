@@ -1,10 +1,18 @@
+/**
+ * @title Wrapper for child process
+ */
+
 const cp = require('child_process');
 const fs = require('fs');
-const path = require('path');
-const uitl = require('util');
 
 let ids = 0;
 
+/**
+ *
+ * @param {string} module
+ * @param {object} options
+ * @returns {nodejs#child_process.ChildProcess}
+ */
 export function fork(module, options) {
     options = options || {};
     const opts = {};

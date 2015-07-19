@@ -2,8 +2,17 @@ import {gzip, gzipTransform} from 'zlib.js';
 
 const ofs = require('fs');
 
-export let gzip_min_buf_len = 1024;
 
+/**
+ * minimum body length to enable gzip. Responses that have payload less that that size will not be gzipped.
+ *
+ * @type {number}
+ */
+export let gzip_min_body_len = 1024;
+
+/**
+ * @class
+ */
 export function HttpResponse() {
     this.status = 200;
     this.headers = {};
@@ -63,16 +72,28 @@ function testGzip(resp, req, res) {
     return false;
 }
 
+/**
+ * create a HttpResponse that works with a handler
+ *
+ * @param {function} fun
+ * @returns {HttpResponse}
+ */
 export function handler(fun) {
     let ret = new HttpResponse();
     ret.handle = fun;
     return ret;
 }
 
+/**
+ * create a HttpResponse that sends some data to the client
+ *
+ * @param {string|Buffer} buffer
+ * @returns {HttpResponse}
+ */
 export function data(buffer) {
     if (typeof buffer === 'string') buffer = new Buffer(buffer);
     return handler(function (req, res) {
-        if (buffer.length > gzip_min_buf_len && testGzip(this, req, res)) {
+        if (buffer.length > gzip_min_body_len && testGzip(this, req, res)) {
             buffer = gzip(buffer);
         }
         res.setHeader('Content-Length', '' + buffer.length);
@@ -80,6 +101,11 @@ export function data(buffer) {
     })
 }
 
+/**
+ * create a HttpResponse that responds a error
+ * @param {number} code
+ * @param {Error|string} reason
+ */
 export function error(code, reason) {
     let ret;
     if (reason) {

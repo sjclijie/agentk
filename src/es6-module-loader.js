@@ -213,7 +213,7 @@ function findExports(body, replace) {
                 replace({range: [stmt.range[0], decl.range[0]]}, '');
             } else { // export {xxx}
                 for (let spec of stmt.specifiers) {
-                    names.push([spec.exported.name, spec.local.name]);
+                    names.push(spec.exported.name);
                     if (spec.local.name !== spec.exported.name) {
                         locals[spec.exported.name] = spec.local.name;
                     }
