@@ -13,7 +13,7 @@
 ```js
 function gzip(buffer) 
 ```
-### params
+#### params
 
   - {Buffer} buffer
 
@@ -26,7 +26,7 @@ function gzip(buffer)
 ```js
 function gzipTransform(stream) 
 ```
-### params
+#### params
 
   - {net.Stream} stream
 
@@ -39,7 +39,7 @@ function gzipTransform(stream)
 ```js
 function gunzipTransform(stream) 
 ```
-### params
+#### params
 
   - {net.Stream} stream
 

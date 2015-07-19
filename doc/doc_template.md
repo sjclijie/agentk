@@ -41,7 +41,7 @@ if(methods.length) {%>
 ```js
 <%- method.prototype %>
 ```
-<% if (comment.param) {%>### params
+<% if (comment.param) {%>#### params
 <% comment.param.forEach(function(param){%>
   - <%- param%>
 <%})}%>

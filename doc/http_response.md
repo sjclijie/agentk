@@ -33,7 +33,7 @@ function HttpResponse()
 ```js
 function handler(fun) 
 ```
-### params
+#### params
 
   - {function} fun
 
@@ -46,7 +46,7 @@ function handler(fun)
 ```js
 function data(buffer) 
 ```
-### params
+#### params
 
   - {string|Buffer} buffer
 
@@ -59,7 +59,7 @@ function data(buffer)
 ```js
 function error(code, reason) 
 ```
-### params
+#### params
 
   - {number} code
 

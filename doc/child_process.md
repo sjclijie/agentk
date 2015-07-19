@@ -15,7 +15,7 @@ Wrapper for child process
 ```js
 function fork(module, options) 
 ```
-### params
+#### params
 
   - {string} module
 
