@@ -1,0 +1,115 @@
+<!-- @rev a7b8864dc85a52c9e61bc427326daf3a -->
+<!doctype html>
+<html>
+<head>
+    <title>http -- AgentK Documentation Generator</title>
+    <link rel="stylesheet" href="doc.css"/>
+</head>
+<body>
+<h1>http</h1>
+
+
+
+
+ Wrapper for http server/client API.
+
+
+
+<dl id="definitions">
+
+    <dt id="maxSockets">
+        <div>maxSockets</div>
+        <sub>variable</sub>
+    </dt>
+    <dd>
+        <p class="proto">maxSockets:{number}
+  = <code>5</code>
+    
+
+        <p class="desc">
+            
+ maximum socket per host when calling request
+
+        </p>
+    </dd>
+
+    <dt id="listen">
+        <div>listen()</div>
+        <sub>method</sub>
+    </dt>
+    <dd>
+        <p class="proto">function listen(port, cb) 
+
+        <p class="desc">
+            
+ Create a new http server, bind it to a port or socket file. A callback is supplied which accepts a
+ <code><a href="https://nodejs.org/api/http.html#http_http_incomingmessage">http request</a></code> object as
+ parameter and returns a <code><a href="http_response.html#HttpResponse">HttpResponse</a></code>
+
+        </p>
+
+        
+        <h4>Example</h4>
+        <pre>   http.listen(8080, function(req) {
+     return http_response.ok()
+   });
+</pre>
+        
+
+        
+        <h4>Parameters</h4>
+        <dl>
+            
+            <dt>port <code>number|string</code></dt>
+            
+            <dd>TCP port number or unix domain socket path to listen to</dd>
+            <dt>cb <code>function|<a href="router.html#Router">router::Router</a></code></dt>
+            
+            <dd>request handler callback</dd>
+        </dl>
+        
+        
+        <h4>Returns</h4>
+        <p style="margin-left: 1em"><code><a href="https://nodejs.org/api/http.html#http_class_http_server">node.http::Server</a></code></p>
+        
+    </dd>
+
+    <dt id="request">
+        <div>request()</div>
+        <sub>method</sub>
+    </dt>
+    <dd>
+        <p class="proto">function request(options, body) 
+
+        <p class="desc">
+            
+        </p>
+
+        
+
+        
+        
+    </dd>
+
+    <dt id="read">
+        <div>read()</div>
+        <sub>method</sub>
+    </dt>
+    <dd>
+        <p class="proto">function read(incoming) 
+
+        <p class="desc">
+            
+        </p>
+
+        
+
+        
+        
+    </dd>
+
+</dl>
+
+
+</body>
+</html>

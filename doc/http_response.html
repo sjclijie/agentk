@@ -1,0 +1,266 @@
+<!-- @rev 036378a3f54a2dbb9613ec395b24cd22 -->
+<!doctype html>
+<html>
+<head>
+    <title>http_response -- AgentK Documentation Generator</title>
+    <link rel="stylesheet" href="doc.css"/>
+</head>
+<body>
+<h1>http_response</h1>
+
+<p>Wrapper class for http response, and basic methods to construct a response.
+
+ This module contains a class named `HttpResponse` representing
+ </p>
+
+
+
+
+
+
+<dl id="definitions">
+
+    <dt id="gzip_min_body_len">
+        <div>gzip_min_body_len</div>
+        <sub>variable</sub>
+    </dt>
+    <dd>
+        <p class="proto">gzip_min_body_len:{number}
+  = <code>1024</code>
+    
+
+        <p class="desc">
+            
+ minimum body length to enable gzip. Responses that have payload less that that size will not be gzipped.
+
+        </p>
+    </dd>
+
+    <dt id="HttpResponse">
+        <div>HttpResponse()</div>
+        <sub>class</sub>
+    </dt>
+    <dd>
+        <p class="proto">function HttpResponse() 
+
+        <p class="desc">
+            
+
+        </p>
+
+        
+
+        
+        
+        <h4>Returns</h4>
+        <p style="margin-left: 1em"><code><a href="#HttpResponse">HttpResponse</a></code></p>
+        
+    </dd>
+
+    <dt id="handler">
+        <div>handler()</div>
+        <sub>method</sub>
+    </dt>
+    <dd>
+        <p class="proto">function handler(fun) 
+
+        <p class="desc">
+            
+ create a HttpResponse that works with a handler
+
+        </p>
+
+        
+
+        
+        <h4>Parameters</h4>
+        <dl>
+            
+            <dt>fun <code>function</code></dt>
+            
+        </dl>
+        
+        
+        <h4>Returns</h4>
+        <p style="margin-left: 1em"><code><a href="#HttpResponse">HttpResponse</a></code></p>
+        
+    </dd>
+
+    <dt id="data">
+        <div>data()</div>
+        <sub>method</sub>
+    </dt>
+    <dd>
+        <p class="proto">function data(buffer) 
+
+        <p class="desc">
+            
+ create a HttpResponse that sends some data to the client
+
+        </p>
+
+        
+
+        
+        <h4>Parameters</h4>
+        <dl>
+            
+            <dt>buffer <code>string|<a href="https://nodejs.org/api/buffer.html#buffer_class_buffer">Buffer</a></code></dt>
+            
+        </dl>
+        
+        
+        <h4>Returns</h4>
+        <p style="margin-left: 1em"><code><a href="#HttpResponse">HttpResponse</a></code></p>
+        
+    </dd>
+
+    <dt id="error">
+        <div>error()</div>
+        <sub>method</sub>
+    </dt>
+    <dd>
+        <p class="proto">function error(code, reason) 
+
+        <p class="desc">
+            
+ create a HttpResponse that responds a error
+        </p>
+
+        
+
+        
+        <h4>Parameters</h4>
+        <dl>
+            
+            <dt>code <code>number</code></dt>
+            
+            <dd>The status code of the error response</dd>
+            <dt>reason <code>Error|string</code></dt>
+            
+            <dd>The extra message as the response payload</dd>
+        </dl>
+        
+        
+        <h4>Returns</h4>
+        <p style="margin-left: 1em"><code><a href="#HttpResponse">HttpResponse</a></code></p>
+        
+    </dd>
+
+    <dt id="json">
+        <div>json()</div>
+        <sub>method</sub>
+    </dt>
+    <dd>
+        <p class="proto">function json(json) 
+
+        <p class="desc">
+            
+ create a HttpResponse that responds a json, The following header will be set:<pre>
+    Content-Type: application/json</pre>
+        </p>
+
+        
+
+        
+        <h4>Parameters</h4>
+        <dl>
+            
+            <dt>json <code>*</code></dt>
+            
+            <dd>Data to be sent</dd>
+        </dl>
+        
+        
+        <h4>Returns</h4>
+        <p style="margin-left: 1em"><code><a href="#HttpResponse">HttpResponse</a></code></p>
+        
+    </dd>
+
+    <dt id="stream">
+        <div>stream()</div>
+        <sub>method</sub>
+    </dt>
+    <dd>
+        <p class="proto">function stream(stream) 
+
+        <p class="desc">
+            
+ create a HttpResponse that responds a json, The following header will be set:
+
+
+        </p>
+
+        
+
+        
+        <h4>Parameters</h4>
+        <dl>
+            
+            <dt>json <code>*</code></dt>
+            
+            <dd>Data to be sent</dd>
+        </dl>
+        
+        
+        <h4>Returns</h4>
+        <p style="margin-left: 1em"><code><a href="#HttpResponse">HttpResponse</a></code></p>
+        
+    </dd>
+
+    <dt id="file">
+        <div>file()</div>
+        <sub>method</sub>
+    </dt>
+    <dd>
+        <p class="proto">function file(file) 
+
+        <p class="desc">
+            
+        </p>
+
+        
+
+        
+        
+    </dd>
+
+    <dt id="ok">
+        <div>ok()</div>
+        <sub>method</sub>
+    </dt>
+    <dd>
+        <p class="proto">function ok() 
+
+        <p class="desc">
+            
+        </p>
+
+        
+
+        
+        
+    </dd>
+
+    <dt id="redirect">
+        <div>redirect()</div>
+        <sub>method</sub>
+    </dt>
+    <dd>
+        <p class="proto">function redirect(url) 
+
+        <p class="desc">
+            
+        </p>
+
+        
+
+        
+        
+    </dd>
+
+</dl>
+
+
+</body>
+</html>
