@@ -65,7 +65,7 @@ h4 {
     font-size: 13px;
     color: #444;
     padding: 0;
-    margin: 0;
+    margin: 12px 0 6px;
 }
 
 dt {
@@ -78,4 +78,36 @@ dt {
 
 dd {
     margin-left: 2em;
+}
+
+a, a:visited {
+    color: #60ace6;
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+.frames {
+    display: flex;
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    right: 0;
+    margin: 0;
+}
+
+.frames > ul {
+    width: 200px;
+    list-style: none;
+    padding-left: 0;
+    margin: 6px;
+    background: #FAFAFA;
+    line-height: 20px;
+}
+
+.frames > iframe {
+    flex: 1
 }

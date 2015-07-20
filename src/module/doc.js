@@ -14,6 +14,34 @@ const parseOption = {
     loc: true
 };
 
+
+const presetTypes = {
+    Buffer: 'https://nodejs.org/api/buffer.html#buffer_class_buffer'
+};
+const primitiveTypes = /^(boolean|string|number|undefined|null|object|array|RegExp|Date|Error)$/;
+const rNamespace = /^(?:([\w\.]+)::)?([A-Z]\w+)/;
+
+function parseTypename(name) {
+    let parts = name.split('|');
+    for (var i = 0, L = parts.length; i < L; i++) {
+        var part = parts[i];
+        if (part in presetTypes) {
+            parts[i] = `<a href="${presetTypes[part]}">${part}</a>`
+        } else if (!primitiveTypes.test(part)) {
+            var m = rNamespace.exec(part);
+            if (m) {
+                if (m[1] && m[1].substr(0, 5) === 'node.') {
+                    let module = m[1].substr(5);
+                    parts[i] = `<a href="https://nodejs.org/api/${module}.html#${module}_class_${module}_${m[2].toLowerCase()}">${m[0]}</a>`
+                } else {
+                    parts[i] = `<a href="${m[1] ? m[1] + '.html' : ''}#${m[2]}">${m[0]}</a>`
+                }
+            }
+        }
+    }
+    return parts.join('|');
+}
+
 export default function (outDir, format) {
     process.chdir('src/module');
     //console.log(outDir, format);
@@ -21,7 +49,10 @@ export default function (outDir, format) {
     let cssFile = path.join(outDir, 'doc.css');
     const template = require('ejs').compile(file.read(path.join(__dirname, '../../doc/doc_template.' + (format === 'html' ? 'ejs' : format))).toString('utf8'));
     file.mkParentDir(cssFile);
+
+    let modules;
     if (format === 'html') {
+        modules = [];
         let cssInput = path.join(__dirname, '../../doc/doc.css'),
             cssContent = file.read(cssInput),
             checksum = md5(cssContent);
@@ -30,6 +61,12 @@ export default function (outDir, format) {
         }
     }
     onDir('.');
+    if (format === 'html') {
+        let index_content = require('ejs').compile(file.read(path.join(__dirname, '../../doc/index_template.ejs')).toString('utf8'))({
+            modules: modules
+        });
+        file.write(path.join(outDir, 'index.html'), index_content);
+    }
 
     function onDir(dir) {
         for (let name of file.readdir(dir)) {
@@ -48,10 +85,14 @@ export default function (outDir, format) {
                         // return
                     }
                 }
+                if (format === 'html') {
+                    modules.push(namespace);
+                }
                 let module = onFile(fileContent, name);
                 if (!module) return;
                 module.namespace = namespace;
                 module.checksum = checksum;
+                module.parseTypename = parseTypename;
                 file.write(output, template(module));
             }
         }
@@ -198,10 +239,18 @@ export default function (outDir, format) {
         }
         if (hasDefault) {
             if (hasDefault.type === Syntax.FunctionDeclaration) {
-                module._default = {
-                    type: 'function',
-                    comment: hasDefault.comment
-                };
+                if (!hasDefault.id) { // TODO: no id
+
+                } else {
+                    if (!hasDefault.exported) {
+                        onExportFunctionDecl(hasDefault, hasDefault.id.name);
+                        methods[methods.length - 1]._default = true;
+                    }
+                    module._default = {
+                        type: 'function',
+                        name: hasDefault.id && hasDefault.id.name
+                    };
+                }
             } else if (hasDefault.type === Syntax.VariableDeclarator) {
                 module._default = {
                     type: 'variable',
@@ -232,6 +281,7 @@ export default function (outDir, format) {
 
         // console.log(name, requires, exports);
         function onExportFunctionDecl(decl, name) {
+            decl.exported = true;
             methods.push({
                 name: name,
                 prototype: script.substring(decl.range[0], decl.body.range[0]),
@@ -240,6 +290,7 @@ export default function (outDir, format) {
         }
 
         function onExportVariableDecl(decl, name) {
+            decl.exported = true;
             let comment = decl.comment;
             let init = decl.init, literal = init && init.type === Syntax.Literal;
             if (!comment) {
@@ -264,22 +315,30 @@ export default function (outDir, format) {
 
         function splitComment(comment) {
             let parts = {};
-            comment = comment.replace(/\r?\n \* @(\w+)\s*(.*)/g, function (m, name, val) {
-                if (name === 'param') { // array
-                    if (name in parts) {
-                        parts[name].push(val);
+            let lines = comment.split(/\r?\n \*/);
+            if (lines[0] === '' || lines[0] === '*') lines.shift();
+            let prev = 'description', cache = '';
+            for (let i = 0, L = lines.length; i < L; i++) {
+                let line = lines[i], m = / @(\w+) ?/.exec(line);
+                if (m) {
+                    if (prev === 'param') {
+                        if (prev in parts) {
+                            parts[prev].push(cache);
+                        } else {
+                            parts[prev] = [cache]
+                        }
                     } else {
-                        parts[name] = [val]
+                        parts[prev] = cache;
                     }
+                    prev = m[1];
+                    cache = line.substr(m[0].length);
                 } else {
-                    parts[name] = val;
+                    cache += '\n' + line;
                 }
-                return ''
-            });
-            parts.description = comment.replace(/^\*/, '').replace(/\r?\n \*/g, '\n');
+            }
+            parts[prev] = cache;
             return parts;
         }
     }
 
 }
-

@@ -1,3 +1,9 @@
+/**
+ *
+ * @param {function|Router} cb optional, handler first called before all rules
+ * @returns {Router}
+ * @constructor
+ */
 function Router(cb) {
     if (!(this instanceof Router))
         return new Router();

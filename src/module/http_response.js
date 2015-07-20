@@ -16,7 +16,9 @@ const ofs = require('fs');
 export let gzip_min_body_len = 1024;
 
 /**
- * @class
+ *
+ * @returns {HttpResponse}
+ * @constructor
  */
 export function HttpResponse() {
     this.status = 200;

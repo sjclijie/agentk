@@ -15,26 +15,24 @@
 <%= meta.description %>
 <% } %>
 
-<% if(consts.length) { %>
-<% consts.forEach(function(obj) {var comment = obj.comment; %>
-<h3>
-    <div><%- obj.name %></div>
-    <sub>constant</sub></h3>
-<%= comment.description %>
-<% if(comment.type) { %>
-#### type
-<%- comment.type %>
-<% } %>
-<% if(obj.value) { %>
-#### value
-`<%- obj.value %>`
-<% } %>
-<% }) %>
-<% } %>
-
 <dl id="definitions">
+<%
+consts.forEach(function(obj) {var comment = obj.comment; %>
+    <dt id="<%- obj.name %>">
+    <div><%- obj.name %></div>
+    <sub>constant</sub>
+    </dt>
+    <dd>
+        <p class="proto"><%- obj.name %><% if(comment.type) { %>:<%- comment.type %><% }
+            if(obj.value) { %> = <code><%- obj.value %></code>
+            <% } %>
 
-<% variables.forEach(function(obj) {var comment = obj.comment; %>
+        <p class="desc">
+            <%= comment.description %>
+        </p>
+    </dd>
+<% });
+variables.forEach(function(obj) {var comment = obj.comment; %>
     <dt id="<%- obj.name %>">
         <div><%- obj.name %></div>
         <sub>variable</sub>
@@ -52,28 +50,37 @@
 methods.forEach(function (method) {var comment = method.comment; %>
     <dt id="<%- method.name %>">
         <div><%- method.name %>()</div>
-        <sub>method</sub>
+        <sub><%- comment.hasOwnProperty('constructor') ? 'class' : 'method'%></sub>
     </dt>
     <dd>
         <p class="proto"><%- method.prototype %>
 
         <p class="desc">
-            <%- comment.description ? comment.description.replace(/`(.*)`/g, '<code>$1</code>').replace(/\r?\n *((?:\r?\n    .*)+)\r?\n/g, '<pre>$1</pre>') : '' %>
+            <%- comment.description ? comment.description
+                    .replace(/`(.*)`/g, '<code>$1</code>')
+                    .replace(/\r?\n *((?:\r?\n    .*)+)\r?\n/g, '<pre>$1</pre>')
+                    .replace(/\[(.+?)\]\((.+?)\)/g, '<a href="$2">$1</a>')
+                  : '' %>
         </p>
+
+        <% if(comment.example) { %>
+        <h4>Example</h4>
+        <pre><%= comment.example.replace(/^\r?\n/m, '') %></pre>
+        <% }%>
 
         <% if(comment.param) {%>
         <h4>Parameters</h4>
         <dl>
-            <% comment.param.forEach(function(param){var m = /^\{(.*?)\}\s*(\w+)\s*(.*)/.exec(param); %>
-            <dt><%- m[2]%><% if(m[1]) {%> <code><%- m[1]%></code><%}%></dt>
+            <% comment.param.forEach(function(param){var m = /^(?:\{(.+)\}\s*)?(\w+)\s*(.*)/.exec(param); %>
+            <dt><%- m[2]%><% if(m[1]) {%> <code><%- parseTypename(m[1])%></code><%}%></dt>
             <%if(m[3]) {%>
             <dd><%= m[3]%></dd><%}
             })%>
         </dl>
         <% } %>
-        <% if(comment.returns) {%>
+        <% if(comment.returns) { var m = /^(?:\{(.+)\}\s*)?(.*)/.exec(comment.returns)%>
         <h4>Returns</h4>
-        <p> <code><%- comment.returns%></code></p>
+        <p style="margin-left: 1em"><% if(m[1]) {%><code><%- parseTypename(m[1])%></code><%}%><%- m[2]%></p>
         <%}%>
     </dd>
 <%})%>
