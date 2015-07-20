@@ -1,15 +1,23 @@
-<!-- @rev 19f678c6330bb248faecef3b14def6b5 -->
+<!-- @rev e6a4f99af80945079fb197eaa3b015be -->
 # http_response
+
+Wrapper class for http response, and basic methods to construct a response.
 
 ----
 
 
 
+ This module contains a class named `HttpResponse` representing
+ 
+
 
 ## Variable Fields
 
 ### gzip_min_body_len
-minimum body length to enable gzip. Responses that have payload less that that size will not be gzipped.
+
+ minimum body length to enable gzip. Responses that have payload less that that size will not be gzipped.
+
+ 
 #### type
 {number}
 
@@ -20,7 +28,8 @@ minimum body length to enable gzip. Responses that have payload less that that s
 
 ## Methods
 
-### HttpResponse
+------------------------------------------------------------------------
+### HttpResponse()
 
 ```js
 function HttpResponse() 
@@ -28,62 +37,116 @@ function HttpResponse()
 
 
 
-### handler
+
+------------------------------------------------------------------------
+### handler()
 
 ```js
 function handler(fun) 
 ```
-#### params
-
-  - {function} fun
-
-#### returns
-{HttpResponse}
 
 
-### data
+ create a HttpResponse that works with a handler
+
+ 
+
+**Params**
+
+  - fun `function`
+
+**Returns**
+
+> {HttpResponse}
+
+------------------------------------------------------------------------
+### data()
 
 ```js
 function data(buffer) 
 ```
-#### params
-
-  - {string|Buffer} buffer
-
-#### returns
-{HttpResponse}
 
 
-### error
+ create a HttpResponse that sends some data to the client
+
+ 
+
+**Params**
+
+  - buffer `string|Buffer`
+
+**Returns**
+
+> {HttpResponse}
+
+------------------------------------------------------------------------
+### error()
 
 ```js
 function error(code, reason) 
 ```
-#### params
-
-  - {number} code
-
-  - {Error|string} reason
 
 
+ create a HttpResponse that responds a error
+ 
 
-### json
+**Params**
+
+  - code `number`
+    <br>The status code of the error response
+  - reason `Error|string`
+    <br>The extra message as the response payload
+
+**Returns**
+
+> {HttpResponse}
+
+------------------------------------------------------------------------
+### json()
 
 ```js
 function json(json) 
 ```
 
 
+ create a HttpResponse that responds a json, The following header will be set:
 
-### stream
+    Content-Type: application/json
+
+ 
+
+**Params**
+
+  - json `*`
+    <br>Data to be sent
+
+**Returns**
+
+> {HttpResponse}
+
+------------------------------------------------------------------------
+### stream()
 
 ```js
 function stream(stream) 
 ```
 
 
+ create a HttpResponse that responds a json, The following header will be set:
 
-### file
+
+ 
+
+**Params**
+
+  - json `*`
+    <br>Data to be sent
+
+**Returns**
+
+> {HttpResponse}
+
+------------------------------------------------------------------------
+### file()
 
 ```js
 function file(file) 
@@ -91,7 +154,9 @@ function file(file)
 
 
 
-### ok
+
+------------------------------------------------------------------------
+### ok()
 
 ```js
 function ok() 
@@ -99,7 +164,9 @@ function ok()
 
 
 
-### redirect
+
+------------------------------------------------------------------------
+### redirect()
 
 ```js
 function redirect(url) 

@@ -1,0 +1,84 @@
+<!-- @rev <%= checksum %> -->
+<!doctype html>
+<html>
+<head>
+    <title><%= namespace %> -- AgentK Documentation Generator</title>
+    <link rel="stylesheet" href="doc.css"/>
+</head>
+<body>
+<h1><%= namespace %></h1>
+<% if(meta && meta.title) { %>
+<p><%= meta.title %></p>
+<% } %>
+
+<% if (meta) { %>
+<%= meta.description %>
+<% } %>
+
+<% if(consts.length) { %>
+<% consts.forEach(function(obj) {var comment = obj.comment; %>
+<h3>
+    <div><%- obj.name %></div>
+    <sub>constant</sub></h3>
+<%= comment.description %>
+<% if(comment.type) { %>
+#### type
+<%- comment.type %>
+<% } %>
+<% if(obj.value) { %>
+#### value
+`<%- obj.value %>`
+<% } %>
+<% }) %>
+<% } %>
+
+<dl id="definitions">
+
+<% variables.forEach(function(obj) {var comment = obj.comment; %>
+    <dt id="<%- obj.name %>">
+        <div><%- obj.name %></div>
+        <sub>variable</sub>
+    </dt>
+    <dd>
+        <p class="proto"><%- obj.name %><% if(comment.type) { %>:<%- comment.type %><% }
+    if(obj.value) { %> = <code><%- obj.value %></code>
+    <% } %>
+
+        <p class="desc">
+            <%= comment.description %>
+        </p>
+    </dd>
+<% });
+methods.forEach(function (method) {var comment = method.comment; %>
+    <dt id="<%- method.name %>">
+        <div><%- method.name %>()</div>
+        <sub>method</sub>
+    </dt>
+    <dd>
+        <p class="proto"><%- method.prototype %>
+
+        <p class="desc">
+            <%- comment.description ? comment.description.replace(/`(.*)`/g, '<code>$1</code>').replace(/\r?\n *((?:\r?\n    .*)+)\r?\n/g, '<pre>$1</pre>') : '' %>
+        </p>
+
+        <% if(comment.param) {%>
+        <h4>Parameters</h4>
+        <dl>
+            <% comment.param.forEach(function(param){var m = /^\{(.*?)\}\s*(\w+)\s*(.*)/.exec(param); %>
+            <dt><%- m[2]%><% if(m[1]) {%> <code><%- m[1]%></code><%}%></dt>
+            <%if(m[3]) {%>
+            <dd><%= m[3]%></dd><%}
+            })%>
+        </dl>
+        <% } %>
+        <% if(comment.returns) {%>
+        <h4>Returns</h4>
+        <p> <code><%- comment.returns%></code></p>
+        <%}%>
+    </dd>
+<%})%>
+</dl>
+
+
+</body>
+</html>

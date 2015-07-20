@@ -3,13 +3,19 @@
 
 ----
 
-Wrapper for http server/client API.
+
+ Wrapper for http server/client API.
+
+ 
 
 
 ## Variable Fields
 
 ### maxSockets
-maximum socket per host when calling request
+
+ maximum socket per host when calling request
+
+ 
 #### type
 {number}
 
@@ -20,7 +26,8 @@ maximum socket per host when calling request
 
 ## Methods
 
-### listen
+------------------------------------------------------------------------
+### listen()
 
 ```js
 function listen(port, cb) 
@@ -28,7 +35,9 @@ function listen(port, cb)
 
 
 
-### request
+
+------------------------------------------------------------------------
+### request()
 
 ```js
 function request(options, body) 
@@ -36,7 +45,9 @@ function request(options, body)
 
 
 
-### read
+
+------------------------------------------------------------------------
+### read()
 
 ```js
 function read(incoming) 

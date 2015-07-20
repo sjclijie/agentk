@@ -8,20 +8,28 @@
 
 ## Methods
 
-### read
+------------------------------------------------------------------------
+### read()
 
 ```js
 function read(file) 
 ```
-#### params
-
-  - {String} file
-
-#### returns
-{Buffer}
 
 
-### write
+ reads file&#39;s content, returns a buffer containing its content. throws if any exception occurs
+
+ 
+
+**Params**
+
+  - file `String`
+
+**Returns**
+
+> {Buffer}
+
+------------------------------------------------------------------------
+### write()
 
 ```js
 function write(file, content) 
@@ -29,7 +37,9 @@ function write(file, content)
 
 
 
-### rm
+
+------------------------------------------------------------------------
+### rm()
 
 ```js
 function rm(file) 
@@ -37,7 +47,9 @@ function rm(file)
 
 
 
-### symlink
+
+------------------------------------------------------------------------
+### symlink()
 
 ```js
 function symlink(src, dst) 
@@ -45,7 +57,9 @@ function symlink(src, dst)
 
 
 
-### exists
+
+------------------------------------------------------------------------
+### exists()
 
 ```js
 function exists(file) 
@@ -53,7 +67,9 @@ function exists(file)
 
 
 
-### mkdir
+
+------------------------------------------------------------------------
+### mkdir()
 
 ```js
 function mkdir(file) 
@@ -61,7 +77,9 @@ function mkdir(file)
 
 
 
-### readdir
+
+------------------------------------------------------------------------
+### readdir()
 
 ```js
 function readdir(file) 
@@ -69,7 +87,9 @@ function readdir(file)
 
 
 
-### isFile
+
+------------------------------------------------------------------------
+### isFile()
 
 ```js
 function isFile(file) 
@@ -77,7 +97,9 @@ function isFile(file)
 
 
 
-### isDirectory
+
+------------------------------------------------------------------------
+### isDirectory()
 
 ```js
 function isDirectory(file) 
@@ -85,7 +107,9 @@ function isDirectory(file)
 
 
 
-### mkParentDir
+
+------------------------------------------------------------------------
+### mkParentDir()
 
 ```js
 function mkParentDir(file) 
@@ -93,7 +117,9 @@ function mkParentDir(file)
 
 
 
-### open
+
+------------------------------------------------------------------------
+### open()
 
 ```js
 function open(path, flags) 
@@ -101,7 +127,9 @@ function open(path, flags)
 
 
 
-### close
+
+------------------------------------------------------------------------
+### close()
 
 ```js
 function close(fd) 

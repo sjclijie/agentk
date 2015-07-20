@@ -1,3 +1,8 @@
+/**
+ * @title Wrapper class for http response, and basic methods to construct a response.
+ *
+ * This module contains a class named `HttpResponse` representing
+ */
 import {gzip, gzipTransform} from 'zlib.js';
 
 const ofs = require('fs');
@@ -103,8 +108,9 @@ export function data(buffer) {
 
 /**
  * create a HttpResponse that responds a error
- * @param {number} code
- * @param {Error|string} reason
+ * @param {number} code The status code of the error response
+ * @param {Error|string} reason The extra message as the response payload
+ * @returns {HttpResponse}
  */
 export function error(code, reason) {
     let ret;
@@ -116,10 +122,26 @@ export function error(code, reason) {
     return ret.setStatus(code)
 }
 
+/**
+ * create a HttpResponse that responds a json, The following header will be set:
+ *
+ *    Content-Type: application/json
+ *
+ * @param {*} json Data to be sent
+ * @returns {HttpResponse}
+ */
 export function json(json) {
     return data(JSON.stringify(json)).setHeader('Content-Type', 'application/json');
 }
 
+
+/**
+ * create a HttpResponse that responds a json, The following header will be set:
+ *
+ *
+ * @param {*} json Data to be sent
+ * @returns {HttpResponse}
+ */
 export function stream(stream) {
     return handler(function (req, res) {
         if (testGzip(this, req, res)) {

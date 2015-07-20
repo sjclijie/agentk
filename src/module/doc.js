@@ -18,8 +18,17 @@ export default function (outDir, format) {
     process.chdir('src/module');
     //console.log(outDir, format);
 
+    let cssFile = path.join(outDir, 'doc.css');
     const template = require('ejs').compile(file.read(path.join(__dirname, '../../doc/doc_template.' + (format === 'html' ? 'ejs' : format))).toString('utf8'));
-    file.mkParentDir(outDir + '/.');
+    file.mkParentDir(cssFile);
+    if (format === 'html') {
+        let cssInput = path.join(__dirname, '../../doc/doc.css'),
+            cssContent = file.read(cssInput),
+            checksum = md5(cssContent);
+        if (!file.exists(cssFile) || Buffer.compare(md5(cssContent), md5(file.read(cssFile)))) {
+            file.write(cssFile, cssContent);
+        }
+    }
     onDir('.');
 
     function onDir(dir) {
@@ -267,7 +276,7 @@ export default function (outDir, format) {
                 }
                 return ''
             });
-            parts.description = comment.replace(/^\*|\r?\n \*/g, '').trim();
+            parts.description = comment.replace(/^\*/, '').replace(/\r?\n \*/g, '\n');
             return parts;
         }
     }

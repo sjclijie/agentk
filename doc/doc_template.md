@@ -36,20 +36,28 @@ if(variables.length) {%>
 if(methods.length) {%>
 ## Methods
 <% methods.forEach(function(method) {var comment = method.comment;%>
-### <%- method.name %>
+------------------------------------------------------------------------
+### <%- method.name %>()
 
 ```js
 <%- method.prototype %>
 ```
-<% if (comment.param) {%>#### params
-<% comment.param.forEach(function(param){%>
-  - <%- param%>
-<%})}%>
-<% if(comment.returns) {%>#### returns
-<%- comment.returns%>
-<%}%>
-<%})%>
+
+<%= comment.description %>
+
+<% if (comment.param) {%>**Params**
+<% comment.param.forEach(function(param){var m = /^\{(.*?)\}\s*(\w+)\s*(.*)/.exec(param); %>
+  - <%- m[2]%><% if(m[1]) {%> `<%- m[1]%>`<%}%><%if(m[3]) {%>
+    <br><%= m[3]%><%}
+})%>
+
 <%}
+if(comment.returns) {%>**Returns**
+
+> <%- comment.returns%>
+<%}
+})
+}
 
 if(_default) {%>
 ## Module default

@@ -6,22 +6,27 @@ Wrapper for child process
 ----
 
 
+ 
 
 
 ## Methods
 
-### fork
+------------------------------------------------------------------------
+### fork()
 
 ```js
 function fork(module, options) 
 ```
-#### params
-
-  - {string} module
-
-  - {object} options
-
-#### returns
-{nodejs#child_process.ChildProcess}
 
 
+
+ 
+
+**Params**
+
+  - module `string`
+  - options `object`
+
+**Returns**
+
+> {nodejs#child_process.ChildProcess}

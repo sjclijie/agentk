@@ -8,7 +8,8 @@
 
 ## Methods
 
-### md5
+------------------------------------------------------------------------
+### md5()
 
 ```js
 function md5(buf, format) 
@@ -16,7 +17,9 @@ function md5(buf, format)
 
 
 
-### sha1
+
+------------------------------------------------------------------------
+### sha1()
 
 ```js
 function sha1(buf, format) 
@@ -24,7 +27,9 @@ function sha1(buf, format)
 
 
 
-### hmac_sha1
+
+------------------------------------------------------------------------
+### hmac_sha1()
 
 ```js
 function hmac_sha1(secret, buf, format) 

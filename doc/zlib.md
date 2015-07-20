@@ -8,42 +8,62 @@
 
 ## Methods
 
-### gzip
+------------------------------------------------------------------------
+### gzip()
 
 ```js
 function gzip(buffer) 
 ```
-#### params
-
-  - {Buffer} buffer
-
-#### returns
-{Buffer}
 
 
-### gzipTransform
+ convert a buffer into a gzipped buffer
+
+ 
+
+**Params**
+
+  - buffer `Buffer`
+
+**Returns**
+
+> {Buffer}
+
+------------------------------------------------------------------------
+### gzipTransform()
 
 ```js
 function gzipTransform(stream) 
 ```
-#### params
-
-  - {net.Stream} stream
-
-#### returns
-{net.Stream}
 
 
-### gunzipTransform
+ transforms a stream into a gzipped stream
+
+ 
+
+**Params**
+
+  - stream `net.Stream`
+
+**Returns**
+
+> {net.Stream}
+
+------------------------------------------------------------------------
+### gunzipTransform()
 
 ```js
 function gunzipTransform(stream) 
 ```
-#### params
-
-  - {net.Stream} stream
-
-#### returns
-{net.Stream}
 
 
+ transforms a gzipped stream into an unzipped stream
+
+ 
+
+**Params**
+
+  - stream `net.Stream`
+
+**Returns**
+
+> {net.Stream}
