@@ -196,7 +196,7 @@ function compile(source, option) {
 }
 
 function findExports(body, replace) {
-    let names = [], locals = {}, hasDefault = false;
+    let names = [], locals = {}, consts = {}, hasDefault = false;
     for (let i = 0, arr = body.body, L = arr.length; i < L; i++) {
         let stmt = arr[i];
         if (stmt.type === Syntax.ExportNamedDeclaration) {
@@ -205,8 +205,13 @@ function findExports(body, replace) {
                 if (decl.type == Syntax.FunctionDeclaration) {
                     names.push(decl.id.name);
                 } else if (decl.type === Syntax.VariableDeclaration) {
+                    const isconst = decl.kind === 'const';
                     for (let vardecl of decl.declarations) {
-                        names.push(vardecl.id.name);
+                        const id = vardecl.id.name;
+                        names.push(id);
+                        if (isconst) {
+                            consts[id] = true;
+                        }
                     }
                 }
                 arr[i] = decl;
@@ -244,6 +249,10 @@ function findExports(body, replace) {
                 replace({range: [stmt.range[0], stmt.declaration.range[0]]}, 'Object.defineProperty(module,moduleDefault,{value:');
                 replace({range: [stmt.declaration.range[1], stmt.declaration.range[1]]}, '});');
             }
+        } else if (stmt.type === Syntax.VariableDeclaration && stmt.kind === 'const') {
+            for (let vardecl of stmt.declarations) {
+                consts[vardecl.id.name] = true;
+            }
         } // TODO: export all
     }
 
@@ -253,8 +262,10 @@ function findExports(body, replace) {
         if (names.length) {
             let ret = ';\nObject.defineProperties(module, {\n';
             for (let name of names) {
-                let local = name in locals ? locals[name] : name;
-                ret += '' + JSON.stringify(name) + ':{get:function(){return ' + local + '}, set:function($_){' + local + '=$_}},\n'
+                let local = name in locals ? locals[name] : name,
+                    isconst = local in consts;
+                ret += '' + JSON.stringify(name) + ':{get:function(){return ' + local + '}' +
+                    (isconst ? '' : ', set:function($_){' + local + '=$_}') + '},\n'
             }
             ret = ret.substr(0, ret.length - 2) + '\n});';
             return [head, ret];
