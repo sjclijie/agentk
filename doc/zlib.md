@@ -18,7 +18,6 @@ function gzip(buffer)
 
  convert a buffer into a gzipped buffer
 
- 
 
 **Params**
 
@@ -27,6 +26,7 @@ function gzip(buffer)
 **Returns**
 
 > {Buffer}
+ 
 
 ------------------------------------------------------------------------
 ### gzipTransform()
@@ -38,7 +38,6 @@ function gzipTransform(stream)
 
  transforms a stream into a gzipped stream
 
- 
 
 **Params**
 
@@ -47,6 +46,7 @@ function gzipTransform(stream)
 **Returns**
 
 > {net.Stream}
+ 
 
 ------------------------------------------------------------------------
 ### gunzipTransform()
@@ -58,7 +58,6 @@ function gunzipTransform(stream)
 
  transforms a gzipped stream into an unzipped stream
 
- 
 
 **Params**
 
@@ -67,3 +66,4 @@ function gunzipTransform(stream)
 **Returns**
 
 > {net.Stream}
+ 

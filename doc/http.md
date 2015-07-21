@@ -1,4 +1,4 @@
-<!-- @rev 12ce1287a3f745fe0a52fac17f5de418 -->
+<!-- @rev a7b8864dc85a52c9e61bc427326daf3a -->
 # http
 
 ----
@@ -6,7 +6,6 @@
 
  Wrapper for http server/client API.
 
- 
 
 
 ## Variable Fields
@@ -15,9 +14,9 @@
 
  maximum socket per host when calling request
 
- 
 #### type
 {number}
+ 
 
 #### value
 `5`
@@ -34,7 +33,22 @@ function listen(port, cb)
 ```
 
 
+ Create a new http server, bind it to a port or socket file. A callback is supplied which accepts a
+ `[http request](https://nodejs.org/api/http.html#http_http_incomingmessage)` object as
+ parameter and returns a `[HttpResponse](http_response.html#HttpResponse)`
 
+
+**Params**
+
+  - port `number|string`
+    <br>TCP port number or unix domain socket path to listen to
+  - cb `function|router::Router`
+    <br>request handler callback
+
+**Returns**
+
+> {node.http::Server}
+ 
 
 ------------------------------------------------------------------------
 ### request()

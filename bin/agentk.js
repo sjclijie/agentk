@@ -328,7 +328,7 @@ let commands = {
                 return buf;
             } else if (arg0 === 'uninst') {
                 let buf = '';
-                let inittab = fs.readFileSync('/etc/inittab', 'binary'), r = /^ak:2345:respawn:\S+ \S+ "([^"]+)"/gm, m;
+                let inittab = fs.readFileSync('/etc/inittab', 'binary'), r = /^k\w:2345:respawn:\/bin\/sh \S+ "([^"]+)"/gm, m;
                 while (m = r.exec(inittab)) {
                     buf = completion(buf, arg1, m[1]);
                 }
@@ -392,21 +392,32 @@ function rcScript(cmd, uname) {
         console.log(xtermEscape('$#ry<WARN> username not specified, using ' + uname));
     }
     let inittab = '/etc/inittab',
-        script = 'ak:2345:respawn:/bin/sh "' + __dirname + '/daemon.sh" "' + uname + '" "' + process.execPath + '"\n',
+        script = ':2345:respawn:/bin/sh "' + __dirname + '/daemon.sh" "' + uname + '" "' + process.execPath + '"\n',
         current = fs.readFileSync(inittab, 'utf8');
 
-    let installed = current.indexOf(script) !== -1;
+    let idx = current.indexOf(script), installed = idx !== -1;
 
     if (cmd === 'install') {
         if (installed) {
-            return console.log('rc script already installed')
+            return console.log('service already installed')
         }
-        fs.appendFileSync(inittab, script);
+        let found_ids = current.match(/^k[0-9a-zA-Z]:/mg), next_id;
+        for (let i of '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ') {
+            if (!found_ids || found_ids.indexOf('k' + i + ':') === -1) {
+                next_id = i;
+                break
+            }
+        }
+        if (!next_id) {
+            throw new Error("no unique key available")
+        }
+        console.log(next_id, script);
+        fs.appendFileSync(inittab, 'k' + next_id + script);
     } else if (cmd === 'uninst') {
         if (installed) {
-            fs.writeFileSync(inittab, current.replace(script, ''))
+            fs.writeFileSync(inittab, current.substr(0, idx - 2) + current.substr(idx + script.length))
         } else {
-            console.log('init script not installed')
+            console.log('service not installed')
         }
     }
 }

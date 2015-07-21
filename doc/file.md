@@ -18,7 +18,6 @@ function read(file)
 
  reads file&#39;s content, returns a buffer containing its content. throws if any exception occurs
 
- 
 
 **Params**
 
@@ -27,6 +26,7 @@ function read(file)
 **Returns**
 
 > {Buffer}
+ 
 
 ------------------------------------------------------------------------
 ### write()

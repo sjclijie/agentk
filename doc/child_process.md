@@ -2,11 +2,11 @@
 # child_process
 
 Wrapper for child process
+ 
 
 ----
 
 
- 
 
 
 ## Methods
@@ -20,7 +20,6 @@ function fork(module, options)
 
 
 
- 
 
 **Params**
 
@@ -30,3 +29,4 @@ function fork(module, options)
 **Returns**
 
 > {nodejs#child_process.ChildProcess}
+ 

@@ -1,14 +1,14 @@
-<!-- @rev e6a4f99af80945079fb197eaa3b015be -->
+<!-- @rev 036378a3f54a2dbb9613ec395b24cd22 -->
 # http_response
 
 Wrapper class for http response, and basic methods to construct a response.
 
+ This module contains a class named `HttpResponse` representing
+ 
+
 ----
 
 
-
- This module contains a class named `HttpResponse` representing
- 
 
 
 ## Variable Fields
@@ -17,9 +17,9 @@ Wrapper class for http response, and basic methods to construct a response.
 
  minimum body length to enable gzip. Responses that have payload less that that size will not be gzipped.
 
- 
 #### type
 {number}
+ 
 
 #### value
 `1024`
@@ -38,6 +38,10 @@ function HttpResponse()
 
 
 
+**Returns**
+
+> {HttpResponse}
+
 ------------------------------------------------------------------------
 ### handler()
 
@@ -48,7 +52,6 @@ function handler(fun)
 
  create a HttpResponse that works with a handler
 
- 
 
 **Params**
 
@@ -57,6 +60,7 @@ function handler(fun)
 **Returns**
 
 > {HttpResponse}
+ 
 
 ------------------------------------------------------------------------
 ### data()
@@ -68,7 +72,6 @@ function data(buffer)
 
  create a HttpResponse that sends some data to the client
 
- 
 
 **Params**
 
@@ -77,6 +80,7 @@ function data(buffer)
 **Returns**
 
 > {HttpResponse}
+ 
 
 ------------------------------------------------------------------------
 ### error()
@@ -87,7 +91,6 @@ function error(code, reason)
 
 
  create a HttpResponse that responds a error
- 
 
 **Params**
 
@@ -99,6 +102,7 @@ function error(code, reason)
 **Returns**
 
 > {HttpResponse}
+ 
 
 ------------------------------------------------------------------------
 ### json()
@@ -112,7 +116,6 @@ function json(json)
 
     Content-Type: application/json
 
- 
 
 **Params**
 
@@ -122,6 +125,7 @@ function json(json)
 **Returns**
 
 > {HttpResponse}
+ 
 
 ------------------------------------------------------------------------
 ### stream()
@@ -134,7 +138,6 @@ function stream(stream)
  create a HttpResponse that responds a json, The following header will be set:
 
 
- 
 
 **Params**
 
@@ -144,6 +147,7 @@ function stream(stream)
 **Returns**
 
 > {HttpResponse}
+ 
 
 ------------------------------------------------------------------------
 ### file()
