@@ -151,7 +151,8 @@ function startProgram(dir) {
     let manifest, workerCount = 1;
     let option = {
         args: [],
-        ipc: true
+        ipc: true,
+        detached: true
     };
     try {
         manifest = JSON.parse('' + file.read(path.join(dir, 'manifest.json')));
