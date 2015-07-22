@@ -17,6 +17,7 @@ exports.promise = function (cb, arg) {
             try {
                 result = fiber.run(args);
             } catch (e) {
+                fiber = null;
                 return reject(e);
             }
             onresult(result);
@@ -27,6 +28,7 @@ exports.promise = function (cb, arg) {
             try {
                 result = fiber.throwInto(err);
             } catch (e) {
+                fiber = null;
                 return reject(e);
             }
             onresult(result);
