@@ -7,11 +7,11 @@ exports.yield = function (result) {
     return result;
 };
 
-exports.promise = function (cb) {
+exports.promise = function (cb, arg) {
     return new Promise(function (resolve, reject) {
         let fiber = new Fiber(cb);
 
-        sched();
+        sched(arg);
         function sched(args) {
             let result;
             try {

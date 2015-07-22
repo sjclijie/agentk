@@ -68,9 +68,7 @@ export function listen(port, cb) {
             req.originalUrl = req.url;
             Object.defineProperties(req, reqGetters);
 
-            co.promise(function () {
-                return cb.apply(req, [req]);
-            }).then(function (resp) { // succ
+            co.promise(resolver, req).then(function (resp) { // succ
                 if (!resp) return res.end();
 
                 res.statusCode = resp.status;
@@ -88,6 +86,10 @@ export function listen(port, cb) {
             resolve(server)
         }).on('error', reject);
     });
+
+    function resolver(req) {
+        return cb.apply(req, [req]);
+    }
 }
 
 export function request(options, body) {
