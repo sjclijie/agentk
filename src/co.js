@@ -1,16 +1,15 @@
 "use strict";
 
 let Fiber = require('fibers');
-exports.yield = Fiber.yield;
+exports.yield = function (result) {
+    if (result instanceof Promise)
+        return Fiber.yield(result);
+    return result;
+};
 
 exports.promise = function (cb) {
-    let finished = false;
     return new Promise(function (resolve, reject) {
-        let fiber = Fiber(function () {
-            let ret = cb();
-            finished = true;
-            return ret;
-        });
+        let fiber = new Fiber(cb);
 
         sched();
         function sched(args) {
@@ -34,15 +33,12 @@ exports.promise = function (cb) {
         }
 
         function onresult(result) {
-            if (finished) {
+            if (!fiber.started) {
+                fiber = null;
                 resolve(result);
                 return;
             }
-            if (result instanceof Promise) {
-                result.then(sched, onerr);
-            } else {
-                process.nextTick(sched, result);
-            }
+            result.then(sched, onerr);
         }
     });
 };
