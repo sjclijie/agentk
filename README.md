@@ -26,7 +26,7 @@ AgentK uses modern ES6 features including:
   - [modules and importing/exporting](https://github.com/lukehoban/es6features#modules)
   - [Promise](https://github.com/lukehoban/es6features#promises)
 
-It uses [Fibers](https://github.com/laverdet/node-fibers) to get around callbacks in Node.JS development. The example
+It uses [Fibers](/laverdet/node-fibers) to get around callbacks in Node.JS development. The example
 below shows a simple http server that returns static file as well as forward proxy web pages (See [test/test.js](test/test.js)):
 
 ```js
@@ -62,6 +62,8 @@ console.log('test listening on', server.address());
 ```
 Type `ak run test.js` to run the program
 
+You can get more information from our [wiki](./wiki) or [documentation](http://kyriosli.github.io/agentk/doc/) 
+
 ### Running the program
 
 Agentk can run the program directly, as well as guard its process to prevent system down, and restarts it when the server
@@ -76,14 +78,11 @@ maching is rebooted. Type `ak help` to get help message.
   - `restart`     restart program
   - `reload`      reload program (partial implemented)
   - `status`      show program status
-  - `doc`         generate documentation (not implemented)
-  - `init`        initialize project structure (not implemented)
+  - `doc`         generate documentation
+  - `init`        initialize project structure
   - `publish`     publish a module
   - `logs`        print program stdout/stderr log message
-  - `svc-install` create init.rc script (not implemented)
-  - `svc-purge`   remove init.rc script (not implemented)
-  - `svc-start`   start service daemon
-  - `svc-stop`    stop service daemon
+  - `service`     service controlling scripts
   - `completion`  auto completion helper
 
 When using `ak start program` to enable guarding of the process, a `manifest.json` must be created in the program directory (see [test/manifest.json](test/manifest.json)),
