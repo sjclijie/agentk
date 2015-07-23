@@ -48,7 +48,7 @@ function callService(cmd, options) {
 
     let co = require('../src/co.js'),
         load = require('../index.js').load;
-    co.promise(function () {
+    co.run(function () {
         let module = co.yield(load(path.join(__dirname, '../src/service/controller.js')));
 
         try {
@@ -209,7 +209,7 @@ let commands = {
             }
             let co = require('../src/co.js'),
                 load = require('../index.js').load;
-            co.promise(function () {
+            co.run(function () {
                 let module = co.yield(load(path.join(__dirname, '../src/module/doc.js')));
                 module[Symbol.for('default')](outDir, format);
             }).done();
@@ -243,7 +243,7 @@ let commands = {
             let args = arguments;
             let module = require('../index.js').load(path.join(__dirname, '../server/publish.js'));
             let co = require('../src/co.js');
-            co.promise(function () {
+            co.run(function () {
                 co.yield(module)[Symbol.for('default')](args)
             }).done()
         },

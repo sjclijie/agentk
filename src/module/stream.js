@@ -1,5 +1,5 @@
 export function read(incoming) {
-    return co.wrap(function (resolve, reject) {
+    return co.promise(function (resolve, reject) {
         let bufs = [];
         incoming.on('data', function (data) {
             bufs.push(data);

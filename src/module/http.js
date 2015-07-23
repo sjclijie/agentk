@@ -62,13 +62,13 @@ const reqGetters = {
  * @returns {node.http::Server}
  */
 export function listen(port, cb) {
-    return co.wrap(function (resolve, reject) {
+    return co.promise(function (resolve, reject) {
         let server = ohttp.createServer(function (req, res) {
             // init req object
             req.originalUrl = req.url;
             Object.defineProperties(req, reqGetters);
 
-            co.promise(resolver, req).then(function (resp) { // succ
+            co.run(resolver, req).then(function (resp) { // succ
                 if (!resp) return res.end();
 
                 res.statusCode = resp.status;
@@ -93,7 +93,7 @@ export function listen(port, cb) {
 }
 
 export function request(options, body) {
-    return co.wrap(function (resolve, reject) {
+    return co.promise(function (resolve, reject) {
         ohttp.request(options, resolve).on('error', reject).end(body);
     });
 }

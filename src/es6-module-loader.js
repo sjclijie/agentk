@@ -126,7 +126,7 @@ System.module = function (source, option) {
     let ctor = vm.runInThisContext(result, option);
 
     let module = {};
-    module[loadProgress] = co.promise(function () {
+    module[loadProgress] = co.run(function () {
         option.paths = resolveModulePath(option.dir);
         option.id = option.filename;
         return ctor(module, co, importer, Module.prototype.require.bind(option), option.filename, option.dir, moduleDefault, initModule);

@@ -48,6 +48,6 @@ export function render(name, locals) {
     if (!file.exists(filename)) {
         throw new Error("template file not found: " + name);
     }
-    return response.data(co.async(engine, filename, locals));
+    return response.data(co.sync(engine, filename, locals));
 }
 

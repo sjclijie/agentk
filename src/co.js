@@ -1,13 +1,16 @@
 "use strict";
 
 let Fiber = require('fibers');
+
+exports.Fiber = Fiber;
+
 exports.yield = function (result) {
     if (result instanceof Promise)
         return Fiber.yield(result);
     return result;
 };
 
-exports.promise = function (cb, arg) {
+exports.run = function (cb, arg) {
     return new Promise(function (resolve, reject) {
         let fiber = new Fiber(cb);
 
@@ -45,13 +48,13 @@ exports.promise = function (cb, arg) {
     });
 };
 
-exports.wrap = function (cb) {
+exports.promise = function (cb) {
     return exports.yield(new Promise(cb));
 };
 
-exports.async = function (fun) {
+exports.sync = function (fun) {
     let args = arguments;
-    return exports.yield(new Promise(function (resolve, reject) {
+    return exports.promise(function (resolve, reject) {
         if (args.length === 1) {
             fun(cb)
         } else if (args.length === 2) {
@@ -67,11 +70,11 @@ exports.async = function (fun) {
             if (err) reject(err);
             else resolve(result)
         }
-    }));
+    });
 };
 
 exports.sleep = function (timeout) {
     exports.yield(new Promise(function (resolve) {
         setTimeout(resolve, timeout);
     }))
-}
+};

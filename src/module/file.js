@@ -10,11 +10,11 @@ const ofs = require('fs'),
  * @returns {Buffer}
  */
 export function read(file) {
-    return co.async(ofs.readFile, file);
+    return co.sync(ofs.readFile, file);
 }
 
 export function write(file, content) {
-    return co.async(ofs.writeFile, file, content);
+    return co.sync(ofs.writeFile, file, content);
 }
 
 export function rm(file) {
