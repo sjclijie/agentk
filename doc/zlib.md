@@ -1,4 +1,4 @@
-<!-- @rev 79c7e374b9f774bb05d25b7f1bbdb99e a1202b -->
+<!-- @rev 1d07f5049786c74fbf3996956c4edd49 a1202b -->
 # zlib
 
 ----
@@ -41,11 +41,11 @@ function gzipTransform(stream)
 
 **Params**
 
-  - stream `net.Stream`
+  - stream `node.stream::stream.Readable`
 
 **Returns**
 
-> {net.Stream}
+> {node.stream::stream.Readable}
  
 
 ------------------------------------------------------------------------
@@ -61,9 +61,9 @@ function gunzipTransform(stream)
 
 **Params**
 
-  - stream `net.Stream`
+  - stream `node.stream::stream.Readable`
 
 **Returns**
 
-> {net.Stream}
+> {node.stream::stream.Readable}
  

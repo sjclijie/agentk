@@ -14,8 +14,8 @@ export function gzip(buffer) {
 /**
  * transforms a stream into a gzipped stream
  *
- * @param {net.Stream} stream
- * @returns {net.Stream}
+ * @param {node.stream::stream.Readable} stream
+ * @returns {node.stream::stream.Readable}
  */
 export function gzipTransform(stream) {
     return stream.pipe(ozlib.createGzip());
@@ -24,8 +24,8 @@ export function gzipTransform(stream) {
 /**
  * transforms a gzipped stream into an unzipped stream
  *
- * @param {net.Stream} stream
- * @returns {net.Stream}
+ * @param {node.stream::stream.Readable} stream
+ * @returns {node.stream::stream.Readable}
  */
 export function gunzipTransform(stream) {
     return stream.pipe(ozlib.createGunzip());

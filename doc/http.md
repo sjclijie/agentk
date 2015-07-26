@@ -1,4 +1,4 @@
-<!-- @rev 97e5ed7c9c920470ad60773d8f6c59da a1202b -->
+<!-- @rev 27f3eb7cd947a1cc731f7b08d58f4c2b a1202b -->
 # http
 
 ----
@@ -34,8 +34,8 @@ function listen(port, cb)
 
 
  Create a new http server, bind it to a port or socket file. A callback is supplied which accepts a
- `[http request](https://nodejs.org/api/http.html#http_http_incomingmessage)` object as
- parameter and returns a `[HttpResponse](http_response.html#HttpResponse)`
+ [`http.IncomingMessage`](https://nodejs.org/api/http.html#http_http_incomingmessage) object as
+ parameter and returns a [`HttpResponse`](http_response.html#HttpResponse)
 
 
 **Params**
@@ -47,7 +47,7 @@ function listen(port, cb)
 
 **Returns**
 
-> {node.http::http_Server}
+> {node.http::http.Server}
  
 
 ------------------------------------------------------------------------

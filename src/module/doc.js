@@ -19,7 +19,7 @@ const presetTypes = {
     Buffer: 'https://nodejs.org/api/buffer.html#buffer_class_buffer'
 };
 const primitiveTypes = /^(boolean|string|number|undefined|null|object|array|RegExp|Date|Error)$/;
-const rNamespace = /^(?:([\w\.]+)::)?(\w+)/;
+const rNamespace = /^(?:([\w\.]+)::)?([\w\.]+)/;
 
 function parseTypename(name) {
 
@@ -33,7 +33,7 @@ function parseTypename(name) {
             if (m) {
                 if (m[1] && m[1].substr(0, 5) === 'node.') {
                     let module = m[1].substr(5);
-                    parts[i] = `<a href="https://nodejs.org/api/${module}.html#${module}_class_${m[2].toLowerCase()}">${m[2]}</a>`
+                    parts[i] = `<a href="https://nodejs.org/api/${module}.html#${module}_class_${m[2].toLowerCase().replace(/\./g, '_')}">${m[2]}</a>`
                 } else {
                     parts[i] = `<a href="${m[1] ? m[1] + '.html' : ''}#${m[2]}">${m[0]}</a>`
                 }

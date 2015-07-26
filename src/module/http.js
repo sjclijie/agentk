@@ -59,7 +59,7 @@ const reqGetters = {
  *
  * @param {number|string} port TCP port number or unix domain socket path to listen to
  * @param {function|router::Router} cb request handler callback
- * @returns {node.http::http_Server}
+ * @returns {node.http::http.Server}
  */
 export function listen(port, cb) {
     return co.promise(function (resolve, reject) {
