@@ -1,4 +1,4 @@
-<!-- @rev 97e5ed7c9c920470ad60773d8f6c59da e1cb8a -->
+<!-- @rev be1bffca92833939b036f9824d2efaae e1cb8a -->
 <!doctype html>
 <html>
 <head>
@@ -48,15 +48,15 @@
 
         <p class="desc">
             <p> Create a new http server, bind it to a port or socket file. A callback is supplied which accepts a
- <code>[http request](https://nodejs.org/api/http.html#http_http_incomingmessage)</code> object as
- parameter and returns a <code>[HttpResponse](http_response.html#HttpResponse)</code></p>
+ <a href="https://nodejs.org/api/http.html#http_http_incomingmessage"><code>http.IncomingMessage</code></a> object as
+ parameter and returns a <a href="http_response.html#HttpResponse"><code>HttpResponse</code></a></p>
         </p>
 
         
         <h4>Example</h4>
-        <pre>   http.listen(8080, function(req) {
- return http_response.ok()
-   });
+        <pre> http.listen(8080, function(req) {
+     return http_response.ok()
+ });
 </pre>
         
 
