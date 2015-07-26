@@ -49,13 +49,13 @@ const reqGetters = {
 
 /**
  * Create a new http server, bind it to a port or socket file. A callback is supplied which accepts a
- * `[http request](https://nodejs.org/api/http.html#http_http_incomingmessage)` object as
- * parameter and returns a `[HttpResponse](http_response.html#HttpResponse)`
+ * [`http.IncomingMessage`](https://nodejs.org/api/http.html#http_http_incomingmessage) object as
+ * parameter and returns a [`HttpResponse`](http_response.html#HttpResponse)
  *
  * @example
- *   http.listen(8080, function(req) {
- *     return http_response.ok()
- *   });
+ *     http.listen(8080, function(req) {
+ *         return http_response.ok()
+ *     });
  *
  * @param {number|string} port TCP port number or unix domain socket path to listen to
  * @param {function|router::Router} cb request handler callback
