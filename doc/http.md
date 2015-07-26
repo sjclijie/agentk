@@ -1,4 +1,4 @@
-<!-- @rev 37c8b538a52f3d30033856c3d4a299c4 015c35 -->
+<!-- @rev 97e5ed7c9c920470ad60773d8f6c59da a1202b -->
 # http
 
 ----
@@ -47,7 +47,7 @@ function listen(port, cb)
 
 **Returns**
 
-> {node.http::Server}
+> {node.http::http_Server}
  
 
 ------------------------------------------------------------------------

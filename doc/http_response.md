@@ -1,13 +1,14 @@
-<!-- @rev 036378a3f54a2dbb9613ec395b24cd22 015c35 -->
+<!-- @rev f69e3cdc232f63846c6bd655c0a6b7ed a1202b -->
 # http_response
 
 Wrapper class for http response, and basic methods to construct a response.
 
- This module contains a class named `HttpResponse` representing
  
 
 ----
 
+
+ This module contains a class named `HttpResponse` representing a response to a http request.
 
 
 
@@ -157,7 +158,19 @@ function file(file)
 ```
 
 
+ create a HttpResponse that responds a local file. The local file should be present and readable,
+ otherwise empty response will be sent and no error is reported.
 
+
+**Params**
+
+  - file
+    <br>local file path
+
+**Returns**
+
+> {HttpResponse}
+ 
 
 ------------------------------------------------------------------------
 ### ok()
@@ -167,7 +180,13 @@ function ok()
 ```
 
 
+ create a empty response with status code 200.
 
+
+**Returns**
+
+> {HttpResponse}
+ 
 
 ------------------------------------------------------------------------
 ### redirect()
@@ -177,4 +196,11 @@ function redirect(url)
 ```
 
 
+ create a redirect response
+
+**Params**
+
+  - url
+    <br>redirection url
+ 
 
