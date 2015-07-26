@@ -1,4 +1,4 @@
-<!-- @rev 76ef8ea0749553f871c5752e00bfb45d -->
+<!-- @rev 7a1a0e2419e22852fc291bec06a2127a e1cb8a -->
 <!doctype html>
 <html>
 <head>
@@ -16,6 +16,13 @@
 
 
 
+<ul>
+    
+    
+    <li><a href="#fork">function fork(module, options) </a></li>
+    
+</ul>
+
 <dl id="definitions">
 
     <dt id="fork">
@@ -26,8 +33,8 @@
         <p class="proto">function fork(module, options) 
 
         <p class="desc">
-            
-
+            <p> Creates a new Node.JS process and runs the specific node module. See: <a href="https://nodejs.org/api/child_process.html#child_process_child_process_fork_modulepath_args_options">child_process.fork</a>
+ for more information about process creation.</p>
         </p>
 
         
@@ -38,13 +45,17 @@
             
             <dt>module <code>string</code></dt>
             
+            <dd><p>bootstrap module path (filename or directory with a <code>package.json</code> present)</p></dd>
             <dt>options <code>object</code></dt>
             
+            <dd><p>optional arguments</p>
+
+<ul><li>options.stdout: stdout file path to be forwarded</li><li>options.stderr: stderr file path to be forwarded</li><li>options.ipc: create a ipc channel (which enables <code>child_process.send</code> and <code>process.send</code>)</li><li>options.detached: child process is a new process group</li><li>options.uid: setuid</li><li>options.gid: setgid</li><li>options.env: environment variables</li></ul></dd>
         </dl>
         
         
         <h4>Returns</h4>
-        <p style="margin-left: 1em"><code>nodejs#child_process.ChildProcess</code></p>
+        <p style="margin-left: 1em"><code><a href="https://nodejs.org/api/child_process.html#child_process_class_childprocess">ChildProcess</a></code></p>
         
     </dd>
 

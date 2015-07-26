@@ -1,4 +1,4 @@
-<!-- @rev 036378a3f54a2dbb9613ec395b24cd22 -->
+<!-- @rev f69e3cdc232f63846c6bd655c0a6b7ed e1cb8a -->
 <!doctype html>
 <html>
 <head>
@@ -10,13 +10,19 @@
 
 <p>Wrapper class for http response, and basic methods to construct a response.
 
- This module contains a class named `HttpResponse` representing
  </p>
 
 
 
+<p> This module contains a class named <code>HttpResponse</code> representing a response to a http request.</p>
 
 
+<ul>
+    
+    <li>variable <a href="#gzip_min_body_len">gzip_min_body_len</a>:<code>number</code></li>
+    <li><a href="#HttpResponse">function HttpResponse() </a></li><li><a href="#handler">function handler(fun) </a></li><li><a href="#data">function data(buffer) </a></li><li><a href="#error">function error(code, reason) </a></li><li><a href="#json">function json(json) </a></li><li><a href="#stream">function stream(stream) </a></li><li><a href="#file">function file(file) </a></li><li><a href="#ok">function ok() </a></li><li><a href="#redirect">function redirect(url) </a></li>
+    
+</ul>
 
 <dl id="definitions">
 
@@ -25,8 +31,7 @@
         <sub>variable</sub>
     </dt>
     <dd>
-        <p class="proto">gzip_min_body_len:{number}
-  = <code>1024</code>
+        <p class="proto">gzip_min_body_len:<code>number</code> = <code>1024</code>
     
 
         <p class="desc">
@@ -34,6 +39,8 @@
  minimum body length to enable gzip. Responses that have payload less that that size will not be gzipped.
 
         </p>
+
+        
     </dd>
 
     <dt id="HttpResponse">
@@ -45,7 +52,6 @@
 
         <p class="desc">
             
-
         </p>
 
         
@@ -65,9 +71,7 @@
         <p class="proto">function handler(fun) 
 
         <p class="desc">
-            
- create a HttpResponse that works with a handler
-
+            <p> create a HttpResponse that works with a handler</p>
         </p>
 
         
@@ -76,7 +80,7 @@
         <h4>Parameters</h4>
         <dl>
             
-            <dt>fun <code>function</code></dt>
+            <dt>fun <code><a href="#function">function</a></code></dt>
             
         </dl>
         
@@ -94,9 +98,7 @@
         <p class="proto">function data(buffer) 
 
         <p class="desc">
-            
- create a HttpResponse that sends some data to the client
-
+            <p> create a HttpResponse that sends some data to the client</p>
         </p>
 
         
@@ -123,8 +125,7 @@
         <p class="proto">function error(code, reason) 
 
         <p class="desc">
-            
- create a HttpResponse that responds a error
+            <p> create a HttpResponse that responds a error</p>
         </p>
 
         
@@ -135,10 +136,10 @@
             
             <dt>code <code>number</code></dt>
             
-            <dd>The status code of the error response</dd>
+            <dd><p>The status code of the error response</p></dd>
             <dt>reason <code>Error|string</code></dt>
             
-            <dd>The extra message as the response payload</dd>
+            <dd><p>The extra message as the response payload</p></dd>
         </dl>
         
         
@@ -155,9 +156,9 @@
         <p class="proto">function json(json) 
 
         <p class="desc">
-            
- create a HttpResponse that responds a json, The following header will be set:<pre>
-    Content-Type: application/json</pre>
+            <p> create a HttpResponse that responds a json, The following header will be set:</p>
+
+<pre><code>Content-Type: application/json</code></pre>
         </p>
 
         
@@ -168,7 +169,7 @@
             
             <dt>json <code>*</code></dt>
             
-            <dd>Data to be sent</dd>
+            <dd><p>Data to be sent</p></dd>
         </dl>
         
         
@@ -185,10 +186,7 @@
         <p class="proto">function stream(stream) 
 
         <p class="desc">
-            
- create a HttpResponse that responds a json, The following header will be set:
-
-
+            <p> create a HttpResponse that responds a json, The following header will be set:</p>
         </p>
 
         
@@ -199,7 +197,7 @@
             
             <dt>json <code>*</code></dt>
             
-            <dd>Data to be sent</dd>
+            <dd><p>Data to be sent</p></dd>
         </dl>
         
         
@@ -216,12 +214,24 @@
         <p class="proto">function file(file) 
 
         <p class="desc">
-            
+            <p> create a HttpResponse that responds a local file. The local file should be present and readable,
+ otherwise empty response will be sent and no error is reported.</p>
         </p>
 
         
 
         
+        <h4>Parameters</h4>
+        <dl>
+            
+            <dt>file</dt>
+            
+            <dd><p>local file path</p></dd>
+        </dl>
+        
+        
+        <h4>Returns</h4>
+        <p style="margin-left: 1em"><code><a href="#HttpResponse">HttpResponse</a></code></p>
         
     </dd>
 
@@ -233,12 +243,15 @@
         <p class="proto">function ok() 
 
         <p class="desc">
-            
+            <p> create a empty response with status code 200.</p>
         </p>
 
         
 
         
+        
+        <h4>Returns</h4>
+        <p style="margin-left: 1em"><code><a href="#HttpResponse">HttpResponse</a></code></p>
         
     </dd>
 
@@ -250,11 +263,20 @@
         <p class="proto">function redirect(url) 
 
         <p class="desc">
-            
+            <p> create a redirect response</p>
         </p>
 
         
 
+        
+        <h4>Parameters</h4>
+        <dl>
+            
+            <dt>url</dt>
+            
+            <dd><p>redirection url
+ </p></dd>
+        </dl>
         
         
     </dd>

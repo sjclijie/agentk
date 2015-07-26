@@ -1,4 +1,4 @@
-<!-- @rev a8925fc8bfb2a72cd45ed99c80fc9ba7 -->
+<!-- @rev c666eada2bc6f94a79bba2e6afdadf44 e1cb8a -->
 <!doctype html>
 <html>
 <head>
@@ -11,6 +11,13 @@
 
 
 
+<ul>
+    <li>constant <a href="#engines">engines</a>:<code>object</code></li>
+    <li>variable <a href="#path">path</a>:<code>string</code></li><li>variable <a href="#view_engine">view_engine</a>:<code>string</code></li><li>variable <a href="#module_loader">module_loader</a>:<code><a href="#function">function</a></code></li>
+    <li><a href="#render">function render(name, locals) </a></li>
+    
+</ul>
+
 <dl id="definitions">
 
     <dt id="engines">
@@ -18,11 +25,19 @@
     <sub>constant</sub>
     </dt>
     <dd>
-        <p class="proto">engines:{object}
+        <p class="proto">engines:<code>object</code>
 
         <p class="desc">
             
+ map of view engines, user can supply a specific view engine by assigning to this object
+
         </p>
+
+        
+        <h4>Example</h4>
+        <pre> view.engines.jade = require(&#39;jade&#39;).__express;
+</pre>
+        
     </dd>
 
     <dt id="path">
@@ -30,12 +45,16 @@
         <sub>variable</sub>
     </dt>
     <dd>
-        <p class="proto">path:{string} = <code>''</code>
+        <p class="proto">path:<code>string</code> = <code>''</code>
     
 
         <p class="desc">
             
+ directory of view template files (default to current directory)
+
         </p>
+
+        
     </dd>
 
     <dt id="view_engine">
@@ -43,12 +62,15 @@
         <sub>variable</sub>
     </dt>
     <dd>
-        <p class="proto">view_engine:{string} = <code>'ejs'</code>
+        <p class="proto">view_engine:<code>string</code> = <code>'ejs'</code>
     
 
         <p class="desc">
             
+ default view engine when no extension name is supplied
         </p>
+
+        
     </dd>
 
     <dt id="module_loader">
@@ -56,11 +78,22 @@
         <sub>variable</sub>
     </dt>
     <dd>
-        <p class="proto">module_loader
+        <p class="proto">module_loader:<code><a href="#function">function</a></code>
 
         <p class="desc">
             
+ method used to load view engine by extension, default to `require`. User can supply a specific loader by assigning
+ this variable
+
         </p>
+
+        
+        <h4>Example</h4>
+        <pre> view.module_loader = function(name) {
+     return require(name).__express
+ }
+</pre>
+        
     </dd>
 
     <dt id="render">
@@ -71,12 +104,27 @@
         <p class="proto">function render(name, locals) 
 
         <p class="desc">
-            
+            <p> render a template file into response content, returns a <code>HttpResponse</code>.
+ User should specify content type if needed.</p>
         </p>
 
         
 
         
+        <h4>Parameters</h4>
+        <dl>
+            
+            <dt>name</dt>
+            
+            <dd><p>template name, with or without extension</p></dd>
+            <dt>locals</dt>
+            
+            <dd><p>local bindings</p></dd>
+        </dl>
+        
+        
+        <h4>Returns</h4>
+        <p style="margin-left: 1em"><code><a href="#HttpResponse">HttpResponse</a></code></p>
         
     </dd>
 

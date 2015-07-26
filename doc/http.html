@@ -1,4 +1,4 @@
-<!-- @rev a7b8864dc85a52c9e61bc427326daf3a -->
+<!-- @rev 97e5ed7c9c920470ad60773d8f6c59da e1cb8a -->
 <!doctype html>
 <html>
 <head>
@@ -10,10 +10,15 @@
 
 
 
+<p> Wrapper for http server/client API.</p>
 
- Wrapper for http server/client API.
 
-
+<ul>
+    
+    <li>variable <a href="#maxSockets">maxSockets</a>:<code>number</code></li>
+    <li><a href="#listen">function listen(port, cb) </a></li><li><a href="#request">function request(options, body) </a></li><li><a href="#read">function read(incoming) </a></li>
+    
+</ul>
 
 <dl id="definitions">
 
@@ -22,8 +27,7 @@
         <sub>variable</sub>
     </dt>
     <dd>
-        <p class="proto">maxSockets:{number}
-  = <code>5</code>
+        <p class="proto">maxSockets:<code>number</code> = <code>5</code>
     
 
         <p class="desc">
@@ -31,6 +35,8 @@
  maximum socket per host when calling request
 
         </p>
+
+        
     </dd>
 
     <dt id="listen">
@@ -41,17 +47,15 @@
         <p class="proto">function listen(port, cb) 
 
         <p class="desc">
-            
- Create a new http server, bind it to a port or socket file. A callback is supplied which accepts a
- <code><a href="https://nodejs.org/api/http.html#http_http_incomingmessage">http request</a></code> object as
- parameter and returns a <code><a href="http_response.html#HttpResponse">HttpResponse</a></code>
-
+            <p> Create a new http server, bind it to a port or socket file. A callback is supplied which accepts a
+ <code>[http request](https://nodejs.org/api/http.html#http_http_incomingmessage)</code> object as
+ parameter and returns a <code>[HttpResponse](http_response.html#HttpResponse)</code></p>
         </p>
 
         
         <h4>Example</h4>
         <pre>   http.listen(8080, function(req) {
-     return http_response.ok()
+ return http_response.ok()
    });
 </pre>
         
@@ -62,15 +66,15 @@
             
             <dt>port <code>number|string</code></dt>
             
-            <dd>TCP port number or unix domain socket path to listen to</dd>
-            <dt>cb <code>function|<a href="router.html#Router">router::Router</a></code></dt>
+            <dd><p>TCP port number or unix domain socket path to listen to</p></dd>
+            <dt>cb <code><a href="#function">function</a>|<a href="router.html#Router">router::Router</a></code></dt>
             
-            <dd>request handler callback</dd>
+            <dd><p>request handler callback</p></dd>
         </dl>
         
         
         <h4>Returns</h4>
-        <p style="margin-left: 1em"><code><a href="https://nodejs.org/api/http.html#http_class_http_server">node.http::Server</a></code></p>
+        <p style="margin-left: 1em"><code><a href="https://nodejs.org/api/http.html#http_class_http_server">http_Server</a></code></p>
         
     </dd>
 
