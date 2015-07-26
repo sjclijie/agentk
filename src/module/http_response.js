@@ -1,7 +1,8 @@
 /**
+ * This module contains a class named `HttpResponse` representing a response to a http request.
+ *
  * @title Wrapper class for http response, and basic methods to construct a response.
  *
- * This module contains a class named `HttpResponse` representing
  */
 import {gzip, gzipTransform} from 'zlib.js';
 
@@ -153,6 +154,13 @@ export function stream(stream) {
     })
 }
 
+/**
+ * create a HttpResponse that responds a local file. The local file should be present and readable,
+ * otherwise empty response will be sent and no error is reported.
+ *
+ * @param file local file path
+ * @returns {HttpResponse}
+ */
 export function file(file) {
     return stream(ofs.createReadStream(file).on('error', function (err) {
         console.error('unexpected file error', err);
@@ -160,10 +168,19 @@ export function file(file) {
     }));
 }
 
+/**
+ * create a empty response with status code 200.
+ *
+ * @returns {HttpResponse}
+ */
 export function ok() {
     return new HttpResponse();
 }
 
+/**
+ * create a redirect response
+ * @param url redirection url
+ */
 export function redirect(url) {
     return new HttpResponse().setStatus(302).setHeader('Location', url)
 }

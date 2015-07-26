@@ -174,9 +174,11 @@ let commands = {
     },
     "doc": {
         help: "generate documentation",
-        args: "[<program directory>] [$#Ck<--out> <output directory>] [$#Ck<--format> <html|md>]",
-        "desc": "generate documentation for all module files in <program directory>/src/module. User can specify output directory " +
-        "(default to: <program directory>/doc) and format (html or md(markdown), default to md)",
+        args: "[<program directory>] [..options]",
+        "desc": "generate documentation for all module files in <program directory>/src/module. \n\n\x1b[36mOPTIONS\x1b[0m\n\n" +
+        "  \x1b[32mprogram directory\x1b[0m: root directory of a program, default to current directory. the generator will try to find module files in \x1b[32m<program directory>\x1b[0m/src/module/\n" +
+        "  \x1b[32m--format <html|md>\x1b[0m: output format of generated files, defaults to md\n" +
+        "  \x1b[32m--out <directory>\x1b[0m: output directory for generated files, defaults to \x1b[32m<program directory>\x1b[0m/doc/",
         func: function () {
             let target, outDir, format;
             for (let i = 0, L = arguments.length; i < L;) {
@@ -340,14 +342,22 @@ let commands = {
         help: "auto completion helper",
         args: ">> ~/.bashrc (or ~/.zshrc)",
         get desc() {
-            return "enable bash completion. After install, please reopen your terminal to make sure it takes effects. \nOr you can just type in current shell:\n    . " + getCompletionFile();
+            return "enable bash completion. After install, please reopen your terminal to make sure it takes effects. \nOr you can just type in current shell:\n    $(" + exec + " completion)";
         },
         func: function (p, agentk, arg2) {
             if (!arguments.length) {
                 if (process.stdout.isTTY) {
                     showHelp()
                 } else {
-                    console.log('. ' + getCompletionFile())
+                    let file = path.join(__dirname, 'completion.sh');
+                    if (win32) {
+                        if (process.env.MSYSTEM === 'MINGW32') {
+                            file = '/' + file.replace(/[:\\]+/g, '/');
+                        } else {
+                            throw new Error("completion is not supported in this shell, Install MinGW32 and try again")
+                        }
+                    }
+                    console.log('. ' + file)
                 }
                 return;
             } else if (p !== "--") {
@@ -367,18 +377,6 @@ let commands = {
         }
     }
 };
-
-function getCompletionFile() {
-    let file = path.join(__dirname, 'completion.sh');
-    if (win32) {
-        if (process.env.MSYSTEM === 'MINGW32') {
-            file = '/' + file.replace(/[:\\]+/g, '/');
-        } else {
-            throw new Error("completion is not supported in this shell, Install MinGW32 and try again")
-        }
-    }
-    return file;
-}
 
 
 function rcScript(cmd, uname) {

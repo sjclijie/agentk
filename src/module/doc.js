@@ -19,10 +19,11 @@ const presetTypes = {
     Buffer: 'https://nodejs.org/api/buffer.html#buffer_class_buffer'
 };
 const primitiveTypes = /^(boolean|string|number|undefined|null|object|array|RegExp|Date|Error)$/;
-const rNamespace = /^(?:([\w\.]+)::)?([A-Z]\w+)/;
+const rNamespace = /^(?:([\w\.]+)::)?(\w+)/;
 
 function parseTypename(name) {
-    let parts = name.split('|');
+
+    let parts = name.replace(/^\s*\{|\}\s*$/g, '').split('|');
     for (var i = 0, L = parts.length; i < L; i++) {
         var part = parts[i];
         if (part in presetTypes) {
@@ -32,7 +33,7 @@ function parseTypename(name) {
             if (m) {
                 if (m[1] && m[1].substr(0, 5) === 'node.') {
                     let module = m[1].substr(5);
-                    parts[i] = `<a href="https://nodejs.org/api/${module}.html#${module}_class_${module}_${m[2].toLowerCase()}">${m[0]}</a>`
+                    parts[i] = `<a href="https://nodejs.org/api/${module}.html#${module}_class_${m[2].toLowerCase()}">${m[2]}</a>`
                 } else {
                     parts[i] = `<a href="${m[1] ? m[1] + '.html' : ''}#${m[2]}">${m[0]}</a>`
                 }
@@ -47,10 +48,12 @@ export default function (outDir, format) {
     //console.log(outDir, format);
 
     let cssFile = path.join(outDir, 'doc.css');
-    const template = require('ejs').compile(file.read(path.join(__dirname, '../../doc/doc_template.' + (format === 'html' ? 'ejs' : format))).toString('utf8'));
+    const tpl_content = file.read(path.join(__dirname, '../../doc/doc_template.' + (format === 'html' ? 'ejs' : format))),
+        tpl_checksum = md5(tpl_content, 'hex').substr(0, 6),
+        template = require('ejs').compile(tpl_content.toString('utf8'));
     file.mkParentDir(cssFile);
 
-    let modules;
+    let modules, parseMarkup;
     if (format === 'html') {
         modules = [];
         let cssInput = path.join(__dirname, '../../doc/doc.css'),
@@ -59,6 +62,7 @@ export default function (outDir, format) {
         if (!file.exists(cssFile) || Buffer.compare(md5(cssContent), md5(file.read(cssFile)))) {
             file.write(cssFile, cssContent);
         }
+        parseMarkup = require('../markdown.js').toHTML;
     }
     onDir('.');
     if (format === 'html') {
@@ -78,21 +82,22 @@ export default function (outDir, format) {
                     output = path.join(outDir, namespace + '.' + format);
                 let fileContent = file.read(name),
                     checksum = md5(fileContent, 'hex');
-                if (file.exists(output)) {
-                    if (file.read(output).slice(0, 46).toString('binary') === `<!-- @rev ${checksum} -->`) {
-                        // docfile is up to date
-                        //console.log(name, 'up to date');
-                        // return
-                    }
-                }
-                if (format === 'html') {
+                if (modules) {
                     modules.push(namespace);
+                }
+                if (file.exists(output)) {
+                    if (file.read(output).slice(0, 53).toString('binary') === `<!-- @rev ${checksum} ${tpl_checksum} -->`) {
+                        console.log(name, 'up to date');
+                        continue
+                    }
                 }
                 let module = onFile(fileContent, name);
                 if (!module) return;
                 module.namespace = namespace;
                 module.checksum = checksum;
+                module.tpl_checksum = tpl_checksum;
                 module.parseTypename = parseTypename;
+                module.parseMarkup = parseMarkup;
                 file.write(output, template(module));
             }
         }
@@ -321,23 +326,26 @@ export default function (outDir, format) {
             for (let i = 0, L = lines.length; i < L; i++) {
                 let line = lines[i], m = / @(\w+) ?/.exec(line);
                 if (m) {
-                    if (prev === 'param') {
-                        if (prev in parts) {
-                            parts[prev].push(cache);
-                        } else {
-                            parts[prev] = [cache]
-                        }
-                    } else {
-                        parts[prev] = cache;
-                    }
+                    onPart();
                     prev = m[1];
                     cache = line.substr(m[0].length);
                 } else {
                     cache += '\n' + line;
                 }
             }
-            parts[prev] = cache;
+            onPart();
             return parts;
+            function onPart() {
+                if (prev === 'param') {
+                    if (prev in parts) {
+                        parts[prev].push(cache);
+                    } else {
+                        parts[prev] = [cache]
+                    }
+                } else {
+                    parts[prev] = cache;
+                }
+            }
         }
     }
 

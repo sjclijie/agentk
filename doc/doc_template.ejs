@@ -1,4 +1,4 @@
-<!-- @rev <%= checksum %> -->
+<!-- @rev <%- checksum %> <%- tpl_checksum %> -->
 <!doctype html>
 <html>
 <head>
@@ -12,8 +12,15 @@
 <% } %>
 
 <% if (meta) { %>
-<%= meta.description %>
+<%- parseMarkup(meta.description) %>
 <% } %>
+
+<ul>
+    <% consts.forEach(function(obj) {%><li>constant <a href="#<%- obj.name %>"><%- obj.name %></a><% if(obj.comment.type) { %>:<code><%- parseTypename(obj.comment.type) %></code><% } %></li><%})%>
+    <% variables.forEach(function(obj) {%><li>variable <a href="#<%- obj.name %>"><%- obj.name %></a><% if(obj.comment.type) { %>:<code><%- parseTypename(obj.comment.type) %></code><% } %></li><%})%>
+    <% methods.forEach(function(method) {%><li><a href="#<%- method.name %>"><%- method.prototype %></a></li><%})%>
+    <% if(_default) {%><li>module default: <a href="#<%- _default.name %>"><%- _default.type %> <%- _default.name %></a></li><% } %>
+</ul>
 
 <dl id="definitions">
 <%
@@ -23,13 +30,18 @@ consts.forEach(function(obj) {var comment = obj.comment; %>
     <sub>constant</sub>
     </dt>
     <dd>
-        <p class="proto"><%- obj.name %><% if(comment.type) { %>:<%- comment.type %><% }
+        <p class="proto"><%- obj.name %><% if(comment.type) { %>:<code><%- parseTypename(comment.type) %></code><% }
             if(obj.value) { %> = <code><%- obj.value %></code>
             <% } %>
 
         <p class="desc">
             <%= comment.description %>
         </p>
+
+        <% if(comment.example) { %>
+        <h4>Example</h4>
+        <pre><%= comment.example.replace(/^    |^\r?\n/gm, '') %></pre>
+        <% }%>
     </dd>
 <% });
 variables.forEach(function(obj) {var comment = obj.comment; %>
@@ -38,13 +50,18 @@ variables.forEach(function(obj) {var comment = obj.comment; %>
         <sub>variable</sub>
     </dt>
     <dd>
-        <p class="proto"><%- obj.name %><% if(comment.type) { %>:<%- comment.type %><% }
+        <p class="proto"><%- obj.name %><% if(comment.type) { %>:<code><%- parseTypename(comment.type) %></code><% }
     if(obj.value) { %> = <code><%- obj.value %></code>
     <% } %>
 
         <p class="desc">
             <%= comment.description %>
         </p>
+
+        <% if(comment.example) { %>
+        <h4>Example</h4>
+        <pre><%= comment.example.replace(/^    |^\r?\n/gm, '') %></pre>
+        <% }%>
     </dd>
 <% });
 methods.forEach(function (method) {var comment = method.comment; %>
@@ -56,25 +73,21 @@ methods.forEach(function (method) {var comment = method.comment; %>
         <p class="proto"><%- method.prototype %>
 
         <p class="desc">
-            <%- comment.description ? comment.description
-                    .replace(/`(.*)`/g, '<code>$1</code>')
-                    .replace(/\r?\n *((?:\r?\n    .*)+)\r?\n/g, '<pre>$1</pre>')
-                    .replace(/\[(.+?)\]\((.+?)\)/g, '<a href="$2">$1</a>')
-                  : '' %>
+            <%- comment.description ? parseMarkup(comment.description) : '' %>
         </p>
 
         <% if(comment.example) { %>
         <h4>Example</h4>
-        <pre><%= comment.example.replace(/^\r?\n/m, '') %></pre>
+        <pre><%= comment.example.replace(/^    |^\r?\n/gm, '') %></pre>
         <% }%>
 
         <% if(comment.param) {%>
         <h4>Parameters</h4>
         <dl>
-            <% comment.param.forEach(function(param){var m = /^(?:\{(.+)\}\s*)?(\w+)\s*(.*)/.exec(param); %>
+            <% comment.param.forEach(function(param){var m = /^(?:\{(.+)\}\s*)?(\w+)\s*([\s\S]*)/.exec(param); %>
             <dt><%- m[2]%><% if(m[1]) {%> <code><%- parseTypename(m[1])%></code><%}%></dt>
             <%if(m[3]) {%>
-            <dd><%= m[3]%></dd><%}
+            <dd><%- parseMarkup(m[3])%></dd><%}
             })%>
         </dl>
         <% } %>

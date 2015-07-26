@@ -1,4 +1,4 @@
-<!-- @rev <%= checksum %> -->
+<!-- @rev <%- checksum %> <%- tpl_checksum %> -->
 # <%= namespace %>
 <% if(meta && meta.title) {%>
 <%=meta.title%>

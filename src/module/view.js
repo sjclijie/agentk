@@ -3,17 +3,52 @@ import * as file from 'file.js';
 
 const opath = require('path');
 
+/**
+ * directory of view template files (default to current directory)
+ *
+ * @type {string}
+ */
 export let path = '';
+
+/**
+ * default view engine when no extension name is supplied
+ * @type {string}
+ */
 export let view_engine = 'ejs';
+
+/**
+ * map of view engines, user can supply a specific view engine by assigning to this object
+ *
+ * @example
+ *
+ *     view.engines.jade = require('jade').__express;
+ *
+ * @type {object}
+ */
 export const engines = {};
-export let module_loader = require;
+
+/**
+ * method used to load view engine by extension, default to `require`. User can supply a specific loader by assigning
+ * this variable
+ *
+ * @example
+ *
+ *     view.module_loader = function(name) {
+ *         return require(name).__express
+ *     }
+ *
+ * @type {function}
+ */
+export let module_loader = function(name) {
+    return require(name).__express
+};
 
 Object.defineProperty(engines, 'ejs', {
     configurable: true,
     get: function () {
         let ejs;
         try {
-            ejs = module_loader('ejs').__express;
+            ejs = module_loader('ejs');
         } catch (e) {
             ejs = require('ejs').__express;
         }
@@ -24,6 +59,14 @@ Object.defineProperty(engines, 'ejs', {
     }
 });
 
+/**
+ * render a template file into response content, returns a `HttpResponse`.
+ * User should specify content type if needed.
+ *
+ * @param name template name, with or without extension
+ * @param locals local bindings
+ * @returns {HttpResponse}
+ */
 export function render(name, locals) {
     let ext = opath.extname(name),
         filename = opath.join(path, name);
@@ -38,7 +81,7 @@ export function render(name, locals) {
     let engine = engines[ext];
     if (!engine) {
         try {
-            engine = engines[ext] = module_loader(ext).__express;
+            engine = engines[ext] = module_loader(ext);
         } catch (e) {
         }
     }

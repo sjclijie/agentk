@@ -2,6 +2,6 @@
 .DS_Store
 /server/log
 /test/log
-/demo/src/module/
+/demo/src/module
 /doc/*.html
-demo/work/log
+/demo/work/log
