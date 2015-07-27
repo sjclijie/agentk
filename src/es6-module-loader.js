@@ -165,22 +165,18 @@ function compile(source, option) {
     if (hasAliasedImport || handleTemplate) {
         handleScope(parsed, globals, replace);
 
-        if (exports) {// replace exports
+        if (hasAliasedImport && exports) {// replace exports
             const exports_replacer = createReplacement(exports[1]);
             let parsed_export = esprima.parse(exports[1], parseOption);
             handleScope(parsed_export, globals, exports_replacer.replace);
             exports[1] = exports_replacer.concat();
         }
     }
-    //console.log(globals, replaces);
 
     let body = replacer.concat();
     if (exports)
         body = exports[0] + body + exports[1];
     return '(function(module, co, include, require, __filename, __dirname, moduleDefault, initModule) {"use strict";' + body + '\nreturn module})';
-    //console.log(option.filename, result);
-
-
 }
 
 function createReplacement(source) {
