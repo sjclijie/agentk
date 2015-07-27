@@ -328,13 +328,7 @@ let commands = {
                     buf = completion(buf, arg1, line.substr(0, line.indexOf(':')))
                 }
                 return buf;
-            } else if (arg0 === 'uninst') {
-                let buf = '';
-                let inittab = fs.readFileSync('/etc/inittab', 'binary'), r = /^k\w:2345:respawn:\/bin\/sh \S+ "([^"]+)"/gm, m;
-                while (m = r.exec(inittab)) {
-                    buf = completion(buf, arg1, m[1]);
-                }
-                return buf;
+            } else if (arg0 === 'uninst') { // TODO: completion
             }
         }
     },
@@ -381,43 +375,21 @@ let commands = {
 
 function rcScript(cmd, uname) {
     if (process.platform !== 'linux')
-        return console.log(cmd + ' is only supported on linux');
-    if (process.getuid()) {
-        return console.log(cmd + ' must be run with root privilege')
-    }
+    //return console.log('service is only supported on linux');
+        if (process.getuid()) {
+            return console.log(cmd + ' must be run with root privilege')
+        }
     if (!uname) {
         uname = process.env.USER;
         console.log(xtermEscape('$#ry<WARN> username not specified, using ' + uname));
     }
-    let inittab = '/etc/inittab',
-        script = ':2345:respawn:/bin/sh "' + __dirname + '/daemon.sh" "' + uname + '" "' + process.execPath + '"\n',
-        current = fs.readFileSync(inittab, 'utf8');
-
-    let idx = current.indexOf(script), installed = idx !== -1;
-
-    if (cmd === 'install') {
-        if (installed) {
-            return console.log('service already installed')
+    require('child_process').spawn('/bin/sh', [path.join(__dirname, 'daemon.sh'), cmd], {
+        stdio: 'inherit',
+        env: {
+            NODE_EXEC: process.execPath,
+            INSTALL_USER: uname
         }
-        let found_ids = current.match(/^k[0-9a-zA-Z]:/mg), next_id;
-        for (let i of '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ') {
-            if (!found_ids || found_ids.indexOf('k' + i + ':') === -1) {
-                next_id = i;
-                break
-            }
-        }
-        if (!next_id) {
-            throw new Error("no unique key available")
-        }
-        console.log(next_id, script);
-        fs.appendFileSync(inittab, 'k' + next_id + script);
-    } else if (cmd === 'uninst') {
-        if (installed) {
-            fs.writeFileSync(inittab, current.substr(0, idx - 2) + current.substr(idx + script.length))
-        } else {
-            console.log('service not installed')
-        }
-    }
+    });
 }
 
 function completeRunningJobs(arg) {
