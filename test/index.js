@@ -31,3 +31,12 @@ setTimeout(function () {
     assertEqual(b.getA(), a);
     assertEqual(b.getDefault(), 0);
 });
+
+let c = System.module('import {c} from "a";' +
+    ' export {c as cc}');
+
+setTimeout(function () {
+    console.log('test module c');
+    c.cc(12345);
+    assertEqual(a.b, 12345);
+});

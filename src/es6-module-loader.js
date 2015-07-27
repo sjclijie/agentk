@@ -154,7 +154,9 @@ function compile(source, option) {
     } catch (e) {
         throw new Error("Error parsing file " + option.filename + ": " + e.message)
     }
-    let replaces = [], globals = {};
+    const replacer = createReplacement(source),
+        replace = replacer.replace,
+        globals = {};
     option = option || {filename: '/'};
     option.dir = path.dirname(option.filename);
     let hasAliasedImport = findImports(parsed, globals, replace, option);
@@ -162,36 +164,47 @@ function compile(source, option) {
 
     if (hasAliasedImport || handleTemplate) {
         handleScope(parsed, globals, replace);
+
+        if (exports) {// replace exports
+            const exports_replacer = createReplacement(exports[1]);
+            let parsed_export = esprima.parse(exports[1], parseOption);
+            handleScope(parsed_export, globals, exports_replacer.replace);
+            exports[1] = exports_replacer.concat();
+        }
     }
     //console.log(globals, replaces);
 
-    let result = '(function(module, co, include, require, __filename, __dirname, moduleDefault, initModule) {"use strict";',
-        currentPos = 0;
-    if (replaces.length) {
-        if (exports) result += exports[0];
-        replaces.sort(function (a, b) {
-            return a[0] - b[0];
-        });
-
-
-        for (let repl of replaces) {
-            result += source.substring(currentPos, repl[0]) + repl[2];
-            currentPos = repl[1];
-        }
-        result += source.substring(currentPos);
-
-        if (exports) result += exports[1];
-    } else {
-        result += source;
-    }
-    result += '\nreturn module})';
+    let body = replacer.concat();
+    if (exports)
+        body = exports[0] + body + exports[1];
+    return '(function(module, co, include, require, __filename, __dirname, moduleDefault, initModule) {"use strict";' + body + '\nreturn module})';
     //console.log(option.filename, result);
-    return result;
 
-    function replace(target, replacement) {
-        let range = target.range;
-        range.push(replacement);
-        replaces.push(range);
+
+}
+
+function createReplacement(source) {
+    const replaces = [];
+    return {
+        replace: function (target, replacement) {
+            let range = target.range;
+            range.push(replacement);
+            replaces.push(range);
+        },
+        concat: function () {
+            if (!replaces.length) return source;
+            replaces.sort(function (a, b) {
+                return a[0] - b[0];
+            });
+
+            let result = '', currentPos = 0;
+            for (let repl of replaces) {
+                result += source.substring(currentPos, repl[0]) + repl[2];
+                currentPos = repl[1];
+            }
+            result += source.substring(currentPos);
+            return result;
+        }
     }
 }
 
