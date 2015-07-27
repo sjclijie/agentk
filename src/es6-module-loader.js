@@ -264,8 +264,12 @@ function findExports(body, replace) {
             for (let name of names) {
                 let local = name in locals ? locals[name] : name,
                     isconst = local in consts;
-                ret += '' + JSON.stringify(name) + ':{get:function(){return ' + local + '}' +
-                    (isconst ? '' : ', set:function($_){' + local + '=$_}') + '},\n'
+                ret += '' + JSON.stringify(name);
+                if (isconst) {
+                    ret += ':{value:' + local + '},\n'
+                } else {
+                    ret += ':{get:function(){return ' + local + '}, set:function(_' + local + '){' + local + '=_' + local + '}' + '},\n'
+                }
             }
             ret = ret.substr(0, ret.length - 2) + '\n});';
             return [head, ret];

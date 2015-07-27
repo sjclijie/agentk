@@ -14,19 +14,15 @@ function Router(cb) {
 }
 
 Router.prototype.all = function (cb) {
-    let ret = new Router(cb);
-    this.nexts.push(ret);
-    return ret;
+    this.nexts.push(cb);
 };
 
 Router.prototype.exact = function (url, cb) {
-    let ret = new Router(cb);
     this.nexts.push(function (req) {
         if (req.pathname === url) {
-            return ret.apply(req, arguments);
+            return cb.apply(req, arguments);
         }
     });
-    return ret;
 };
 
 Router.prototype.prefix = function (prefix, cb) {
