@@ -1,0 +1,73 @@
+<!-- @rev fe9d6161aa6062f8b712e333a3e2e25a e1cb8a -->
+<!doctype html>
+<html>
+<head>
+    <title>legacy -- AgentK Documentation Generator</title>
+    <link rel="stylesheet" href="doc.css"/>
+</head>
+<body>
+<h1>legacy</h1>
+
+<p>Legacy support module
+ </p>
+
+
+
+<p> Converts some popular code styles into AgentK style.</p>
+
+
+<ul>
+    
+    
+    <li><a href="#middleware">function middleware(cb) </a></li>
+    
+</ul>
+
+<dl id="definitions">
+
+    <dt id="middleware">
+        <div>middleware()</div>
+        <sub>method</sub>
+    </dt>
+    <dd>
+        <p class="proto">function middleware(cb) 
+
+        <p class="desc">
+            <p> Wrap an connect/express style middleware into AgentK route handler</p>
+        </p>
+
+        
+        <h4>Example</h4>
+        <pre> import Router from &#39;router.js&#39;;
+ import {middleware} from &#39;legacy.js&#39;;
+ let cookieParser = require(&#39;cookie-parser&#39;)()
+ let route = new Router();
+ route.prefix(&#39;/user/&#39;, middleware(function (req, res, next) {
+     // express style code here
+ }));
+ route.prefix(&#39;/static/&#39;, middleware(cookieParser))
+</pre>
+        
+
+        
+        <h4>Parameters</h4>
+        <dl>
+            
+            <dt>cb</dt>
+            
+            <dd><p>middleware callback with 3 arguments:</p>
+
+<ol><li>req: request object</li><li>res: response object</li><li>next: called on success or failed</li></ol></dd>
+        </dl>
+        
+        
+        <h4>Returns</h4>
+        <p style="margin-left: 1em"><code><a href="#function">function</a></code></p>
+        
+    </dd>
+
+</dl>
+
+
+</body>
+</html>

@@ -1,0 +1,88 @@
+<!-- @rev 63a8c2d60b5cb1883749f5094a7e30d1 e1cb8a -->
+<!doctype html>
+<html>
+<head>
+    <title>static_file -- AgentK Documentation Generator</title>
+    <link rel="stylesheet" href="doc.css"/>
+</head>
+<body>
+<h1>static_file</h1>
+
+<p>static file request handler
+ </p>
+
+
+
+
+
+
+<ul>
+    <li>constant <a href="#mimeTypes">mimeTypes</a>:<code>object</code></li>
+    
+    <li><a href="#staticFile">function staticFile(directory, option) </a></li>
+    <li>module default: <a href="#staticFile">function staticFile</a></li>
+</ul>
+
+<dl id="definitions">
+
+    <dt id="mimeTypes">
+    <div>mimeTypes</div>
+    <sub>constant</sub>
+    </dt>
+    <dd>
+        <p class="proto">mimeTypes:<code>object</code>
+
+        <p class="desc">
+            
+ filename extension to mime type map
+
+        </p>
+
+        
+    </dd>
+
+    <dt id="staticFile">
+        <div>staticFile()</div>
+        <sub>method</sub>
+    </dt>
+    <dd>
+        <p class="proto">function staticFile(directory, option) 
+
+        <p class="desc">
+            
+        </p>
+
+        
+        <h4>Example</h4>
+        <pre> import Router from &#39;router.js&#39;;
+ import staticFile from &#39;static_file.js&#39;;
+ let route = new Router();
+ route.prefix(&#39;/static/&#39;, staticFile(&#39;static&#39;))
+</pre>
+        
+
+        
+        <h4>Parameters</h4>
+        <dl>
+            
+            <dt>directory <code>string</code></dt>
+            
+            <dd><p>absolute path or relative to working directory</p></dd>
+            <dt>option <code>object</code></dt>
+            
+            <dd><p>optional parameters:</p>
+
+<ul><li>no_cache:<code>boolean</code> disable file cache, default to false</li><li>expires:<code>number</code> duration before expiration in ms, default to 0</li><li>cached:<code>number</code> file modification check iteration in ms, default to 3s</li><li>gzip:<code>boolean</code> enable gzip, default to false</li></ul></dd>
+        </dl>
+        
+        
+        <h4>Returns</h4>
+        <p style="margin-left: 1em"><code><a href="#function">function</a></code>router handle</p>
+        
+    </dd>
+
+</dl>
+
+
+</body>
+</html>
