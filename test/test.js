@@ -3,6 +3,8 @@ import * as response from '../src/module/http_response.js';
 import Router from '../src/module/router.js';
 import * as view from '../src/module/view.js';
 
+import staticFile from '../src/module/static_file.js';
+
 const route = new Router(function (req) {
     req.timeStart = Date.now();
 });
@@ -15,10 +17,10 @@ route.exact('/favicon.ico', function () {
     return response.error(404);
 });
 
-route.prefix('/static', function (req) {
-    console.log(req.timeStart, req.url);
-    return response.file(req.url.substr(1)).setHeader('Content-Type', 'text/javascript').enableGzip();
-});
+route.prefix('/static', staticFile('.', {
+    expires: 5 * 60e3, // 5min
+    gzip: true
+}));
 
 route.match(/^\/([^\/]+)(\/.*)/, function (req, host, path) {
     console.log(host, path);

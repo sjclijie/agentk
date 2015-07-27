@@ -99,6 +99,8 @@ listen(3000, function (req, res) {
 });
 
 
+export * from 'http.js';
+
 // a.js
 export default 0;
 

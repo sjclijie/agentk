@@ -63,10 +63,11 @@ const reqGetters = {
  */
 export function listen(port, cb) {
     return co.promise(function (resolve, reject) {
-        let server = ohttp.createServer(function (req, res) {
+        ohttp.createServer(function (req, res) {
             // init req object
             req.originalUrl = req.url;
             Object.defineProperties(req, reqGetters);
+            req.response = res;
 
             co.run(resolver, req).then(function (resp) { // succ
                 if (!resp) return res.end();
@@ -83,7 +84,7 @@ export function listen(port, cb) {
                 console.error(err.stack);
             })
         }).listen(port, function () {
-            resolve(server)
+            resolve(this)
         }).on('error', reject);
     });
 
