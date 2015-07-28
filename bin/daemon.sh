@@ -2,11 +2,11 @@
 
 # usage: NODE_EXEC=/usr/bin/node INSTALL_USER=john sh /.../bin/daemon.sh {install|uninst}
 
-method=sysv
 
-command -v initctl > /dev/null 2>&1 && method=upstart
+command -v initctl > /dev/null 2>&1 || { echo 'WARN: service daemon currently support upstart only, plz contact your admin'; }
 
-[ "$method" = "upstart" ] || { echo 'service daemon currently support upstart only, plz contact your admin'; exit 1; }
+method=upstart
+
 
 upstart_install() {
     filename="/etc/init/ak_${INSTALL_USER}.conf"
@@ -22,14 +22,7 @@ stop on runlevel [016]
 
 respawn
 
-script
-    exec /bin/su ${INSTALL_USER} << EOC
-        cd
-        mkdir -p .agentk
-        cd .agentk
-        exec ${NODE_EXEC} --harmony "${dir}/index.js" load "${dir}/src/service/daemon.js" >> out.log 2>> err.log
-    EOC
-end script
+exec /bin/su -c "cd ; mkdir -p .agentk ; cd .agentk ; exec ${NODE_EXEC} --harmony '${dir}/index.js' load '${dir}/src/service/daemon.js' >> out.log 2>> err.log" ${INSTALL_USER}
 EOF
 
 echo "${INSTALL_USER}: service installed, use 'initctl start ak_${INSTALL_USER}' to start the service"

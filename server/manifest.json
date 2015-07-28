@@ -5,10 +5,8 @@
   "stderr": "log/stderr.log",
   "config": {
     "storage": {
-      "name": "aliyun_oss",
-      "bucket": "agent-k",
-      "host": "agent-k.oss-cn-beijing.aliyuncs.com",
-      "keyfile": "/Users/kyriosli/oss.json"
+      "name": "file",
+      "directory": "modules"
     },
     "port": "8800"
   }
