@@ -7,7 +7,7 @@
     "storage": {
       "name": "file",
       "directory": "modules",
-      "host": "l-qzz1.fe.dev.cn6"
+      "host": "l-qzz1.fe.dev.cn6:8800"
     },
     "port": "8800"
   }
