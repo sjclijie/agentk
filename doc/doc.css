@@ -117,5 +117,12 @@ ul {
 .frames > .content {
     flex: 1;
     overflow-y: scroll;
-    margin: 20px;
+    padding: 20px;
+}
+
+.meta-description {
+    font-size: 14px;
+    padding: 6px;
+    background: #F8F8F8;
+    box-shadow: 0 0 1px #EEE;
 }

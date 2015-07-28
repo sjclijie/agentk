@@ -12,7 +12,10 @@
         <% if(module.namespace === namespace) { %>
         <%- module.namespace %>
         <% } else { %>
-        <a href="<%- module.namespace %>.html"><%- module.namespace %></a>
+        <a href="<%- module.namespace %>.html"
+           <% if(module.meta && module.meta.title) { %>title="<%- module.meta.title %>"
+                <% } %>
+                ><%- module.namespace %></a>
         <% } %>
     </li>
     <% }) %>
@@ -24,7 +27,9 @@
 <% } %>
 
 <% if (meta) { %>
-<%- parseMarkup(meta.description) %>
+<div class="meta-description">
+    <%- parseMarkup(meta.description) %>
+</div>
 <% } %>
 
 <ul>

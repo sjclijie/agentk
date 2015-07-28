@@ -1,4 +1,8 @@
-"use strict";
+/**
+ * Welcome to AgentK documentation generator! This page is automatically generated from source file.
+ *
+ * @title AgentK documentation generator
+ */
 
 import * as file from 'file.js';
 import {md5} from 'crypto.js';
