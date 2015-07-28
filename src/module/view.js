@@ -39,7 +39,7 @@ export const engines = {};
  *
  * @type {function}
  */
-export let module_loader = function(name) {
+export let module_loader = function (name) {
     return require(name).__express
 };
 

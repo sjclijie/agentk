@@ -114,6 +114,8 @@ ul {
     line-height: 20px;
 }
 
-.frames > iframe {
-    flex: 1
+.frames > .content {
+    flex: 1;
+    overflow-y: scroll;
+    margin: 20px;
 }

@@ -5,7 +5,19 @@
     <title><%= namespace %> -- AgentK Documentation Generator</title>
     <link rel="stylesheet" href="doc.css"/>
 </head>
-<body>
+<body class="frames">
+<ul>
+    <% modules.forEach(function(module) { %>
+    <li>
+        <% if(module.namespace === namespace) { %>
+        <%- module.namespace %>
+        <% } else { %>
+        <a href="<%- module.namespace %>.html"><%- module.namespace %></a>
+        <% } %>
+    </li>
+    <% }) %>
+</ul>
+<div class="content">
 <h1><%= namespace %></h1>
 <% if(meta && meta.title) { %>
 <p><%= meta.title %></p>
@@ -99,6 +111,6 @@ methods.forEach(function (method) {var comment = method.comment; %>
 <%})%>
 </dl>
 
-
+</div>
 </body>
 </html>
