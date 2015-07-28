@@ -22,12 +22,13 @@ import * as http from '../src/module/http.js';
 import * as response from '../src/module/http_response.js';
 import * as file from '../src/module/file.js';
 import {md5} from '../src/module/crypto.js';
+import * as watcher from '../src/module/q_watcher.js';
 
+watcher.listen(8801);
 
 const storage = manifest.config.storage;
 if (storage.name == 'aliyun_oss') {
     const entry = include('aliyun_oss.js', __dirname);
-
     storage.key = JSON.parse(file.read(storage.keyfile).toString());
     storage.get = function (req) {
         let tres = entry.get(storage, req.url, {});
@@ -63,6 +64,7 @@ if (storage.name == 'aliyun_oss') {
 let server = http.listen(manifest.config.port, function (req) {
     console.log(req.method, req.url);
     if (req.method === 'PUT') {
+        let uploadStart = Date.now();
         let m = /^\/([^\/]+)\.js$/.exec(req.url);
         if (!m) {
             return response.error(404);
@@ -82,8 +84,10 @@ let server = http.listen(manifest.config.port, function (req) {
         if (tres.statusCode >= 300) { // not OK
             return response.stream(tres).setStatus(tres.statusCode);
         }
+        watcher.incrRecord('upload', Date.now() - uploadStart);
         return response.ok();
     } else if (req.method === 'GET') {
+        watcher.incrRecord('download');
         return storage.get(req);
     } else {
         return response.error(401, 'method not implemented')
