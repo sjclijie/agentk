@@ -22,7 +22,14 @@ stop on runlevel [016]
 
 respawn
 
-exec /bin/su -c "cd ; mkdir -p .agentk ; cd .agentk ; exec ${NODE_EXEC} --harmony '${dir}/index.js' load '${dir}/src/service/daemon.js' >> out.log 2>> err.log" ${INSTALL_USER}
+script
+    exec /bin/su ${INSTALL_USER} << EOC
+        cd
+        mkdir -p .agentk
+        cd .agentk
+        exec ${NODE_EXEC} --harmony "${dir}/index.js" load "${dir}/src/service/daemon.js" >> out.log 2>> err.log
+    EOC
+end script
 EOF
 
 echo "${INSTALL_USER}: service installed, use 'initctl start ak_${INSTALL_USER}' to start the service"

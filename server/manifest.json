@@ -6,7 +6,8 @@
   "config": {
     "storage": {
       "name": "file",
-      "directory": "modules"
+      "directory": "modules",
+      "host": "l-qzz1.fe.dev.cn6"
     },
     "port": "8800"
   }
