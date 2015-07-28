@@ -84,10 +84,10 @@ let server = http.listen(manifest.config.port, function (req) {
         if (tres.statusCode >= 300) { // not OK
             return response.stream(tres).setStatus(tres.statusCode);
         }
-        watcher.incrRecord('upload', Date.now() - uploadStart);
+        watcher.recordOne('upload', Date.now() - uploadStart);
         return response.ok();
     } else if (req.method === 'GET') {
-        watcher.incrRecord('download');
+        watcher.recordOne('download');
         return storage.get(req);
     } else {
         return response.error(401, 'method not implemented')
