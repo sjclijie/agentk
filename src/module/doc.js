@@ -22,7 +22,7 @@ const parseOption = {
 const presetTypes = {
     Buffer: 'https://nodejs.org/api/buffer.html#buffer_class_buffer'
 };
-const primitiveTypes = /^(boolean|string|number|undefined|null|object|function|array|RegExp|Date|Error)$/;
+const primitiveTypes = /^(boolean|string|number|undefined|null|object|function|Array|RegExp|Date|Error)$/;
 const rNamespace = /^(?:([\w\.]+)::)?([\w\.]+)/;
 
 function parseTypename(name) {
