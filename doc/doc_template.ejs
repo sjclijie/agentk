@@ -1,4 +1,3 @@
-<!-- @rev <%- checksum %> <%- tpl_checksum %> -->
 <!doctype html>
 <html>
 <head>
@@ -30,6 +29,13 @@
 <div class="meta-description">
     <%- parseMarkup(meta.description) %>
 </div>
+
+<% if(meta.example) { %>
+<h4>Example</h4>
+<pre><%= meta.example.replace(/^    |^\r?\n/gm, '') %></pre>
+<% }%>
+
+
 <% } %>
 
 <ul>

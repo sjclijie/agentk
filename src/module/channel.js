@@ -1,8 +1,8 @@
 /**
  * Channel can be used for cross process communication, in two modes:
  *
- *   - provider and query mode: a process can query all pairs for a data
- *   - dispatcher and listener mode: a process can dispatch a message to all pairs
+ *   - provider and query mode: a process can query all pairs for a data, with a channel name
+ *   - dispatcher and listener mode: a process can dispatch a message to all pairs, with a channel name
  *
  * @example
  *
@@ -37,14 +37,14 @@ if (isSlave) { // ipc enabled
 
 
 /**
- * register a provider for getAll(). when called by one child, all except current worker will be queried and the result
- * is returned.
+ * register a provider for [query](#query). when called by one child, all pairs will be queried and the result
+ * is returned as an array.
  *
- * `cb` is called inside coroutine.
+ * `cb` is called inside coroutine if `direct` is set to false
  *
- * @param {string} ch
- * @param {function} cb
- * @param {boolean} direct whether cb should run directly or inside coroutine
+ * @param {string} ch channel name to be queried
+ * @param {function} cb callback method to get the data
+ * @param {boolean} direct whether cb should run directly or inside coroutine, default to false
  */
 export function registerProvider(ch, cb, direct) {
     providers[ch] = [cb, direct];
@@ -55,8 +55,8 @@ export function registerProvider(ch, cb, direct) {
  *
  * `cb` is called outside coroutine
  *
- * @param {string} ch
- * @param {function} cb
+ * @param {string} ch channel name that listens to
+ * @param {function} cb callback method receive the dispatched data
  */
 export function registerListener(ch, cb) {
     if (ch in listeners) {
@@ -85,8 +85,8 @@ export function registerListener(ch, cb) {
 let nextSeq = 0;
 
 /**
- * query all providers
- * @param {string} ch channel to be queried
+ * query all processes, get the data by the provider registered, and return them as an array
+ * @param {string} ch channel name to be queried
  * @returns {Array} all results of the pairs that registered a provider for this channel
  */
 export function query(ch) {
@@ -101,7 +101,7 @@ export function query(ch) {
 }
 
 /**
- *
+ * dispatch a message to all processes
  * @param {string} ch channel to be dispatched
  * @param data data to be dispatched, must be json serializable
  */

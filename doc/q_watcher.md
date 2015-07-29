@@ -1,4 +1,4 @@
-<!-- @rev 589d9adc1067be3b961b59ab51cdb93d a1202b -->
+<!-- @rev 6878355cfd118fb070bcc80a426d6667 a1202b -->
 # q_watcher
 
 Qunar Watcher module
