@@ -38,3 +38,21 @@ route.all(function (req) {
 
 let server = listen(3000, route);
 console.log('test listening on', server.address());
+
+
+// test channels
+import * as channel from '../src/module/channel.js';
+
+channel.registerProvider('mem', function () {
+    return process.pid
+});
+channel.registerListener('haha', function (data) {
+    console.log(process.pid, 'haha', data);
+});
+
+setInterval(function () {
+    co.run(function () {
+        console.log(process.pid, channel.query('mem'));
+        channel.dispatch('haha', process.pid);
+    }).done();
+}, 3000);

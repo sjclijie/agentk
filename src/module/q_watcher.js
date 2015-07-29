@@ -8,12 +8,19 @@
 
 import {listen as _listen} from 'http.js';
 import {data} from 'http_response.js';
+import * as channel from 'channel.js';
 
-let last = '', current = {}, sums = {}, lastMin = 0;
+let last = '', current = {}, sums = {}, nextMin = Date.now() / 60e3 | 0;
+
+channel.registerProvider('watcher', function () {
+    return last;
+}, true);
+
+setTimeout(updateTime, ++nextMin * 60e3 - Date.now()).unref();
 
 function updateTime() {
-    let minute = Date.now() / 60e3 | 0;
-    if (minute === lastMin) return;
+    setTimeout(updateTime, ++nextMin * 60e3 - Date.now()).unref();
+
     let buf = '';
     for (let i = 0, keys = Object.keys(sums), L = keys.length; i < L; i++) {
         let key = keys[i];
@@ -61,8 +68,6 @@ export function recordOne(name, time) {
  * @param {number} number number to be set to
  */
 export function recordSize(name, number) {
-    updateTime();
-
     let key = name.replace(/[\W$]/g, '_') + '_Value';
     current[key] = number | 0;
 }
@@ -79,7 +84,6 @@ export function recordSize(name, number) {
  * @param {number} count value to be increased
  */
 export function incrRecord(name, count) {
-    updateTime();
     let key = name.replace(/[\W$]/g, '_') + '_Count';
     current[key] = key in current ? current[key] + count : count;
 }
@@ -92,8 +96,8 @@ export function incrRecord(name, count) {
  */
 export function listen(port) {
     let server = _listen(port, function (req) {
-        updateTime();
-        return data(last);
+        return data(channel.query('watcher').join(''));
     });
     server.unref();
 }
+

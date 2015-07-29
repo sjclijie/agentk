@@ -31,7 +31,7 @@ function SharedScheduler(schedulers, key, option) {
 
 SharedScheduler.prototype.add = function (worker, seq) {
     this.workers++;
-    worker.sched.handles[this.key] = true;
+    worker.handles[this.key] = true;
     send(worker, seq, this.key, this.errno, this.handle);
 };
 
@@ -95,7 +95,7 @@ function RoundRobinScheduler(schedulers, key, option) {
             send(worker, pendingWorkers[i + 1], key, errno, handle, data);
             if (!errno) {
                 frees.push(worker);
-                worker.sched.handles[key] = true;
+                worker.handles[key] = true;
             }
         }
         pendingWorkers = null;
@@ -110,7 +110,7 @@ function RoundRobinScheduler(schedulers, key, option) {
 RoundRobinScheduler.prototype.add = function (worker, seq) {
     send(worker, seq, this.key, null, null, this.data);
     this.workers++;
-    worker.sched.handles[this.key] = true;
+    worker.handles[this.key] = true;
     this.handoff(worker);  // In case there are connections pending.
 };
 
@@ -132,7 +132,7 @@ let sendSeq = 0;
 const pendingMessages = {};
 
 RoundRobinScheduler.prototype.handoff = function (worker) {
-    if (!(this.key in worker.sched.handles)) return;
+    if (!(this.key in worker.handles)) return;
 
     if (!this.handles.length) {
         this.free.push(worker);  // Add to ready queue again.
@@ -171,7 +171,7 @@ function workerOnMessage(message) {
         delete pendingMessages[message.ack];
         return;
     }
-    let worker = this, handles = worker.sched.handles, schedulers = worker.sched.schedulers;
+    let worker = this, handles = worker.handles, schedulers = worker.program.schedulers;
 
 
     if (message.act === 'queryServer') {
@@ -201,16 +201,13 @@ function workerOnMessage(message) {
     }
 }
 function workerOnExit() {
-    for (let key in this.sched.handles) {
-        this.sched.schedulers[key].remove(this);
+    for (let key in this.handles) {
+        this.program.schedulers[key].remove(this);
     }
 }
 
-export function onWorker(worker, program) {
-    worker.sched = {
-        schedulers: program.schedulers,
-        handles: {__proto__: null}
-    };
+export function onWorker(worker) {
+    worker.handles = {__proto__: null};
     worker.on('internalMessage', workerOnMessage);
     worker.on('exit', workerOnExit);
 }

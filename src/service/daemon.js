@@ -2,7 +2,8 @@ import * as http from "../module/http.js";
 import * as response from "../module/http_response.js";
 import * as file from '../module/file.js';
 import {fork} from '../module/child_process.js';
-import {onWorker} from 'scheduler.js';
+import * as scheduler from 'scheduler.js';
+import * as channel from '../module/channel.js';
 
 const path = require('path');
 
@@ -231,8 +232,10 @@ function startProgram(dir) {
             restarted[i]++;
             program.lastRestart = Date.now();
             let worker = workers[i] = fork(main, option);
+            worker.program = program;
             worker.on('exit', onExit);
-            onWorker(worker, program);
+            scheduler.onWorker(worker);
+            channel.onWorker(worker);
 
         }
     }
