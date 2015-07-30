@@ -121,20 +121,19 @@ export let client_ua = `AgentK/${process.versions.agentk} NodeJS/${process.versi
  *   - options.method `string` request method, default to `"GET"`
  *   - options.path `string` request url pathname and query string, default to `"/"`
  *   - options.headers `object` request header names and values map
+ *   - options.proxy `string|object` http proxy server, maybe string like: `"<user>:<password>@<host>:<port>"` or object with these keys
  *
  * @param {string|Buffer} body data to be sent to as payload, maybe null or undefined if there is no payload
  * @returns {node.http::http.ServerResponse} a response object that can be operated and read as a stream.
  */
 export function request(options, body) {
     return co.promise(function (resolve, reject) {
-        const headers = options.headers || (options.headers = {});
-        'User-Agent' in headers || (headers['User-Agent'] = client_ua);
-        'agent' in options || (options.agent = agent);
+        handleRequestOptions(options);
         if ('method' in options && options.method !== 'GET') { // requires body
             if (typeof body === 'string') {
                 body = new Buffer(body);
             }
-            headers['Content-Length'] = body ? '' + body.length : '0';
+            options.headers['Content-Length'] = body ? '' + body.length : '0';
         } else {
             body = null;
         }
@@ -152,14 +151,34 @@ export function request(options, body) {
 
 export function pipe(options, stream) {
     return co.promise(function (resolve, reject) {
-        const headers = options.headers || (options.headers = {});
-        'User-Agent' in headers || (headers['User-Agent'] = client_ua);
-        'agent' in options || (options.agent = agent);
+        handleRequestOptions(options);
 
         stream.pipe(ohttp.request(options, resolve).on('error', reject));
     });
 }
 
+function handleRequestOptions(options) {
+    const headers = options.headers || (options.headers = {});
+    'User-Agent' in headers || (headers['User-Agent'] = client_ua);
+    'agent' in options || (options.agent = agent);
+    if (options.proxy) {
+        let proxy = options.proxy, auth;
+        if (typeof proxy === 'string') {
+            proxy = ourl.parse('http://' + proxy);
+            auth = proxy.auth;
+        } else {
+            if ('user' in proxy) {
+                auth = proxy.user + ':' + proxy.password;
+            }
+        }
+        options.path = `http://${options.host}:${options.port || '80'}${options.path || '/'}`;
+        options.host = proxy.host;
+        options.port = proxy.port;
+        if (auth) {
+            headers['Proxy-Authorization'] = 'Basic ' + new Buffer(auth).toString('base64');
+        }
+    }
+}
 
 /**
  * Read and return a `http.ServerResponse`'s body. Similar to `stream.read`, but it can handle gzipped response content.

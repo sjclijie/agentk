@@ -1,4 +1,4 @@
-<!-- @rev 51c95394e133a005b2fb8a0032a8a1b5 a1202b -->
+<!-- @rev 51c95394e133a005b2fb8a0032a8a1b5 215fda -->
 # q_watcher
 
 Qunar Watcher module
@@ -23,7 +23,7 @@ function recordOne(name, time)
 ```
 
 
- Increase a record&#39;s count by 1, a time can be supplied
+ Increase a record's count by 1, a time can be supplied
 
 
 **Params**
@@ -43,7 +43,7 @@ function recordSize(name, number)
 ```
 
 
- Set a record&#39;s number
+ Set a record's number
 
 
 **Params**
@@ -63,7 +63,7 @@ function incrRecord(name, count)
 ```
 
 
- Increase a record&#39;s count by a varible number
+ Increase a record's count by a varible number
 
 
 **Params**

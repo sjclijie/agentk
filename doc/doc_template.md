@@ -23,7 +23,7 @@ if(variables.length) {%>
 ## Variable Fields
 <% variables.forEach(function(obj) {var comment = obj.comment; %>
 ### <%- obj.name %>
-<%= comment.description %>
+<%- comment.description %>
 <% if(comment.type) {%>#### type
 <%- comment.type %>
 <%}%>
@@ -43,12 +43,12 @@ if(methods.length) {%>
 <%- method.prototype %>
 ```
 
-<%= comment.description %>
+<%- comment.description %>
 
 <% if (comment.param) {%>**Params**
 <% comment.param.forEach(function(param){var m = /^(?:\{(.+)\}\s*)?(\w+)\s*([\s\S]*)/.exec(param); %>
   - <%- m[2]%><% if(m[1]) {%> `<%- m[1]%>`<%}%><%if(m[3]) {%>
-    <br><%= m[3]%><%}
+    <br><%- m[3]%><%}
 })%>
 
 <%}

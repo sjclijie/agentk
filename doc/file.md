@@ -1,4 +1,4 @@
-<!-- @rev 7750fc3cb397ac0bed795c8f71cb8dcf a1202b -->
+<!-- @rev 7750fc3cb397ac0bed795c8f71cb8dcf 215fda -->
 # file
 
 ----
@@ -16,7 +16,7 @@ function read(file)
 ```
 
 
- reads file&#39;s content, returns a buffer containing its content. throws if any exception occurs
+ reads file's content, returns a buffer containing its content. throws if any exception occurs
 
 
 **Params**

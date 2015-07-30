@@ -1,4 +1,4 @@
-<!-- @rev 5d16b2f62d9bdbc9684f4af67104e5d2 a1202b -->
+<!-- @rev 8dd7200b6cd62b1842a9e938ccccf284 215fda -->
 # http
 
 ----
@@ -50,7 +50,7 @@ function listen(port, cb)
 
  There are some extra properties that can be accessed with the `req` object:
 
-   - req.pathname `string` request&#39;s pathname, could be overwritten by `Router.prefix` method
+   - req.pathname `string` request's pathname, could be overwritten by `Router.prefix` method
    - req.search `string` search string, looks like `?foo=bar`
    - req.query `object` key-value map of the query string
    - req.body `Buffer` request payload
@@ -88,9 +88,10 @@ function request(options, body)
    - options.host `string` hostname to connect to
    - options.port `number` port number to connect to, default to `80`
    - options.socketPath `string` against host:port, use socketPath to create connection
-   - options.method `string` request method, default to `&#34;GET&#34;`
-   - options.path `string` request url pathname and query string, default to `&#34;/&#34;`
+   - options.method `string` request method, default to `"GET"`
+   - options.path `string` request url pathname and query string, default to `"/"`
    - options.headers `object` request header names and values map
+   - options.proxy `string|object` http proxy server, maybe string like: `"<user>:<password>@<host>:<port>"` or object with these keys
 
   - body `string|Buffer`
     <br>data to be sent to as payload, maybe null or undefined if there is no payload
@@ -131,7 +132,7 @@ function read(incoming)
 ```
 
 
- Read and return a `http.ServerResponse`&#39;s body. Similar to `stream.read`, but it can handle gzipped response content.
+ Read and return a `http.ServerResponse`'s body. Similar to `stream.read`, but it can handle gzipped response content.
 
 
 **Params**
