@@ -26,6 +26,7 @@ exports.run = function (programDir) {
 };
 
 if (process.mainModule === module) {
+    process.versions.agentk = require('./package.json').version;
     let target = process.argv[2], path = require('path').resolve(process.argv[3]);
 
     if (target === 'run') {
