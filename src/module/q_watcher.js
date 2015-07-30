@@ -110,6 +110,6 @@ export function listen(port) {
         }
 
         return response.data(buf);
-    }).unref();
+    });
 }
 
