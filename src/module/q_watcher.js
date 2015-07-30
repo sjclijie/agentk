@@ -7,10 +7,10 @@
  */
 
 import {listen as _listen} from 'http.js';
-import {data} from 'http_response.js';
+import * as response from 'http_response.js';
 import * as channel from 'channel.js';
 
-let last = '', current = {}, sums = {}, nextMin = Date.now() / 60e3 | 0;
+let last = [{}, {}], current = {}, sumTime = {}, nextMin = Date.now() / 60e3 | 0;
 
 channel.registerProvider('watcher', function () {
     return last;
@@ -21,20 +21,9 @@ setTimeout(updateTime, ++nextMin * 60e3 - Date.now()).unref();
 function updateTime() {
     setTimeout(updateTime, ++nextMin * 60e3 - Date.now()).unref();
 
-    let buf = '';
-    for (let i = 0, keys = Object.keys(sums), L = keys.length; i < L; i++) {
-        let key = keys[i];
-        buf += key + '_Value=' + (sums[key] / current[key + '_Count'] | 0) + '\n';
-    }
-    for (let i = 0, keys = Object.keys(current), L = keys.length; i < L; i++) {
-        let key = keys[i];
-        buf += key + '=' + current[key] + '\n';
-    }
-
-    last = buf;
-    lastMin = minute;
+    last = [current, sumTime];
     current = {};
-    sums = {};
+    sumTime = {};
 }
 
 /**
@@ -53,7 +42,7 @@ export function recordOne(name, time) {
 
     if (arguments.length > 1) { // has time
         let key = name.replace(/[\W$]/g, '_');
-        sums[key] = key in sums ? sums[key] + time : time;
+        sumTime[key] = (sumTime[key] || 0) + time;
     }
 }
 
@@ -85,7 +74,7 @@ export function recordSize(name, number) {
  */
 export function incrRecord(name, count) {
     let key = name.replace(/[\W$]/g, '_') + '_Count';
-    current[key] = key in current ? current[key] + count : count;
+    current[key] = (current[key] | 0) + count;
 }
 
 
@@ -95,9 +84,32 @@ export function incrRecord(name, count) {
  * @param {number} port HTTP port number to listen to
  */
 export function listen(port) {
-    let server = _listen(port, function (req) {
-        return data(channel.query('watcher').join(''));
-    });
-    server.unref();
+    _listen(port, function (req) {
+        if (req.url !== '/qmonitor.jsp') return response.error(404);
+
+        const results = channel.query('watcher'),
+            self = results.pop(),
+            allNumbers = self[0], allSums = self[1];
+
+        for (let pair of results) {
+            let numbers = pair[0], sums = pair[1];
+            for (let key in numbers) {
+                allNumbers[key] = (allNumbers[key] | 0) + numbers[key];
+            }
+            for (let key in sums) {
+                allSums[key] = (allSums[key] | 0) + sums[key];
+            }
+        }
+
+        let buf = '';
+        for (let key in allSums) {
+            buf += key + '_Time=' + (allSums[key] / allNumbers[key + '_Count'] | 0) + '\n';
+        }
+        for (let key in allNumbers) {
+            buf += key + '=' + allNumbers[key] + '\n';
+        }
+
+        return response.data(buf);
+    }).unref();
 }
 

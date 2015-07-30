@@ -4,9 +4,13 @@ import Router from '../src/module/router.js';
 import * as view from '../src/module/view.js';
 
 import staticFile from '../src/module/static_file.js';
+import * as watcher from '../src/module/q_watcher.js';
+
+watcher.listen(8081);
 
 const route = new Router(function (req) {
     req.timeStart = Date.now();
+    watcher.recordOne('request' + req.url, Math.random() * 128 | 0);
 });
 
 route.exact('/', function (req) {
@@ -39,20 +43,3 @@ route.all(function (req) {
 let server = listen(3000, route);
 console.log('test listening on', server.address());
 
-
-// test channels
-import * as channel from '../src/module/channel.js';
-
-channel.registerProvider('mem', function () {
-    return process.pid
-});
-channel.registerListener('haha', function (data) {
-    console.log(process.pid, 'haha', data);
-});
-
-setInterval(function () {
-    co.run(function () {
-        console.log(process.pid, channel.query('mem'));
-        channel.dispatch('haha', process.pid);
-    }).done();
-}, 3000);
