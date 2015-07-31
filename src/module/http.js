@@ -214,7 +214,7 @@ export function read(incoming) {
  * @returns {string} query string
  */
 export function buildQuery(obj) {
-    return querystring.stringify(obj);
+    return oquerystring.stringify(obj);
 }
 
 /**
@@ -231,7 +231,7 @@ export function buildQuery(obj) {
  * @returns {object} keys and values
  */
 export function parseQuery(query) {
-    return querystring.parse(query);
+    return oquerystring.parse(query);
 }
 
 

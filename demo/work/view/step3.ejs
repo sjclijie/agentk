@@ -28,9 +28,11 @@
 </p>
 
 <pre>import {redirect} from 'module/http_response.js';
+import {parseQuery} from 'module/http.js';
 
 export default function (req) {
-    return redirect('/step4').setCookie('name', req.query.name, {
+    let form = parseQuery(req.body);
+    return redirect('/step4').setCookie('name', form.name, {
         path: '/',
         expires: new Date('2099-12-31').toGMTString()
     })

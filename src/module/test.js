@@ -3,6 +3,8 @@ import * as http from 'http.js';
 let passed = 0, total = 0, ms = 0;
 
 const assert = require('assert'),
+    ohttp = require('http'),
+    ostream = require('stream'),
     ourl = require('url');
 /**
  * Run a test script
@@ -55,35 +57,6 @@ IntegrationTest.prototype.postForm = function (url, params, options) {
     headers['Content-Type'] = 'application/x-www-form-urlencoded';
     options.body = new Buffer(http.buildQuery(params));
     return this.request(options);
-};
-
-IntegrationTest.prototype.read = function (response) {
-    return co.promise(function (resolve) {
-        let buffers = [];
-        response.handle(response._request, {
-            setHeader: function (name, val) {
-                response.headers[name] = val;
-                return this;
-            },
-            write: function (buf) {
-                if (typeof buf === 'string') {
-                    buffers.push(new Buffer(buf));
-                } else if (Buffer.isBuffer(buf)) {
-                    buffers.push(buf);
-                } else {
-                    throw new Error("write() accepts a string or Buffer");
-                }
-            }, end: function (buf) {
-                if (arguments.length) {
-                    this.write(buf);
-                }
-                resolve(Buffer.concat(buffers));
-                this.end = function () {
-                    throw new Error("end() called after data sent");
-                }
-            }
-        })
-    })
 };
 
 const http_defaults = {
@@ -142,11 +115,43 @@ function parseUrl(req) {
 
 IntegrationTest.prototype.request = function (options) {
     options.__proto__ = http_defaults;
-    let response = this.handle.apply(options, [options]);
-    if (response && typeof response === 'object') {
-        response._request = options;
-    }
-    return response;
+    let resp = this.handle.apply(options, [options]);
+
+    return co.promise(function (resolve) {
+        let result = {};
+        let socket = new ostream.Writable();
+        let buffers = [];
+
+        socket._write = function (chunk, encoding, callback) {
+            buffers.push(chunk);
+            callback();
+        };
+
+        let res = new ohttp.ServerResponse(options);
+        res._storeHeader = function (firstLine, headers) {
+            var m = /HTTP\/(1\.\d) (\d+) (.+)/.exec(firstLine);
+            result.version = m[1];
+            result.status = +m[2];
+            result.reason = m[3];
+            result.headers = headers;
+            res._headerSent = true;
+        };
+        res.assignSocket(socket);
+
+        res.once('finish', function () {
+            result.body = Buffer.concat(buffers);
+            resolve(result)
+        });
+
+        if (!resp) return res.end();
+
+        res.statusCode = resp.status;
+        for (let key of Object.keys(resp.headers)) {
+            res.setHeader(key, resp.headers[key])
+        }
+
+        resp.handle(options, res);
+    });
 };
 
 IntegrationTest.prototype.test = function (name) {
@@ -157,16 +162,27 @@ IntegrationTest.prototype.test = function (name) {
 };
 
 IntegrationTest.prototype.assertEqual = function (actual, expected, message) {
-    console.log('assertEqual', actual, expected);
-    try {
-        assert.strictEqual(actual, expected, `failed: ${message} (${this.name}: ${this.title})`);
-    } catch (e) {
-        console.error(e.message);
-        if (this.succ) {
-            this.succ = false;
-            passed--;
-        }
+    if (actual !== expected) {
+        this.fail(message);
+        console.error('expected', expected, 'actual', actual);
     }
+};
+
+IntegrationTest.prototype.fail = function (message) {
+    console.error(`failed: ${message || 'assertion fail'} (${this.name}: ${this.title})`);
+    if (this.succ) {
+        this.succ = false;
+        passed--;
+    }
+    if (this.succ) {
+        this.succ = false;
+        passed--;
+    }
+};
+
+IntegrationTest.prototype.assert = function (bool, message) {
+    if (!bool)
+        this.fail(message)
 };
 
 export function summary() {
