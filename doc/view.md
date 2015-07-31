@@ -1,4 +1,4 @@
-<!-- @rev 2a428f613f3c442bea01e57c0c8a7b81 215fda -->
+<!-- @rev ad65f7565e886c1e9fc32674b31ab503 215fda -->
 # view
 
 ----
@@ -61,7 +61,7 @@
 ### render()
 
 ```js
-function render(name, locals) 
+function render(name, locals, mimeType) 
 ```
 
 
@@ -71,10 +71,12 @@ function render(name, locals)
 
 **Params**
 
-  - name
+  - name `string`
     <br>template name, with or without extension
-  - locals
+  - locals `object`
     <br>local bindings
+  - mimeType `string`
+    <br>custom mimeType, default to 'text/html'
 
 **Returns**
 

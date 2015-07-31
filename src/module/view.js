@@ -63,11 +63,12 @@ Object.defineProperty(engines, 'ejs', {
  * render a template file into response content, returns a `HttpResponse`.
  * User should specify content type if needed.
  *
- * @param name template name, with or without extension
- * @param locals local bindings
+ * @param {string} name template name, with or without extension
+ * @param {object} locals local bindings
+ * @param {string} mimeType custom mimeType, default to 'text/html'
  * @returns {HttpResponse}
  */
-export function render(name, locals) {
+export function render(name, locals, mimeType) {
     let ext = opath.extname(name),
         filename = opath.join(path, name);
     if (!ext) {
@@ -91,6 +92,6 @@ export function render(name, locals) {
     if (!file.exists(filename)) {
         throw new Error("template file not found: " + name);
     }
-    return response.data(co.sync(engine, filename, locals));
+    return response.data(co.sync(engine, filename, locals)).setHeader('Content-Type', mimeType || 'text/html');
 }
 

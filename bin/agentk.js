@@ -45,12 +45,7 @@ function xtermEscape(str) {
 }
 
 function callService(cmd, options) {
-
-    let co = require('../src/co.js'),
-        load = require('../index.js').load;
-    co.run(function () {
-        let module = co.yield(load(path.join(__dirname, '../src/service/controller.js')));
-
+    loadAndRun('../src/service/controller.js', function (module) {
         try {
             module[cmd.replace(' ', '_')](options);
         } catch (err) {
@@ -63,6 +58,7 @@ function callService(cmd, options) {
         }
     }).done();
 }
+
 
 function commander(dir) {
     if (dir === '--all') {
@@ -243,11 +239,9 @@ let commands = {
         "will upload ‘http.js’ and ‘file.js’ to the server",
         func: function () {
             let args = arguments;
-            let module = require('../index.js').load(path.join(__dirname, '../server/publish.js'));
-            let co = require('../src/co.js');
-            co.run(function () {
-                co.yield(module)[Symbol.for('default')](args)
-            }).done()
+            loadAndRun('../server/publish.js', function (module) {
+                module[Symbol.for('default')](args)
+            }).done();
         },
         completion: function () {
             let added = {};
@@ -341,22 +335,22 @@ let commands = {
         func: function (p, agentk, arg2) {
             if (!arguments.length) {
                 if (process.stdout.isTTY) {
-                    showHelp()
-                } else {
-                    let file = path.join(__dirname, 'completion.sh');
-                    if (win32) {
-                        if (process.env.MSYSTEM === 'MINGW32') {
-                            file = '/' + file.replace(/[:\\]+/g, '/');
-                        } else {
-                            throw new Error("completion is not supported in this shell, Install MinGW32 and try again")
-                        }
-                    }
-                    console.log('. ' + file)
+                    return showHelp()
                 }
-                return;
-            } else if (p !== "--") {
-                return;
+                let file = path.join(__dirname, 'completion.sh');
+                if (win32) {
+                    if (process.env.MSYSTEM === 'MINGW32') {
+                        file = '/' + file.replace(/[:\\]+/g, '/');
+                    } else {
+                        throw new Error("completion is not supported in this shell, Install MinGW32 and try again")
+                    }
+                }
+                return console.log('. ' + file)
             }
+            if (p !== "--") {
+                return showHelp();
+            }
+
             let ret;
             if (arguments.length === 3) {
                 ret = commands.help.completion(arg2);
@@ -369,9 +363,73 @@ let commands = {
             }
             ret && ret.length && process.stdout.write(ret);
         }
+    },
+    "test": {
+        help: "run autotest scripts",
+        args: "[<test name>]",
+        desc: "will run the test scripts found in the `test` directory",
+        maxArgs: 1,
+        func: function (name) {
+            let projectDir = process.cwd();
+            if (fs.existsSync('manifest.json')) {
+                let manifest = global.manifest = JSON.parse(fs.readFileSync('manifest.json'));
+                if ('directory' in manifest && manifest.directory) {
+                    process.chdir(manifest.directory);
+                }
+            } else {
+                console.warn(xtermEscape('$#Yk<WARN> manifest.json not found'));
+            }
+            let files;
+            if (arguments.length) { // call by name
+                if (!fs.existsSync(path.join(projectDir, '/test/' + name + '.js'))) {
+                    throw new Error('test script not found: ' + name + '.js');
+                }
+
+                files = [name + '.js'];
+            } else {
+                files = fs.readdirSync(projectDir + '/test').filter(RegExp.prototype.test.bind(/\.js$/));
+            }
+            loadAndRun('../src/module/test.js', function (module) {
+                global.test = module;
+                for (let file of files) {
+                    module.run(path.join(projectDir, '/test/' + file));
+                }
+                module.summary();
+            }).done();
+        },
+        completion: function (prefix) {
+            if (!fs.existsSync('test')) return;
+            let buf = '';
+            for (let arr = fs.readdirSync('test'), i = 0, L = arr.length; i < L; i++) {
+                let m = /(.+)\.js$/.exec(arr[i]);
+                if (m) {
+                    buf = completion(buf, prefix, m[1]);
+                }
+            }
+            return buf;
+
+        }
+
     }
 };
 
+if (!cmd || !(cmd in commands)) {
+    cmd = "help"
+}
+commands[cmd].func.apply(null, process.argv.slice(3));
+
+function showHelp() {
+    process.argv[2] = 'help';
+    commands.help.func(cmd);
+}
+
+function loadAndRun(modulePath, cb) {
+    let co = require('../src/co.js'),
+        load = require('../index.js').load;
+    return co.run(function () {
+        return cb(co.yield(load(path.join(__dirname, modulePath))), co);
+    });
+}
 
 function rcScript(cmd, uname) {
     if (process.platform !== 'linux')
@@ -423,13 +481,3 @@ function completion(buf, arg0) {
     }
     return buf
 }
-
-function showHelp() {
-    process.argv[2] = 'help';
-    commands.help.func(cmd);
-}
-
-if (!cmd || !(cmd in commands)) {
-    cmd = "help"
-}
-commands[cmd].func.apply(null, process.argv.slice(3));

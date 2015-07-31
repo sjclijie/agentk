@@ -60,30 +60,25 @@ function ensureParentDir(name) {
 const defaultProp = {
     configurable: true,
     get: function () {
-        co.yield(this[loadProgress]);
-        return this[moduleDefault];
+        return co.yield(this[loadProgress])[moduleDefault];
     }
 };
 
-function initModule(module, names, hasDefault) {
+function initModule(module, names) {
     let props = {};
     names.forEach(function (name) {
         props[name] = {
             configurable: true,
             get: function () {
                 //console.log('getting ' + name);
-                co.yield(this[loadProgress]);
-                return this[name];
+                return co.yield(this[loadProgress])[name];
             }, set: function (val) {
                 //console.log('setting ' + name);
-                co.yield(this[loadProgress]);
-                this[name] = val;
+                co.yield(this[loadProgress])[name] = val;
             }
         }
     });
-    if (hasDefault) {
-        props[moduleDefault] = defaultProp;
-    }
+    props[moduleDefault] = defaultProp;
     Object.defineProperties(module, props);
 }
 
@@ -129,7 +124,8 @@ System.module = function (source, option) {
     module[loadProgress] = co.run(function () {
         option.paths = resolveModulePath(option.dir);
         option.id = option.filename;
-        return ctor(module, co, importer, Module.prototype.require.bind(option), option.filename, option.dir, moduleDefault, initModule);
+        ctor(module, co, importer, Module.prototype.require.bind(option), option.filename, option.dir, moduleDefault, initModule);
+        return module;
     });
     return module;
 };
@@ -165,7 +161,7 @@ function compile(source, option) {
     if (hasAliasedImport || handleTemplate) {
         handleScope(parsed, globals, replace);
 
-        if (hasAliasedImport && exports) {// replace exports
+        if (hasAliasedImport && exports[1]) {// replace exports
             const exports_replacer = createReplacement(exports[1]);
             let parsed_export = esprima.parse(exports[1], parseOption);
             handleScope(parsed_export, globals, exports_replacer.replace);
@@ -173,10 +169,8 @@ function compile(source, option) {
         }
     }
 
-    let body = replacer.concat();
-    if (exports)
-        body = exports[0] + body + exports[1];
-    return '(function(module, co, include, require, __filename, __dirname, moduleDefault, initModule) {"use strict";' + body + '\nreturn module})';
+    return '(function(module, co, include, require, __filename, __dirname, moduleDefault, initModule) {"use strict";'
+        + exports[0] + replacer.concat() + exports[1] + exports[2] + '})';
 }
 
 function createReplacement(source) {
@@ -266,27 +260,25 @@ function findExports(body, replace) {
     }
 
     //console.log(names);
-    if (names.length || hasDefault) {
-        let head = 'initModule(module, ' + JSON.stringify(names) + ',' + hasDefault + ');';
-        if (names.length) {
-            let ret = ';\nObject.defineProperties(module, {\n';
-            for (let name of names) {
-                let local = name in locals ? locals[name] : name,
-                    isconst = local in consts;
-                ret += '' + JSON.stringify(name);
-                if (isconst) {
-                    ret += ':{value:' + local + '},\n'
-                } else {
-                    ret += ':{get:function(){return ' + local + '}, set:function(_' + local + '){' + local + '=_' + local + '}' + '},\n'
-                }
+    let head = 'initModule(module, ' + JSON.stringify(names) + ');', tail;
+    if (names.length) {
+        tail = ';\nObject.defineProperties(module, {\n';
+        for (let name of names) {
+            let local = name in locals ? locals[name] : name,
+                isconst = local in consts;
+            tail += '' + JSON.stringify(name);
+            if (isconst) {
+                tail += ':{value:' + local + '},\n'
+            } else {
+                tail += ':{get:function(){return ' + local + '}, set:function(_' + local + '){' + local + '=_' + local + '}' + '},\n'
             }
-            ret = ret.substr(0, ret.length - 2) + '\n});';
-            return [head, ret];
-        } else {
-            return [head, ''];
         }
+        tail = tail.substr(0, tail.length - 2) + '\n});';
+    } else {
+        tail = '';
     }
-    return null;
+    let trailer = hasDefault ? '' : 'Object.defineProperty(module,moduleDefault,{value:undefined});';
+    return [head, tail, trailer];
 }
 
 const VARIABLE_TYPE = {type: 'variable'};

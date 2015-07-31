@@ -6,17 +6,9 @@
 </head>
 <body class="frames">
 <ul>
-    <% modules.forEach(function(module) { %>
-    <li>
-        <% if(module.namespace === namespace) { %>
-        <%- module.namespace %>
-        <% } else { %>
-        <a href="<%- module.namespace %>.html"
-           <% if(module.meta && module.meta.title) { %>title="<%- module.meta.title %>"
-                <% } %>
-                ><%- module.namespace %></a>
-        <% } %>
-    </li>
+    <% modules.forEach(function(module) {
+    %><li><% if(module.namespace === namespace) { %><%- module.namespace %><%
+        } else { %><a href="<%- module.namespace %>.html"<% if(module.meta && module.meta.title) { %> title="<%- module.meta.title.trim() %>"<% } %>><%- module.namespace %></a><% } %></li>
     <% }) %>
 </ul>
 <div class="content">
