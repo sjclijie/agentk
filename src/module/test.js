@@ -5,7 +5,8 @@ let passed = 0, total = 0, ms = 0;
 const assert = require('assert'),
     ohttp = require('http'),
     ostream = require('stream'),
-    ourl = require('url');
+    ourl = require('url'),
+    util = require('util');
 /**
  * Run a test script
  * @param {string} file pathname of a test script file
@@ -25,23 +26,65 @@ export function run(file) {
 }
 
 /**
- * Integration test on a router handle that accepts a http request and returns a http response
+ * Unit test
  *
- * @param {string} name
- * @param {function|router::Router} handle
+ * @param {name} name
+ * @returns {Test}
  */
-export function it(name, handle) {
-    return new IntegrationTest(name, handle);
-}
-
-function IntegrationTest(name, handle) {
+export function Test(name) {
     this.name = name;
-    this.handle = handle;
-    this.title = 'init';
+    this.title = '_init';
     this.succ = true;
     total++;
     passed++;
 }
+
+Test.prototype.test = function (name) {
+    if (this.title !== '_init' || !this.succ) {
+        total++;
+        passed++;
+    }
+    this.title = name;
+    this.succ = true;
+};
+
+Test.prototype.assertEqual = function (actual, expected, message) {
+    if (!Object.is(actual, expected)) {
+        this.fail(message);
+        console.error('expected', expected, 'actual', actual);
+    }
+};
+
+Test.prototype.fail = function (message) {
+    console.error(`failed: ${message || 'assertion fail'} (${this.name}: ${this.title})`);
+    if (this.succ) {
+        this.succ = false;
+        passed--;
+    }
+    if (this.succ) {
+        this.succ = false;
+        passed--;
+    }
+};
+
+Test.prototype.assert = function (bool, message) {
+    if (!bool)
+        this.fail(message)
+};
+
+/**
+ * Integration test on a router handle that accepts a http request and returns a http response
+ *
+ * @param {string} name
+ * @param {function|router::Router} handle
+ * @returns {IntegrationTest}
+ */
+export function IntegrationTest(name, handle) {
+    Test.call(this, name);
+    this.handle = handle;
+}
+util.inherits(IntegrationTest, Test);
+
 
 IntegrationTest.prototype.get = function (url, options) {
     options || (options = {});
@@ -154,36 +197,6 @@ IntegrationTest.prototype.request = function (options) {
     });
 };
 
-IntegrationTest.prototype.test = function (name) {
-    this.title = name;
-    this.succ = true;
-    total++;
-    passed++;
-};
-
-IntegrationTest.prototype.assertEqual = function (actual, expected, message) {
-    if (actual !== expected) {
-        this.fail(message);
-        console.error('expected', expected, 'actual', actual);
-    }
-};
-
-IntegrationTest.prototype.fail = function (message) {
-    console.error(`failed: ${message || 'assertion fail'} (${this.name}: ${this.title})`);
-    if (this.succ) {
-        this.succ = false;
-        passed--;
-    }
-    if (this.succ) {
-        this.succ = false;
-        passed--;
-    }
-};
-
-IntegrationTest.prototype.assert = function (bool, message) {
-    if (!bool)
-        this.fail(message)
-};
 
 export function summary() {
     console.log('\x1b[32m%d/%d tests passed (%dms)\x1b[0m', passed, total, ms);

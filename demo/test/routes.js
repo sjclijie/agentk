@@ -1,7 +1,7 @@
 import route from '../src/route.js';
 import {read} from '../src/module/file.js';
 
-let it = test.it('route', route);
+let it = new IntegrationTest('route', route);
 
 it.test('get index');
 let response = it.get('/');

@@ -390,7 +390,8 @@ let commands = {
                 files = fs.readdirSync(projectDir + '/test').filter(RegExp.prototype.test.bind(/\.js$/));
             }
             loadAndRun('../src/module/test.js', function (module) {
-                global.test = module;
+                global.IntegrationTest = module.IntegrationTest;
+                global.Test = module.Test;
                 for (let file of files) {
                     module.run(path.join(projectDir, '/test/' + file));
                 }

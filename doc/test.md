@@ -1,4 +1,4 @@
-<!-- @rev 2b65d32a21d99abe95e169c61e1fb32c 215fda -->
+<!-- @rev 75b1a3bbfecfdd2a8baa50f7374e2e97 215fda -->
 # test
 
 ----
@@ -26,10 +26,30 @@ function run(file)
 
 
 ------------------------------------------------------------------------
-### it()
+### Test()
 
 ```js
-function it(name, handle) 
+function Test(name) 
+```
+
+
+ Unit test
+
+
+**Params**
+
+  - name `name`
+
+**Returns**
+
+> {Test}
+ 
+
+------------------------------------------------------------------------
+### IntegrationTest()
+
+```js
+function IntegrationTest(name, handle) 
 ```
 
 
@@ -41,6 +61,10 @@ function it(name, handle)
   - name `string`
   - handle `function|router::Router`
 
+**Returns**
+
+> {IntegrationTest}
+ 
 
 ------------------------------------------------------------------------
 ### summary()
