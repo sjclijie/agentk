@@ -33,44 +33,19 @@ export function run(file) {
  */
 export function Test(name) {
     this.name = name;
-    this.title = '_init';
-    this.succ = true;
-    total++;
-    passed++;
 }
 
-Test.prototype.test = function (name) {
-    if (this.title !== '_init' || !this.succ) {
-        total++;
-        passed++;
-    }
-    this.title = name;
-    this.succ = true;
-};
-
-Test.prototype.assertEqual = function (actual, expected, message) {
-    if (!Object.is(actual, expected)) {
-        this.fail(message);
-        console.error('expected', expected, 'actual', actual);
-    }
-};
-
-Test.prototype.fail = function (message) {
-    console.error(`failed: ${message || 'assertion fail'} (${this.name}: ${this.title})`);
-    if (this.succ) {
-        this.succ = false;
-        passed--;
-    }
-    if (this.succ) {
-        this.succ = false;
+Test.prototype.test = function (title, cb) {
+    passed++;
+    total++;
+    try {
+        cb.call(this)
+    } catch (e) {
+        console.error(`failed: ${e.message} (${this.name}: ${title})`);
         passed--;
     }
 };
 
-Test.prototype.assert = function (bool, message) {
-    if (!bool)
-        this.fail(message)
-};
 
 /**
  * Integration test on a router handle that accepts a http request and returns a http response
