@@ -295,7 +295,7 @@ let commands = {
     },
     "service": {
         help: "service controlling scripts",
-        args: "start|stop|upstart_install|upstart_uninst",
+        args: "start|stop|upstart_install|upstart_uninst|sysv_install|sysv_uninst",
         maxArgs: 2,
         get desc() {
             callService('description');
@@ -314,7 +314,7 @@ let commands = {
                     output = completion(output, arg0, arg);
                 }
                 return output;
-            } else if (arg0 === 'upstart_install') { // two arguments
+            } else if (arg0 === 'upstart_install' || arg0 === 'sysv_install') { // two arguments
                 let buf = '';
                 for (let line of fs.readFileSync('/etc/passwd', 'binary').split('\n')) {
                     if (!line || line.substr(line.length - 8) === '/nologin' || line.substr(line.length - 6) === '/false') continue;
@@ -328,6 +328,13 @@ let commands = {
                     if (m) {
                         buf = completion(buf, arg1, m[1]);
                     }
+                }
+                return buf;
+            } else if (arg0 === 'sysv_uninst') {
+                let buf = '';
+                let inittab = fs.readFileSync('/etc/inittab', 'binary'), r = /^k\w:2345:respawn:\/bin\/sh \S+ "([^"]+)"/gm, m;
+                while (m = r.exec(inittab)) {
+                    buf = completion(buf, arg1, m[1]);
                 }
                 return buf;
             }

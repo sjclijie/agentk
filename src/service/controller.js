@@ -70,6 +70,41 @@ export function service_upstart_uninst(uname) {
     file.rm(filename);
 }
 
+export function service_sysv_install(uname) {
+    let inittab = '/etc/inittab',
+        script = `:2345:respawn:/bin/sh "${__dirname}/daemon.sh" "${uname}" "${process.execPath}"\n`,
+        current = '' + file.read(inittab);
+
+    let idx = current.indexOf(script), installed = idx !== -1;
+
+    if (installed) {
+        throw new Error(`${uname}: service already installed`);
+    }
+    let found_ids = current.match(/^k[0-9a-zA-Z]:/mg), next_id;
+    for (let i of '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ') {
+        if (!found_ids || found_ids.indexOf('k' + i + ':') === -1) {
+            next_id = i;
+            break
+        }
+    }
+    if (!next_id) {
+        throw new Error("no unique key available (too many installation)")
+    }
+    file.write(inittab, current + 'k' + next_id + script);
+}
+
+export function service_sysv_uninst(uname) {
+    let inittab = '/etc/inittab',
+        script = `:2345:respawn:/bin/sh "${__dirname}/daemon.sh" "${uname}" "${process.execPath}"\n`,
+        current = '' + file.read(inittab);
+
+    let idx = current.indexOf(script), installed = idx !== -1;
+    if (!installed) {
+        throw new Error(`${uname}: service not installed`);
+    }
+    file.write(inittab, current.substr(0, idx - 2) + current.substr(idx + script.length + 2))
+}
+
 function getData(result) {
     if (result.code !== 200) {
         throw new Error(result.msg)
@@ -88,11 +123,14 @@ export function description() {
   ak service stop
   ak service upstart_install [username]
   ak service upstart_uninst [username]
+  ak service sysv_install [username]
+  ak service sysv_uninst [username]
 
 \x1b[36mDESCRIPTION\x1b[0m
 
   \x1b[32mak service start\x1b[0m: starts the service if it has not ben started.
-    If there are running user programs when the service is stopped or killed, they will be respawned. Command \x1b[32mak start <program>\x1b[0m will also restart the service if it has not been started.
+    If there are running user programs when the service is stopped or killed, they will be respawned. Command \x1b[32mak\
+ start <program>\x1b[0m will also restart the service if it has not been started.
 
   \x1b[32mak service stop\x1b[0m: stops the service.
     All running programs will be killed, and will be respawned when the service starts again
@@ -105,8 +143,16 @@ export function description() {
     To make the installation to take effect immediately, run \x1b[36msudo initctl start ak_[username]\x1b[0m
 
   \x1b[32mak service upstart_install [username]\x1b[0m: removes the upstart service installation.
-    PLEASE DO stop the service before it is uninstalled, run \x1b[36msudo initctl status ak_[username]\x1b[0m to check whether
-the service is stopped, run \x1b[36msudo initctl stop ak_[username]\x1b[0m to stop the service`);
+    PLEASE DO stop the service before it is uninstalled, run \x1b[36msudo initctl status ak_[username]\x1b[0m to check whether\
+ the service is stopped, run \x1b[36msudo initctl stop ak_[username]\x1b[0m to stop the service
+
+  \x1b[32mak service sysv_install [username]\x1b[0m: like the \x1b[36mupstart_install\x1b[0m, but uses sysvinit rather than upstart\
+ to spawn and guard the daemon service. You should use the upstart version if it is available, for more information about which to choose, please\
+ contact your system admin.
+    After the installation, Run \x1b[36msudo init q\x1b[0m to make the installation take effect.
+
+  \x1b[32mak service sysv_uninst [username]\x1b[0m: removes the sysvinit service installation.
+    Run \x1b[36msudo init q\x1b[0m to make the uninstallation take effect.`);
 }
 
 export function status() {
