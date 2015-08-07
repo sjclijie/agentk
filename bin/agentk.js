@@ -54,7 +54,7 @@ function callService(cmd, options) {
             } else {
                 console.error('command \'' + cmd + '\' failed, ' + err.message)
             }
-            process.exit(-1)
+            process.exit(1)
         }
     }).done();
 }
@@ -295,17 +295,16 @@ let commands = {
     },
     "service": {
         help: "service controlling scripts",
-        args: "start|stop|install|uninst",
+        args: "start|stop|upstart_install|upstart_uninst",
         maxArgs: 2,
         get desc() {
             callService('description');
-            return '';
         },
         func: function (arg0, arg1) {
-            if (arg0 === 'install' || arg0 === 'uninst') {
-                rcScript(arg0, arg1)
+            if (!arguments.length) {
+                showHelp();
             } else {
-                callService('service ' + arg0);
+                callService('service ' + arg0, arg1);
             }
         },
         completion: function (arg0, arg1) {
@@ -315,14 +314,22 @@ let commands = {
                     output = completion(output, arg0, arg);
                 }
                 return output;
-            } else if (arg0 === 'install') { // two arguments
+            } else if (arg0 === 'upstart_install') { // two arguments
                 let buf = '';
                 for (let line of fs.readFileSync('/etc/passwd', 'binary').split('\n')) {
                     if (!line || line.substr(line.length - 8) === '/nologin' || line.substr(line.length - 6) === '/false') continue;
                     buf = completion(buf, arg1, line.substr(0, line.indexOf(':')))
                 }
                 return buf;
-            } else if (arg0 === 'uninst') { // TODO: completion
+            } else if (arg0 === 'upstart_uninst') {
+                let buf = '';
+                for (let file of fs.readdirSync('/etc/init')) {
+                    let m = /^ak_(.+)\.conf$/.exec(file);
+                    if (m) {
+                        buf = completion(buf, arg1, m[1]);
+                    }
+                }
+                return buf;
             }
         }
     },

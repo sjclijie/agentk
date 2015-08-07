@@ -42,4 +42,12 @@ upstart_uninst() {
     echo "${INSTALL_USER}: service uninstall ok"
 }
 
+inittab_install() {
+    current_content=$(cat /etc/inittab)
+    found=""
+
+    while [ "$found" = "" ]; do
+        echo "$current_content" | grep
+    done
+}
 ${method}_${1}

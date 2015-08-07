@@ -36,6 +36,40 @@ export function service_stop() {
     callService('exit');
 }
 
+export function service_upstart_install(uname) {
+    const filename = `/etc/init/ak_${uname}.conf`;
+    if (file.exists(filename)) {
+        throw new Error(`${uname}: service already installed`);
+    }
+
+    let dir = path.dirname(__dirname);
+    file.write(filename, `description "AgentK: Integrated Node.JS Framework"
+
+start on filesystem and static-network-up
+stop on runlevel [016]
+
+respawn
+
+script
+    exec /bin/su ${uname} << EOC
+        cd
+        mkdir -p .agentk
+        cd .agentk
+        exec ${process.execPath} --harmony "${dir}/index.js" load "${dir}/src/service/daemon.js" >> out.log 2>> err.log
+    EOC
+end script`);
+
+    console.log(`${uname}: service installed, use \x1b[36msudo initctl start ak_${uname}\x1b[0m to start the service`);
+}
+
+export function service_upstart_uninst(uname) {
+    const filename = `/etc/init/ak_${uname}.conf`;
+    if (!file.exists(filename)) {
+        throw new Error(`${uname}: service not installed`);
+    }
+    file.rm(filename);
+}
+
 function getData(result) {
     if (result.code !== 200) {
         throw new Error(result.msg)
@@ -52,8 +86,8 @@ export function description() {
 
   ak service start
   ak service stop
-  ak service install [username]
-  ak service uninst [username]
+  ak service upstart_install [username]
+  ak service upstart_uninst [username]
 
 \x1b[36mDESCRIPTION\x1b[0m
 
@@ -63,17 +97,17 @@ export function description() {
   \x1b[32mak service stop\x1b[0m: stops the service.
     All running programs will be killed, and will be respawned when the service starts again
 
-  \x1b[32mak service install [username]\x1b[0m: installs service into operating system.
-    The installed service will be automatically started when the operating system is restarted.
-    Currently we only support Linux. AgentK uses \x1b[36m'/etc/inittab'\x1b[0m to start the service on system startup,\
- and the service will be automatically respawned when it is unexpectedly stopped or killed. So if you want to stop the\
- running service, you should use \x1b[32mak service uninst\x1b[0m.
-    The service installation will take effect on next boot. If you want it to take effect immediately, run:
-      \x1b[36msudo init q\x1b[0m
-    A username should be supplied to run the service, otherwise \x1b[36m'root'\x1b[0m will be used.
+  \x1b[32mak service upstart_install [username]\x1b[0m: installs daemon service into operating system's upstart scripts.
+    Upstart is a event-driven service manager. You can run the next command to see if your system supports upstart:
+        \x1b[36msudo initctl --version\x1b[0m
 
-  \x1b[32mak service uninst [username]\x1b[0m: removes the service installation.
-    Type \x1b[36m'sudo init q'\x1b[0m to stop the service immediately.`);
+    A username should be supplied to run the service, otherwise \x1b[36m'root'\x1b[0m will be used.
+    The daemon service will be automatically started when the computer finishes its boot, and respawned if killed unexpectedly.
+    To make the installation to take effect immediately, run \x1b[36msudo initctl start ak_[username]\x1b[0m
+
+  \x1b[32mak service upstart_install [username]\x1b[0m: removes the upstart service installation.
+    PLEASE DO stop the service before it is uninstalled, run \x1b[36msudo initctl status ak_[username]\x1b[0m to check whether
+the service is stopped, run \x1b[36msudo initctl stop ak_[username]\x1b[0m to stop the service`);
 }
 
 export function status() {
