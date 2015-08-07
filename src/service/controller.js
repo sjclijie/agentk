@@ -100,7 +100,6 @@ export function description() {
   \x1b[32mak service upstart_install [username]\x1b[0m: installs daemon service into operating system's upstart scripts.
     Upstart is a event-driven service manager. You can run the next command to see if your system supports upstart:
         \x1b[36msudo initctl --version\x1b[0m
-
     A username should be supplied to run the service, otherwise \x1b[36m'root'\x1b[0m will be used.
     The daemon service will be automatically started when the computer finishes its boot, and respawned if killed unexpectedly.
     To make the installation to take effect immediately, run \x1b[36msudo initctl start ak_[username]\x1b[0m

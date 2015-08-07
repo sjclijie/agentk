@@ -439,25 +439,6 @@ function loadAndRun(modulePath, cb) {
     });
 }
 
-function rcScript(cmd, uname) {
-    if (process.platform !== 'linux')
-    //return console.log('service is only supported on linux');
-        if (process.getuid()) {
-            return console.log(cmd + ' must be run with root privilege')
-        }
-    if (!uname) {
-        uname = process.env.USER;
-        console.log(xtermEscape('$#ry<WARN> username not specified, using ' + uname));
-    }
-    require('child_process').spawn('/bin/sh', [path.join(__dirname, 'daemon.sh'), cmd], {
-        stdio: 'inherit',
-        env: {
-            NODE_EXEC: process.execPath,
-            INSTALL_USER: uname
-        }
-    });
-}
-
 function completeRunningJobs(arg) {
     // read active jobs from file
     let file = path.join(process.env.HOME, '.agentk/programs');
