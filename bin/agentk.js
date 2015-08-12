@@ -428,11 +428,11 @@ let commands = {
         desc: "creates a script file in /etc/init.d that can be used to start|stop|restart|reload the program",
         func: function (dir, filename, username) {
             dir = path.resolve(dir);
-            let outFile = '/etc/init.d/' + name;
+            let outFile = '/etc/init.d/' + filename;
             fs.writeFileSync(outFile, '#!/bin/sh\n\
 case "$1" in\n\
     start|stop|restart|reload|status)\n\
-        su ' + ussername + ' -c ' + process.execPath + ' --harmony "' + __filename + '" $1 "' + dir + '"\n\
+        su ' + username + ' -c ' + process.execPath + ' --harmony "' + __filename + '" $1 "' + dir + '"\n\
         ;;\n\
     *)\n\
         echo "Usage: $0 {start|stop|restart|reload|status}"\n\
