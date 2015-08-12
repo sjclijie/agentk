@@ -112,7 +112,8 @@ function sendAll() {
                         str += buf;
                     }).on('end', function () {
                         console.log(peer + ' returns ' + str);
-                        resolve(JSON.parse(str))
+                        resolve(JSON.parse(str));
+                        console.log(peer + ' returned');
                     }).on('error', function (err) {
                         console.error(err.stack);
                         resolve(null);
