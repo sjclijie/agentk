@@ -33,31 +33,11 @@ export let prefix = 't.agentk';
  * @type {string}
  */
 export let server = 'qmon-beta.corp.qunar.com';
+export let port = 2015;
 
-let sendingTimer = null, peers = null, peerPort = 0;
+let sendingTimer = null;
 
-let last = '', current = '', nextMin = Date.now() / 30e3 | 0;
-
-/**
- * Set up data combination and calculation for multiple servers.
- *
- * @param {Array} hosts hostnames of all servers
- * @param {string} localhost this server
- * @param {number} port
- */
-export function setupPeers(hosts, localhost, port) {
-    let idx = hosts.indexOf(localhost);
-    if (idx === -1) {
-        throw new Error('localhost not in host list');
-    }
-    hosts.splice(idx, 1);
-    peers = hosts;
-    peerPort = port;
-    http.listen(port, function (req) {
-        return response.data(channel.query('watcher').join(''));
-    }, localhost);
-}
-
+let last = '', current = '', nextMin = Date.now() / 20e3 | 0;
 
 channel.registerProvider('watcher', function () {
     if (sendingTimer) { // scheduling
@@ -67,58 +47,34 @@ channel.registerProvider('watcher', function () {
     return last;
 }, true);
 
-setTimeout(trigger, ++nextMin * 30e3 - Date.now()).unref();
-
+setTimeout(trigger, ++nextMin * 20e3 - Date.now()).unref();
 
 function trigger() {
-    setTimeout(trigger, ++nextMin * 30e3 - Date.now()).unref();
-
+    setTimeout(trigger, ++nextMin * 20e3 - Date.now()).unref();
     last = current;
     current = '';
-    sendingTimer = setTimeout(sendAll, Math.random() * (peers ? peers.length + 1 : 1) * 3000);
+    sendingTimer = setTimeout(sendAll, 1000 + Math.random() * 3000);
 }
 
-const ohttp = require('http');
+const dgram = require('dgram');
 
 function sendAll() {
     sendingTimer = null;
     // fetch all and send
     co.run(function () {
         let allResults = channel.query('watcher').join('');
-        if (peers) {
-            co.yield(Promise.all(peers.map(function (peer) {
-                return new Promise(function (resolve, reject) {
-                    ohttp.request({
-                        method: 'GET',
-                        path: '/',
-                        host: peer,
-                        port: peerPort,
-                        headers: {
-                            'Connection': 'close'
-                        }
-                    }, function (tres) {
-                        let str = '';
-                        tres.on('data', function (buf) {
-                            str += buf;
-                        }).on('end', function () {
-                            allResults += str;
-                            resolve();
-                        }).on('error', function (err) {
-                            console.error(err.stack);
-                            resolve();
-                        });
-                    }).on('error', function (err) { // cannot contact peer
-                        console.error(err.stack);
-                        resolve();
-                    }).end();
-                });
-            })));
-        }
+        if (!allResults) return;
         console.log(allResults);
-    }).done();
+        let socket = dgram.createSocket('udp4');
+        let buf = new Buffer(allResults);
+        co.sync(socket, send, buf, 0, buf.length, port, server);
+        socket.close();
+    }).then(null, function (err) {
+        console.error(err.stack);
+    });
 }
 
 export function add(name, duration, timeStamp) {
     let argLen = arguments.length;
-    current += prefix + name.replace(/[\W$]/g, '_') + ' ' + (argLen < 2 ? 0 : duration | 0) + ' ' + ((argLen < 3 ? Date.now() : timeStamp) / 1000 | 0) + '\n'
+    current += `${prefix}.${name.replace(/[\W$]/g, '_')} ${(argLen < 2 ? 0 : duration | 0)} ${((argLen < 3 ? Date.now() : timeStamp) / 1000 | 0)}\n`;
 }
