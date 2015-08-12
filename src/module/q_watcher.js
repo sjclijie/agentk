@@ -62,7 +62,6 @@ export function setupPeers(hosts, localhost, port) {
 
 
 channel.registerProvider('watcher', function () {
-    console.log('pid ' + process.pid + ': queried');
     if (sendingTimer) { // scheduling
         clearTimeout(sendingTimer);
         sendingTimer = null;
@@ -148,8 +147,6 @@ function sendAll() {
         for (let key in allSums) {
             buf += prefix + '.' + key + '_Time ' + (allSums[key] / allCounts[key] | 0) + ' ' + ts + '\n';
         }
-
-        console.log(buf);
 
         onet.connect({
             port: port,
