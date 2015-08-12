@@ -432,7 +432,7 @@ let commands = {
             fs.writeFileSync(outFile, '#!/bin/sh\n\
 case "$1" in\n\
     start|stop|restart|reload|status)\n\
-        su ' + username + ' -c ' + process.execPath + ' --harmony "' + __filename + '" $1 "' + dir + '"\n\
+        su ' + username + ' -c "' + addslashes(process.execPath) + ' --harmony ' + addslashes(__filename) + ' $1 ' + addslashes(dir) + '"\n\
         ;;\n\
     *)\n\
         echo "Usage: $0 {start|stop|restart|reload|status}"\n\
@@ -456,6 +456,10 @@ commands[cmd].func.apply(null, process.argv.slice(3));
 function showHelp() {
     process.argv[2] = 'help';
     commands.help.func(cmd);
+}
+
+function addslashes(str) {
+    return str.replace(/[^0-9a-zA-Z.-_+=\/~]/g, '\\$&');
 }
 
 function loadAndRun(modulePath, cb) {
