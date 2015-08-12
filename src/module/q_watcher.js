@@ -6,24 +6,122 @@
  * @title Qunar Watcher module
  */
 
-import {listen as _listen} from 'http.js';
+import * as http from 'http.js';
 import * as response from 'http_response.js';
 import * as channel from 'channel.js';
 
+/**
+ * metric prefix of the log entry, see the [wiki](http://wiki.corp.qunar.com/pages/viewpage.action?pageId=74958076#%E6%95%B0%E6%8D%AE%E6%94%B6%E9%9B%86-Watcher%E6%8C%87%E6%A0%87%E5%91%BD%E5%90%8DOpsWiki%3AWatcher%E6%8C%87%E6%A0%87%E5%91%BD%E5%90%8D)
+ * to get the proper metric prefix
+ *
+ * @demo
+ *
+ *     watcher.prefix = 's.hotel.ued.xxx';
+ *
+ * @type {string}
+ */
+export let prefix = 't.agentk';
+
+/**
+ * remote server to push the log to, see the [wiki](http://wiki.corp.qunar.com/pages/viewpage.action?pageId=74958076#%E6%95%B0%E6%8D%AE%E6%94%B6%E9%9B%86-Watcher%E6%8C%87%E6%A0%87%E5%91%BD%E5%90%8DOpsWiki%3AWatcher%E6%8C%87%E6%A0%87%E5%91%BD%E5%90%8D)
+ * to get the proper remote server
+ *
+ * @demo
+ *
+ *     watcher.server = 'qmon-hotel.corp.qunar.com';
+ *
+ * @type {string}
+ */
+export let server = 'qmon-beta.corp.qunar.com';
+
+let sendingTimer = null, peers = null, peerPort = 0;
+
 let last = [{}, {}], current = {}, sumTime = {}, nextMin = Date.now() / 60e3 | 0;
+
+/**
+ * Set up data combination and calculation for multiple servers.
+ *
+ * @param {Array} hosts hostnames of all servers
+ * @param {string} localhost this server
+ * @param {number} port
+ */
+export function setupPeers(hosts, localhost, port) {
+    let idx = hosts.indexOf(localhost);
+    if (idx === -1) {
+        throw new Error('localhost not in host list');
+    }
+    hosts.splice(idx, 1);
+    peers = hosts;
+    peerPort = port;
+    http.listen(port, function (req) {
+        if (sendingTimer) { // scheduling
+            clearTimeout(sendingTimer);
+            sendingTimer = null;
+        }
+        return response.json(channel.query('watcher'));
+    }, localhost);
+}
+
 
 channel.registerProvider('watcher', function () {
     return last;
 }, true);
 
-setTimeout(updateTime, ++nextMin * 60e3 - Date.now()).unref();
+setTimeout(trigger, ++nextMin * 60e3 - Date.now()).unref();
 
-function updateTime() {
-    setTimeout(updateTime, ++nextMin * 60e3 - Date.now()).unref();
+
+function trigger() {
+    setTimeout(trigger, ++nextMin * 60e3 - Date.now()).unref();
 
     last = [current, sumTime];
     current = {};
     sumTime = {};
+
+    if (peers) {
+        sendingTimer = setTimeout(sendAll, Math.random() * 3000);
+    } else {
+        send();
+    }
+}
+
+const ohttp = require('http');
+
+function sendAll() {
+    sendingTimer = null;
+    // fetch all and send
+    co.run(function () {
+        let peerResults = co.yield(Promise.all(peers.map(function (peer) {
+            return new Promise(function (resolve, reject) {
+                ohttp.request({
+                    method: 'GET',
+                    path: '/',
+                    host: peer,
+                    port: peerPort,
+                    headers: {
+                        'Connection': 'close'
+                    }
+                }, function (tres) {
+                    let str = '';
+                    tres.on('data', function (buf) {
+                        str += buf;
+                    }).on('end', function () {
+                        console.log(peer + ' returns ' + str);
+                        resolve(JSON.parse(str))
+                    }).on('error', function () {
+                        resolve(null);
+                    });
+                }).on('error', function (err) { // cannot contact peer
+                    resolve(null);
+                }).end();
+            });
+        })));
+        let allResults = Array.prorotype.concat.apply(channel.query('watcher'), peerResults);
+        console.log('all results', allResults);
+    });
+}
+
+function send() {
+
 }
 
 /**
@@ -35,7 +133,7 @@ function updateTime() {
  *     q_watcher.recordOne('request_cost', Date.now() - timeStart);
  *
  * @param {string} name last name of the monitor record
- * @param {number} time optional, time of the monitor record
+ * @param {number} [time] time of the monitor record
  */
 export function recordOne(name, time) {
     incrRecord(name, 1);
@@ -83,8 +181,8 @@ export function incrRecord(name, count) {
  *
  * @param {number} port HTTP port number to listen to
  */
-export function listen(port) {
-    _listen(port, function (req) {
+export function _listen(port) {
+    listen(port, function (req) {
         if (req.url !== '/qmonitor.jsp') return response.error(404);
 
         const results = channel.query('watcher'),

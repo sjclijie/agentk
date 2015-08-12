@@ -68,9 +68,11 @@ const reqGetters = {
  *
  * @param {number|string} port TCP port number or unix domain socket path to listen to
  * @param {function|router::Router} cb request handler callback
+ * @param {string} [host] hostname to listen to, only valid if port is a 0-65535 number
+ * @param {number} [backlog] maximum requests pending to be accepted, only valid if port is a 0-65535 number
  * @returns {node.http::http.Server}
  */
-export function listen(port, cb) {
+export function listen(port, cb, host, backlog) {
     return co.promise(function (resolve, reject) {
         ohttp.createServer(function (req, res) {
             // init req object
@@ -92,7 +94,7 @@ export function listen(port, cb) {
                 res.end(err.message);
                 console.error(err.stack);
             })
-        }).listen(port, function () {
+        }).listen(port, host, backlog, function () {
             resolve(this)
         }).on('error', reject);
     });

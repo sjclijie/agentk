@@ -40,7 +40,7 @@ export const mimeTypes = {
  *
  *
  * @param {string} directory absolute path or relative to working directory
- * @param {object} option optional parameters:
+ * @param {object} [option] optional arguments:
  *
  *   - no_cache:`boolean` disable file cache, default to false
  *   - expires:`number` duration before expiration in ms, default to 0

@@ -12,7 +12,7 @@ let ids = 0;
  * for more information about process creation.
  *
  * @param {string} module bootstrap module path (filename or directory with a `package.json` present)
- * @param {object} options optional arguments
+ * @param {object} [options] optional arguments
  *
  *   - options.stdout: stdout file path to be forwarded
  *   - options.stderr: stderr file path to be forwarded
