@@ -1,6 +1,6 @@
 import * as q_watcher from '../../src/module/q_watcher.js';
 
-q_watcher.prefix = 't.agentk.q_watcher';
+q_watcher.prefix = 't.shaodw.test.agentk.q_watcher';
 
 setTimeout(function func() {
     let t = Math.random() * 6000;

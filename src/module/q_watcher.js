@@ -20,7 +20,7 @@ import * as channel from 'channel.js';
  *
  * @type {string}
  */
-export let prefix = 't.agentk';
+export let prefix = 't';
 
 /**
  * remote server to push the log to, see the [wiki](http://wiki.corp.qunar.com/pages/viewpage.action?pageId=74958076#%E6%95%B0%E6%8D%AE%E6%94%B6%E9%9B%86-Watcher%E6%8C%87%E6%A0%87%E5%91%BD%E5%90%8DOpsWiki%3AWatcher%E6%8C%87%E6%A0%87%E5%91%BD%E5%90%8D)
@@ -33,7 +33,7 @@ export let prefix = 't.agentk';
  * @type {string}
  */
 export let server = 'qmon-beta.corp.qunar.com';
-export let port = 2015;
+export let port = 2013;
 
 let sendingTimer = null;
 
@@ -56,7 +56,7 @@ function trigger() {
     sendingTimer = setTimeout(sendAll, 1000 + Math.random() * 3000);
 }
 
-const dgram = require('dgram');
+const net = require('net');
 
 function sendAll() {
     sendingTimer = null;
@@ -65,14 +65,13 @@ function sendAll() {
         let allResults = channel.query('watcher').join('');
         if (!allResults) return;
         console.log(allResults);
-        let socket = dgram.createSocket('udp4');
         let buf = new Buffer(allResults);
-        socket.send(buf, 0, buf.length, port, server, function (err) {
-            if (err)
-                console.error(err.stack);
-            socket.close();
-        });
-        console.log('sent', buf, port, server);
+        net.connect({
+            port: port,
+            host: server
+        }).on('error', function (err) {
+            console.error(err.stack);
+        }).end(buf);
     }).then(null, function (err) {
         console.error(err.stack);
     });
