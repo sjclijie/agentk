@@ -54,16 +54,16 @@ export function setupPeers(hosts, localhost, port) {
     peers = hosts;
     peerPort = port;
     http.listen(port, function (req) {
-        if (sendingTimer) { // scheduling
-            clearTimeout(sendingTimer);
-            sendingTimer = null;
-        }
-        return response.json(channel.query('watcher'));
+        console.log('pid ' + process.pid + ': will query for watcher data');
+        let results = channel.query('watcher');
+        console.log('pid ' + process.pid + ': will send', results);
+        return response.json(results);
     }, localhost);
 }
 
 
 channel.registerProvider('watcher', function () {
+    console.log('pid ' + process.pid + ': queried');
     if (sendingTimer) { // scheduling
         clearTimeout(sendingTimer);
         sendingTimer = null;
@@ -95,6 +95,7 @@ function sendAll() {
     // fetch all and send
     co.run(function () {
         let peerResults = co.yield(Promise.all(peers.map(function (peer) {
+            console.log('pid ' + process.pid + ': will ask ' + peer + ' for watcher data');
             return new Promise(function (resolve, reject) {
                 ohttp.request({
                     method: 'GET',
