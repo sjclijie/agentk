@@ -43,9 +43,13 @@ let last = [{}, {}, {}], counts = {}, sums = {}, values = {}, nextMin = Date.now
 /**
  * Set up data combination and calculation for multiple servers.
  *
+ * @demo
+ *
+ *     q_watcher.setupPeers(['l-qzz1.fe.dev.cn6', 'l-qzz2.fe.dev.cn6'], require('os').hostname(), 8012);
+ *
  * @param {Array} hosts hostnames of all servers
- * @param {string} localhost this server
- * @param {number} port
+ * @param {string} localhost this server's hostname
+ * @param {number} [port] port number to communicate with other servers, default to 8012
  */
 export function setupPeers(hosts, localhost, port) {
     let idx = hosts.indexOf(localhost);
@@ -54,8 +58,8 @@ export function setupPeers(hosts, localhost, port) {
     }
     hosts.splice(idx, 1);
     peers = hosts;
-    peerPort = port;
-    http.listen(port, function (req) {
+    peerPort = port || 8012;
+    http.listen(peerPort, function (req) {
         return response.json(channel.query('watcher'));
     }, localhost);
 }

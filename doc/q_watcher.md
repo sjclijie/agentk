@@ -1,4 +1,4 @@
-<!-- @rev 437816d643b6a86ae286981cc0d25d1d 20ae7b -->
+<!-- @rev f3a3e133e232e860e57237bbd2105186 20ae7b -->
 # q_watcher
 
 Qunar Watcher module
@@ -69,8 +69,10 @@ function setupPeers(hosts, localhost, port)
   - hosts `Array`
     <br>hostnames of all servers
   - localhost `string`
-    <br>this server
-  - port `number`
+    <br>this server's hostname
+  - port(optional) `number`
+    <br>port number to communicate with other servers, default to 8012
+ 
 
 
 ------------------------------------------------------------------------
