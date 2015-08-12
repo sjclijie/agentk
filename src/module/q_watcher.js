@@ -54,7 +54,7 @@ export function setupPeers(hosts, localhost, port) {
     peers = hosts;
     peerPort = port;
     http.listen(port, function (req) {
-        return response.json(channel.query('watcher'));
+        return response.data(channel.query('watcher').join(''));
     }, localhost);
 }
 
@@ -86,7 +86,7 @@ function sendAll() {
     co.run(function () {
         let allResults = channel.query('watcher');
         if (peers) {
-            allResults += co.yield(Promise.all(peers.map(function (peer) {
+            co.yield(Promise.all(peers.map(function (peer) {
                 return new Promise(function (resolve, reject) {
                     ohttp.request({
                         method: 'GET',
@@ -101,17 +101,18 @@ function sendAll() {
                         tres.on('data', function (buf) {
                             str += buf;
                         }).on('end', function () {
-                            resolve(JSON.parse(str));
+                            allResults += str;
+                            resolve();
                         }).on('error', function (err) {
                             console.error(err.stack);
-                            resolve(null);
+                            resolve();
                         });
                     }).on('error', function (err) { // cannot contact peer
                         console.error(err.stack);
-                        resolve(null);
+                        resolve();
                     }).end();
                 });
-            }))).join('');
+            })));
         }
         console.log(allResults);
     }).done();
