@@ -89,6 +89,9 @@ function trigger() {
 
 const ohttp = require('http'), onet = require('net');
 
+// callbacks for registered metrics
+const registeredMetrics = {};
+
 function sendAll() {
     sendingTimer = null;
     // fetch all and send
@@ -152,6 +155,10 @@ function sendAll() {
             buf += prefix + '.' + key + '_Time ' + (allSums[key] / allCounts[key] | 0) + ' ' + ts + '\n';
         }
 
+        for (let key of registeredMetrics) {
+            buf += prefix + '.' + key + ' ' + registeredMetrics[ke]() + ' ' + ts + '\n';
+        }
+
         onet.connect({
             port: port,
             host: server
@@ -213,4 +220,13 @@ export function addMulti(name, count) {
     counts[key] = key in counts ? (counts[key] | 0) + count : count;
 }
 
-
+/**
+ * Register a callback for a metric. The callback will be called every one minute for the current value.
+ *
+ * @param {string} name last name of the metric
+ * @param {Function} cb callback that will be queried for the value of the metric
+ */
+export function register(name, cb) {
+    let key = name.replace(/[\W$]/g, '_');
+    registeredMetrics[key] = cb;
+}

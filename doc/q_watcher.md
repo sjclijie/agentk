@@ -1,4 +1,4 @@
-<!-- @rev f3a3e133e232e860e57237bbd2105186 20ae7b -->
+<!-- @rev 02eff7c464df7bdfb0ed74c1ffc81202 20ae7b -->
 # q_watcher
 
 Qunar Watcher module
@@ -132,5 +132,25 @@ function addMulti(name, count)
     <br>last name of the monitor record
   - count `number`
     <br>value to be increased
+ 
+
+
+------------------------------------------------------------------------
+### register()
+
+```js
+function register(name, cb) 
+```
+
+
+ Register a callback for a metric. The callback will be called every one minute for the current value.
+
+
+**Params**
+
+  - name `string`
+    <br>last name of the metric
+  - cb `Function`
+    <br>callback that will be queried for the value of the metric
  
 
