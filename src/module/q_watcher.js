@@ -124,7 +124,7 @@ function sendAll() {
                 }).end();
             });
         })));
-        let allResults = Array.prorotype.concat.apply(selfResults, peerResults);
+        let allResults = Array.prototype.concat.apply(selfResults, peerResults);
         console.log('all results', allResults);
     }).done();
 }
