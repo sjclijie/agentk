@@ -36,7 +36,7 @@ export let server = 'qmon-beta.corp.qunar.com';
 
 let sendingTimer = null, peers = null, peerPort = 0;
 
-let last = [{}, {}], current = {}, sumTime = {}, nextMin = Date.now() / 60e3 | 0;
+let last = [{}, {}], current = {}, sumTime = {}, nextMin = Date.now() / 30e3 | 0;
 
 /**
  * Set up data combination and calculation for multiple servers.
@@ -71,11 +71,11 @@ channel.registerProvider('watcher', function () {
     return last;
 }, true);
 
-setTimeout(trigger, ++nextMin * 60e3 - Date.now()).unref();
+setTimeout(trigger, ++nextMin * 30e3 - Date.now()).unref();
 
 
 function trigger() {
-    setTimeout(trigger, ++nextMin * 60e3 - Date.now()).unref();
+    setTimeout(trigger, ++nextMin * 30e3 - Date.now()).unref();
 
     last = [current, sumTime];
     current = {};
@@ -126,7 +126,7 @@ function sendAll() {
         })));
         let allResults = Array.prorotype.concat.apply(selfResults, peerResults);
         console.log('all results', allResults);
-    });
+    }).done();
 }
 
 function send() {
