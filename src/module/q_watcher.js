@@ -156,7 +156,7 @@ function sendAll() {
         }
 
         for (let key in registeredMetrics) {
-            buf += prefix + '.' + key + ' ' + registeredMetrics[ke]() + ' ' + ts + '\n';
+            buf += prefix + '.' + key + ' ' + registeredMetrics[key]() + ' ' + ts + '\n';
         }
 
         onet.connect({
