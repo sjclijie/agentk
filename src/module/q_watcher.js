@@ -84,7 +84,7 @@ function sendAll() {
     sendingTimer = null;
     // fetch all and send
     co.run(function () {
-        let allResults = channel.query('watcher');
+        let allResults = channel.query('watcher').join('');
         if (peers) {
             co.yield(Promise.all(peers.map(function (peer) {
                 return new Promise(function (resolve, reject) {
