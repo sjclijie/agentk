@@ -104,7 +104,7 @@ function sysvScript(uname) {
 }
 
 function execScript(uname) {
-    let dir = addslashes(path.dirname(__dirname));
+    let dir = addslashes(path.join(__dirname, '../..'));
     return `/bin/su ${addslashes(uname)} -c "cd; mkdir -p .agentk; cd .agentk; exec ${addslashes(process.execPath)} --harmony ${dir}/index.js load ${dir}/src/service/daemon.js >> out.log 2>> err.log"`
 }
 
