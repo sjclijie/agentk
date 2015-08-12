@@ -40,6 +40,9 @@ let sendingTimer = null, peers = null, peerPort = 0;
 
 let last = [{}, {}, {}], counts = {}, sums = {}, values = {}, nextMin = Date.now() / 60e3 | 0;
 
+// callbacks for registered metrics
+const registeredMetrics = {};
+
 /**
  * Set up data combination and calculation for multiple servers.
  *
@@ -79,6 +82,9 @@ setTimeout(trigger, ++nextMin * 60e3 - Date.now()).unref();
 function trigger() {
     setTimeout(trigger, ++nextMin * 60e3 - Date.now()).unref();
 
+    for (let key in registeredMetrics) {
+        values[key] = registeredMetrics[key]();
+    }
     last = [values, counts, sums];
     values = {};
     counts = {};
@@ -89,8 +95,6 @@ function trigger() {
 
 const ohttp = require('http'), onet = require('net');
 
-// callbacks for registered metrics
-const registeredMetrics = {};
 
 function sendAll() {
     sendingTimer = null;
@@ -153,10 +157,6 @@ function sendAll() {
 
         for (let key in allSums) {
             buf += prefix + '.' + key + '_Time ' + (allSums[key] / allCounts[key] | 0) + ' ' + ts + '\n';
-        }
-
-        for (let key in registeredMetrics) {
-            buf += prefix + '.' + key + ' ' + registeredMetrics[key]() + ' ' + ts + '\n';
         }
 
         onet.connect({
