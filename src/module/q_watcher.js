@@ -14,7 +14,7 @@ import * as channel from 'channel.js';
  * metric prefix of the log entry, see the [wiki](http://wiki.corp.qunar.com/pages/viewpage.action?pageId=74958076#%E6%95%B0%E6%8D%AE%E6%94%B6%E9%9B%86-Watcher%E6%8C%87%E6%A0%87%E5%91%BD%E5%90%8DOpsWiki%3AWatcher%E6%8C%87%E6%A0%87%E5%91%BD%E5%90%8D)
  * to get the proper metric prefix
  *
- * @demo
+ * @example
  *
  *     watcher.prefix = 's.hotel.ued.xxx';
  *
@@ -26,7 +26,7 @@ export let prefix = 't';
  * remote server to push the log to, see the [wiki](http://wiki.corp.qunar.com/pages/viewpage.action?pageId=74958076#%E6%95%B0%E6%8D%AE%E6%94%B6%E9%9B%86-Watcher%E6%8C%87%E6%A0%87%E5%91%BD%E5%90%8DOpsWiki%3AWatcher%E6%8C%87%E6%A0%87%E5%91%BD%E5%90%8D)
  * to get the proper remote server
  *
- * @demo
+ * @example
  *
  *     watcher.server = 'qmon-hotel.corp.qunar.com';
  *
@@ -43,7 +43,7 @@ let last = [{}, {}, {}], counts = {}, sums = {}, values = {}, nextMin = Date.now
 /**
  * Set up data combination and calculation for multiple servers.
  *
- * @demo
+ * @example
  *
  *     q_watcher.setupPeers(['l-qzz1.fe.dev.cn6', 'l-qzz2.fe.dev.cn6'], require('os').hostname(), 8012);
  *

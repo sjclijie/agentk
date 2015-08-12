@@ -49,9 +49,9 @@ consts.forEach(function(obj) {var comment = obj.comment; %>
             if(obj.value) { %> = <code><%- obj.value %></code>
             <% } %>
 
-        <p class="desc">
-            <%= comment.description %>
-        </p>
+        <% if(comment.description) {%><p class="desc">
+            <%- parseMarkup(comment.description)%>
+        </p><% } %>
 
         <% if(comment.example) { %>
         <h4>Example</h4>
@@ -69,9 +69,9 @@ variables.forEach(function(obj) {var comment = obj.comment; %>
     if(obj.value) { %> = <code><%- obj.value %></code>
     <% } %>
 
-        <p class="desc">
-            <%= comment.description %>
-        </p>
+        <% if(comment.description) {%><p class="desc">
+            <%- parseMarkup(comment.description)%>
+        </p><% } %>
 
         <% if(comment.example) { %>
         <h4>Example</h4>
@@ -87,9 +87,9 @@ methods.forEach(function (method) {var comment = method.comment; %>
     <dd>
         <p class="proto"><%- method.prototype %>
 
-        <p class="desc">
-            <%- comment.description ? parseMarkup(comment.description) : '' %>
-        </p>
+        <% if(comment.description) {%><p class="desc">
+            <%- parseMarkup(comment.description)%>
+        </p><% } %>
 
         <% if(comment.example) { %>
         <h4>Example</h4>
