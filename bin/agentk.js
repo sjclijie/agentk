@@ -433,7 +433,7 @@ let commands = {
         func: function (dir, name) {
             dir = path.resolve(dir);
             let outFile = '/etc/init.d/' + name;
-            fs.writeFileSync('/etc/init.d/' + name, '#!/bin/sh\n\
+            fs.writeFileSync(outFile, '#!/bin/sh\n\
 case "$1" in\n\
     start|stop|restart|reload|status)\n\
         ' + process.execPath + ' --harmony "' + __filename + '" $1 "' + dir + '"\n\
@@ -442,7 +442,7 @@ case "$1" in\n\
         echo "Usage: $0 {start|stop|restart|reload|status}"\n\
         exit 2\n\
 esac\n');
-            fs.chmodSync(name, '766');
+            fs.chmodSync(outFile, '755');
 
         }
     }
