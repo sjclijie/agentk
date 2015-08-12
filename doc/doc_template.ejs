@@ -100,7 +100,7 @@ methods.forEach(function (method) {var comment = method.comment; %>
         <h4>Parameters</h4>
         <dl>
             <% comment.param.forEach(function(param){var m = /^(?:\{(.+)\}\s*)?(\[\w+\]|\w+)\s*([\s\S]*)/.exec(param); %>
-            <dt><%- m[2][0] === '[' ? '<sub class="green">optional</sub>' + m[2].substr(1, m[2].length - 2)  : m[2] %><% if(m[1]) {%> <code><%- parseTypename(m[1])%></code><%}%></dt>
+            <dt><%- m[2][0] === '[' ? '<sub>optional</sub>' + m[2].substr(1, m[2].length - 2)  : m[2] %><% if(m[1]) {%> <code><%- parseTypename(m[1])%></code><%}%></dt>
             <%if(m[3]) {%>
             <dd><%- parseMarkup(m[3])%></dd><%}
             })%>
