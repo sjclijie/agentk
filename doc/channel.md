@@ -1,4 +1,4 @@
-<!-- @rev 5b1b2f81d2000637df2a7babccb7bb43 215fda -->
+<!-- @rev f058beecdf2b84987e9cc3b2b95ef51f 20ae7b -->
 # channel
 
 cross process message gathering and dispatching system

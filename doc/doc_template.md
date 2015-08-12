@@ -46,8 +46,8 @@ if(methods.length) {%>
 <%- comment.description %>
 
 <% if (comment.param) {%>**Params**
-<% comment.param.forEach(function(param){var m = /^(?:\{(.+)\}\s*)?(\w+)\s*([\s\S]*)/.exec(param); %>
-  - <%- m[2]%><% if(m[1]) {%> `<%- m[1]%>`<%}%><%if(m[3]) {%>
+<% comment.param.forEach(function(param){var m = /^(?:\{(.+)\}\s*)?(\[\w+\]|\w+)\s*([\s\S]*)/.exec(param); %>
+  - <%- m[2][0]==='[' ? m[2].substr(1,m[2].length-2)+'(optional)':m[2]%><% if(m[1]) {%> `<%- m[1]%>`<%}%><%if(m[3]) {%>
     <br><%- m[3]%><%}
 })%>
 

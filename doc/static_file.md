@@ -1,4 +1,4 @@
-<!-- @rev 63a8c2d60b5cb1883749f5094a7e30d1 215fda -->
+<!-- @rev e05aa578544c1071457f2651ffd78865 20ae7b -->
 # static_file
 
 static file request handler
@@ -38,8 +38,8 @@ function staticFile(directory, option)
 
   - directory `string`
     <br>absolute path or relative to working directory
-  - option `object`
-    <br>optional parameters:
+  - option(optional) `object`
+    <br>optional arguments:
 
    - no_cache:`boolean` disable file cache, default to false
    - expires:`number` duration before expiration in ms, default to 0

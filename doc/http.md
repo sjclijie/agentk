@@ -1,4 +1,4 @@
-<!-- @rev 35da296f800f3d5fc67761de9eda6b74 215fda -->
+<!-- @rev 6501876273fc00fc296d7fedc93f88da 20ae7b -->
 # http
 
 ----
@@ -40,7 +40,7 @@
 ### listen()
 
 ```js
-function listen(port, cb) 
+function listen(port, cb, host, backlog) 
 ```
 
 
@@ -62,6 +62,10 @@ function listen(port, cb)
     <br>TCP port number or unix domain socket path to listen to
   - cb `function|router::Router`
     <br>request handler callback
+  - host(optional) `string`
+    <br>hostname to listen to, only valid if port is a 0-65535 number
+  - backlog(optional) `number`
+    <br>maximum requests pending to be accepted, only valid if port is a 0-65535 number
 
 **Returns**
 

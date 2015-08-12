@@ -126,3 +126,14 @@ ul {
     background: #F8F8F8;
     box-shadow: 0 0 1px #EEE;
 }
+
+sub {
+    border: 1px solid #EEE;
+    border-radius: 4px;
+    padding: 2px 6px;
+}
+
+sub.green {
+    background: #28C682;
+    color: #fff;
+}

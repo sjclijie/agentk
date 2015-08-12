@@ -1,4 +1,4 @@
-<!-- @rev 7a1a0e2419e22852fc291bec06a2127a 215fda -->
+<!-- @rev b973488e08f83be0648d8d1479f82d79 20ae7b -->
 # child_process
 
 Wrapper for child process
@@ -27,7 +27,7 @@ function fork(module, options)
 
   - module `string`
     <br>bootstrap module path (filename or directory with a `package.json` present)
-  - options `object`
+  - options(optional) `object`
     <br>optional arguments
 
    - options.stdout: stdout file path to be forwarded

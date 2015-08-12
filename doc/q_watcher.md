@@ -1,4 +1,4 @@
-<!-- @rev 51c95394e133a005b2fb8a0032a8a1b5 215fda -->
+<!-- @rev 437816d643b6a86ae286981cc0d25d1d 20ae7b -->
 # q_watcher
 
 Qunar Watcher module
@@ -13,13 +13,71 @@ Qunar Watcher module
 
 
 
+## Variable Fields
+
+### prefix
+
+ metric prefix of the log entry, see the [wiki](http://wiki.corp.qunar.com/pages/viewpage.action?pageId=74958076#%E6%95%B0%E6%8D%AE%E6%94%B6%E9%9B%86-Watcher%E6%8C%87%E6%A0%87%E5%91%BD%E5%90%8DOpsWiki%3AWatcher%E6%8C%87%E6%A0%87%E5%91%BD%E5%90%8D)
+ to get the proper metric prefix
+
+#### type
+{string}
+ 
+
+#### value
+`'t'`
+
+
+### server
+
+ remote server to push the log to, see the [wiki](http://wiki.corp.qunar.com/pages/viewpage.action?pageId=74958076#%E6%95%B0%E6%8D%AE%E6%94%B6%E9%9B%86-Watcher%E6%8C%87%E6%A0%87%E5%91%BD%E5%90%8DOpsWiki%3AWatcher%E6%8C%87%E6%A0%87%E5%91%BD%E5%90%8D)
+ to get the proper remote server
+
+#### type
+{string}
+ 
+
+#### value
+`'qmon-beta.corp.qunar.com'`
+
+
+### port
+
+#### type
+{number}
+
+#### value
+`2013`
+
+
+
 ## Methods
 
 ------------------------------------------------------------------------
-### recordOne()
+### setupPeers()
 
 ```js
-function recordOne(name, time) 
+function setupPeers(hosts, localhost, port) 
+```
+
+
+ Set up data combination and calculation for multiple servers.
+
+
+**Params**
+
+  - hosts `Array`
+    <br>hostnames of all servers
+  - localhost `string`
+    <br>this server
+  - port `number`
+
+
+------------------------------------------------------------------------
+### add()
+
+```js
+function add(name, time) 
 ```
 
 
@@ -30,16 +88,16 @@ function recordOne(name, time)
 
   - name `string`
     <br>last name of the monitor record
-  - time `number`
-    <br>optional, time of the monitor record
+  - time(optional) `number`
+    <br>time of the monitor record
  
 
 
 ------------------------------------------------------------------------
-### recordSize()
+### set()
 
 ```js
-function recordSize(name, number) 
+function set(name, number) 
 ```
 
 
@@ -56,10 +114,10 @@ function recordSize(name, number)
 
 
 ------------------------------------------------------------------------
-### incrRecord()
+### addMulti()
 
 ```js
-function incrRecord(name, count) 
+function addMulti(name, count) 
 ```
 
 
@@ -72,23 +130,5 @@ function incrRecord(name, count)
     <br>last name of the monitor record
   - count `number`
     <br>value to be increased
- 
-
-
-------------------------------------------------------------------------
-### listen()
-
-```js
-function listen(port) 
-```
-
-
- start background web service
-
-
-**Params**
-
-  - port `number`
-    <br>HTTP port number to listen to
  
 

@@ -38,7 +38,7 @@ export let port = 2013;
 
 let sendingTimer = null, peers = null, peerPort = 0;
 
-let last = [{}, {}, {}], counts = {}, sums = {}, values = {}, nextMin = Date.now() / 30e3 | 0;
+let last = [{}, {}, {}], counts = {}, sums = {}, values = {}, nextMin = Date.now() / 60e3 | 0;
 
 /**
  * Set up data combination and calculation for multiple servers.
@@ -69,11 +69,11 @@ channel.registerProvider('watcher', function () {
     return last;
 }, true);
 
-setTimeout(trigger, ++nextMin * 30e3 - Date.now()).unref();
+setTimeout(trigger, ++nextMin * 60e3 - Date.now()).unref();
 
 
 function trigger() {
-    setTimeout(trigger, ++nextMin * 30e3 - Date.now()).unref();
+    setTimeout(trigger, ++nextMin * 60e3 - Date.now()).unref();
 
     last = [values, counts, sums];
     values = {};
