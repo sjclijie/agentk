@@ -1,5 +1,6 @@
 {
   "main": "index.js",
   "workers": 4,
-  "stdout": "out.log"
+  "stdout": "out.log",
+  "stderr": "err.log"
 }

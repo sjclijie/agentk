@@ -64,6 +64,10 @@ export function setupPeers(hosts, localhost, port) {
 
 
 channel.registerProvider('watcher', function () {
+    if (sendingTimer) { // scheduling
+        clearTimeout(sendingTimer);
+        sendingTimer = null;
+    }
     return last;
 }, true);
 
@@ -107,10 +111,12 @@ function sendAll() {
                     }).on('end', function () {
                         console.log(peer + ' returns ' + str);
                         resolve(JSON.parse(str))
-                    }).on('error', function () {
+                    }).on('error', function (err) {
+                        console.error(err.stack);
                         resolve(null);
                     });
                 }).on('error', function (err) { // cannot contact peer
+                    console.error(err.stack);
                     resolve(null);
                 }).end();
             });
