@@ -24,8 +24,6 @@ import * as file from '../src/module/file.js';
 import {md5} from '../src/module/crypto.js';
 import * as watcher from '../src/module/q_watcher.js';
 
-watcher.listen(8801);
-
 const storage = manifest.config.storage;
 if (storage.name == 'aliyun_oss') {
     const entry = include('aliyun_oss.js', __dirname);
