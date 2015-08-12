@@ -198,7 +198,7 @@ function onMasterMessage(mesg) {
             let provider = providers[ch];
             if (provider[1]) { // directly
                 resp.status = 0;
-                resp.result = provider[0];
+                resp.result = provider[0]();
                 process.send(resp);
             } else { // inside coroutine
                 co.run(provider[0]).then(function (result) { // success
