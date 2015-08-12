@@ -316,12 +316,7 @@ let commands = {
                 }
                 return output;
             } else if (arg0 === 'upstart_install' || arg0 === 'sysv_install') { // two arguments
-                let buf = '';
-                for (let line of fs.readFileSync('/etc/passwd', 'binary').split('\n')) {
-                    if (!line || line.substr(line.length - 8) === '/nologin' || line.substr(line.length - 6) === '/false') continue;
-                    buf = completion(buf, arg1, line.substr(0, line.indexOf(':')))
-                }
-                return buf;
+                return completeUsername(arg1);
             } else if (arg0 === 'upstart_uninst') {
                 let buf = '';
                 for (let file of fs.readdirSync('/etc/init')) {
@@ -428,15 +423,16 @@ let commands = {
     },
     "rc-create": {
         help: "create sysv rc/init script for a program",
-        args: "<program directory> <name>",
+        args: "<program directory> <filename> [<username>]",
+        maxArgs: 3,
         desc: "creates a script file in /etc/init.d that can be used to start|stop|restart|reload the program",
-        func: function (dir, name) {
+        func: function (dir, filename, username) {
             dir = path.resolve(dir);
             let outFile = '/etc/init.d/' + name;
             fs.writeFileSync(outFile, '#!/bin/sh\n\
 case "$1" in\n\
     start|stop|restart|reload|status)\n\
-        ' + process.execPath + ' --harmony "' + __filename + '" $1 "' + dir + '"\n\
+        su ' + ussername + ' -c ' + process.execPath + ' --harmony "' + __filename + '" $1 "' + dir + '"\n\
         ;;\n\
     *)\n\
         echo "Usage: $0 {start|stop|restart|reload|status}"\n\
@@ -444,6 +440,10 @@ case "$1" in\n\
 esac\n');
             fs.chmodSync(outFile, '755');
 
+        }, completion: function (a, b, c) {
+            if (arguments.length === 3) {
+                return completeUsername(c);
+            }
         }
     }
 };
@@ -496,4 +496,13 @@ function completion(buf, arg0) {
         }
     }
     return buf
+}
+
+function completeUsername(arg1) {
+    let buf = '';
+    for (let line of fs.readFileSync('/etc/passwd', 'binary').split('\n')) {
+        if (!line || line.substr(line.length - 8) === '/nologin' || line.substr(line.length - 6) === '/false') continue;
+        buf = completion(buf, arg1, line.substr(0, line.indexOf(':')))
+    }
+    return buf;
 }
