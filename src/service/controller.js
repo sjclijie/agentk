@@ -50,14 +50,8 @@ stop on runlevel [016]
 
 respawn
 
-script
-    exec /bin/su ${addslashes(uname)} << EOC
-        cd
-        mkdir -p .agentk
-        cd .agentk
-        exec ${addslashes(process.execPath)} --harmony ${addslashes(dir)}/index.js load ${addslashes(dir)}/src/service/daemon.js >> out.log 2>> err.log
-    EOC
-end script`);
+exec ${execScript(uname)}
+`);
 
     console.log(`${uname}: service installed, use \x1b[36msudo initctl start ak_${uname}\x1b[0m to start the service`);
 }
@@ -72,7 +66,7 @@ export function service_upstart_uninst(uname) {
 
 export function service_sysv_install(uname) {
     let inittab = '/etc/inittab',
-        script = `:2345:respawn:/bin/sh ${addslashes(__dirname)}/daemon.sh ${addslashes(uname)} ${addslashes(process.execPath)}\n`,
+        script = sysvScript(uname),
         current = '' + file.read(inittab);
 
     let idx = current.indexOf(script), installed = idx !== -1;
@@ -95,7 +89,7 @@ export function service_sysv_install(uname) {
 
 export function service_sysv_uninst(uname) {
     let inittab = '/etc/inittab',
-        script = `:2345:respawn:/bin/sh "${__dirname}/daemon.sh" "${uname}" "${process.execPath}"\n`,
+        script = sysvScript(uname),
         current = '' + file.read(inittab);
 
     let idx = current.indexOf(script), installed = idx !== -1;
@@ -103,6 +97,15 @@ export function service_sysv_uninst(uname) {
         throw new Error(`${uname}: service not installed`);
     }
     file.write(inittab, current.substr(0, idx - 2) + current.substr(idx + script.length + 2))
+}
+
+function sysvScript(uname) {
+    return `:2345:respawn:${execScript(uname)}\n`;
+}
+
+function execScript(uname) {
+    let dir = addslashes(path.dirname(__dirname));
+    return `/bin/su ${addslashes(uname)} -c "cd; mkdir -p .agentk; cd .agentk; exec ${addslashes(process.execPath)} --harmony ${dir}/index.js load ${dir}/src/service/daemon.js >> out.log 2>> err.log"`
 }
 
 function getData(result) {
