@@ -94,6 +94,7 @@ function sendAll() {
     sendingTimer = null;
     // fetch all and send
     co.run(function () {
+        let selfResults = channel.query('watcher');
         let peerResults = co.yield(Promise.all(peers.map(function (peer) {
             console.log('pid ' + process.pid + ': will ask ' + peer + ' for watcher data');
             return new Promise(function (resolve, reject) {
@@ -122,7 +123,7 @@ function sendAll() {
                 }).end();
             });
         })));
-        let allResults = Array.prorotype.concat.apply(channel.query('watcher'), peerResults);
+        let allResults = Array.prorotype.concat.apply(selfResults, peerResults);
         console.log('all results', allResults);
     });
 }
