@@ -33,13 +33,36 @@ export let prefix = 't';
  * @type {string}
  */
 export let server = 'qmon-beta.corp.qunar.com';
+
 export let port = 2013;
 
-let sendingTimer = null;
+let sendingTimer = null, peers = null, peerPort = 0;
 
-let last = '', current = '', nextMin = Date.now() / 20e3 | 0;
+let last = [{}, {}, {}], counts = {}, sums = {}, values = {}, nextMin = Date.now() / 30e3 | 0;
+
+/**
+ * Set up data combination and calculation for multiple servers.
+ *
+ * @param {Array} hosts hostnames of all servers
+ * @param {string} localhost this server
+ * @param {number} port
+ */
+export function setupPeers(hosts, localhost, port) {
+    let idx = hosts.indexOf(localhost);
+    if (idx === -1) {
+        throw new Error('localhost not in host list');
+    }
+    hosts.splice(idx, 1);
+    peers = hosts;
+    peerPort = port;
+    http.listen(port, function (req) {
+        return response.json(channel.query('watcher'));
+    }, localhost);
+}
+
 
 channel.registerProvider('watcher', function () {
+    console.log('pid ' + process.pid + ': queried');
     if (sendingTimer) { // scheduling
         clearTimeout(sendingTimer);
         sendingTimer = null;
@@ -47,37 +70,146 @@ channel.registerProvider('watcher', function () {
     return last;
 }, true);
 
-setTimeout(trigger, ++nextMin * 20e3 - Date.now()).unref();
+setTimeout(trigger, ++nextMin * 30e3 - Date.now()).unref();
+
 
 function trigger() {
-    setTimeout(trigger, ++nextMin * 20e3 - Date.now()).unref();
-    last = current;
-    current = '';
-    sendingTimer = setTimeout(sendAll, 1000 + Math.random() * 3000);
+    setTimeout(trigger, ++nextMin * 30e3 - Date.now()).unref();
+
+    last = [values, counts, sums];
+    values = {};
+    counts = {};
+    sums = {};
+
+    sendingTimer = setTimeout(sendAll, Math.random() * (peers ? peers.length + 1 : 1) * 3000);
 }
 
-const net = require('net');
+const ohttp = require('http');
 
 function sendAll() {
     sendingTimer = null;
     // fetch all and send
     co.run(function () {
-        let allResults = channel.query('watcher').join('');
-        if (!allResults) return;
-        console.log(allResults);
-        let buf = new Buffer(allResults);
+        let allResults = channel.query('watcher');
+        if (peers) {
+            allResults = Array.prototype.concat.apply(allResults, co.yield(Promise.all(peers.map(function (peer) {
+                return new Promise(function (resolve) {
+                    ohttp.request({
+                        method: 'GET',
+                        path: '/',
+                        host: peer,
+                        port: peerPort,
+                        headers: {
+                            'Connection': 'close'
+                        }
+                    }, function (tres) {
+                        let str = '';
+                        tres.on('data', function (buf) {
+                            str += buf;
+                        }).on('end', function () {
+                            resolve(JSON.parse(str));
+                        }).on('error', function (err) {
+                            console.error(err.stack);
+                            resolve(null);
+                        });
+                    }).on('error', function (err) { // cannot contact peer
+                        console.error(err.stack);
+                        resolve(null);
+                    }).end();
+                });
+            }))));
+        }
+
+        //console.log('all results', allResults);
+        let allValues = {}, allCounts = {}, allSums = {};
+        for (let tuple of allResults) {
+            if (!tuple) continue;
+            let values = tuple[0], counts = tuple[1], sums = tuple[2];
+            for (let key in  values) {
+                key in allValues || (allValues[key] = values[key]);
+            }
+            for (let key in counts) {
+                allCounts[key] = (counts[key] | 0) + (allCounts[key] | 0);
+            }
+
+            for (let key in sums) {
+                allSums[key] = +sums[key] + (key in allSums ? +allSums[key] : 0);
+            }
+        }
+        let buf = '', ts = Date.now() / 1000 | 0;
+        for (let key in allValues) {
+            buf += prefix + '.' + key + ' ' + allValues[key] + ' ' + ts + '\n';
+        }
+
+        for (let key in allCounts) {
+            buf += prefix + '.' + key + '_Count ' + allCounts[key] + ' ' + ts + '\n';
+        }
+
+        for (let key in allSums) {
+            buf += prefix + '.' + key + '_Time ' + (allSums[key] / allCounts[key] | 0) + ' ' + ts + '\n';
+        }
+
+        console.log(buf);
+
         net.connect({
             port: port,
             host: server
-        }).on('error', function (err) {
-            console.error(err.stack);
-        }).end(buf);
-    }).then(null, function (err) {
+        }).on('error', onerr).end(buf);
+    }).then(null, onerr);
+    function onerr(err) {
         console.error(err.stack);
-    });
+    }
 }
 
-export function add(name, duration, timeStamp) {
-    let argLen = arguments.length;
-    current += `${prefix}.${name.replace(/[\W$]/g, '_')} ${(argLen < 2 ? 0 : duration | 0)} ${((argLen < 3 ? Date.now() : timeStamp) / 1000 | 0)}\n`;
+/**
+ * Increase a record's count by 1, a time can be supplied
+ *
+ * @example
+ *
+ *     q_watcher.add('request_total');
+ *     q_watcher.add('request_cost', Date.now() - timeStart);
+ *
+ * @param {string} name last name of the monitor record
+ * @param {number} [time] time of the monitor record
+ */
+export function add(name, time) {
+    let key = name.replace(/[\W$]/g, '_');
+    counts[key] = key in counts ? (counts[key] | 0) + 1 : 1;
+
+    if (arguments.length > 1) { // has time
+        sums[key] = (sums[key] || 0) + time;
+    }
 }
+
+/**
+ * Set a record's number
+ *
+ * @example
+ *
+ *     q_watcher.recordSize('Thread Count', 100)
+ *
+ * @param {string} name last name of the monitor record
+ * @param {number} number number to be set to
+ */
+export function set(name, number) {
+    let key = name.replace(/[\W$]/g, '_');
+    values[key] = number | 0;
+}
+
+
+/**
+ * Increase a record's count by a varible number
+ *
+ * @example
+ *
+ *     q_watcher.addMulti('foobar', 30)
+ *
+ * @param {string} name last name of the monitor record
+ * @param {number} count value to be increased
+ */
+export function addMulti(name, count) {
+    let key = name.replace(/[\W$]/g, '_');
+    counts[key] = key in counts ? (counts[key] | 0) + count : count;
+}
+
+
