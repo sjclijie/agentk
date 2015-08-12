@@ -36,7 +36,7 @@ export let server = 'qmon-beta.corp.qunar.com';
 
 let sendingTimer = null, peers = null, peerPort = 0;
 
-let last = [{}, {}], current = {}, sumTime = {}, nextMin = Date.now() / 30e3 | 0;
+let last = '', current = '', nextMin = Date.now() / 30e3 | 0;
 
 /**
  * Set up data combination and calculation for multiple servers.
@@ -54,16 +54,12 @@ export function setupPeers(hosts, localhost, port) {
     peers = hosts;
     peerPort = port;
     http.listen(port, function (req) {
-        console.log('pid ' + process.pid + ': will query for watcher data');
-        let results = channel.query('watcher');
-        console.log('pid ' + process.pid + ': will send', results);
-        return response.json(results);
+        return response.json(channel.query('watcher'));
     }, localhost);
 }
 
 
 channel.registerProvider('watcher', function () {
-    console.log('pid ' + process.pid + ': queried');
     if (sendingTimer) { // scheduling
         clearTimeout(sendingTimer);
         sendingTimer = null;
@@ -77,15 +73,9 @@ setTimeout(trigger, ++nextMin * 30e3 - Date.now()).unref();
 function trigger() {
     setTimeout(trigger, ++nextMin * 30e3 - Date.now()).unref();
 
-    last = [current, sumTime];
-    current = {};
-    sumTime = {};
-
-    if (peers) {
-        sendingTimer = setTimeout(sendAll, Math.random() * 3000);
-    } else {
-        send();
-    }
+    last = current;
+    current = '';
+    sendingTimer = setTimeout(sendAll, Math.random() * (peers ? peers.length + 1 : 1) * 3000);
 }
 
 const ohttp = require('http');
@@ -94,129 +84,40 @@ function sendAll() {
     sendingTimer = null;
     // fetch all and send
     co.run(function () {
-        let selfResults = channel.query('watcher');
-        let peerResults = co.yield(Promise.all(peers.map(function (peer) {
-            console.log('pid ' + process.pid + ': will ask ' + peer + ' for watcher data');
-            return new Promise(function (resolve, reject) {
-                ohttp.request({
-                    method: 'GET',
-                    path: '/',
-                    host: peer,
-                    port: peerPort,
-                    headers: {
-                        'Connection': 'close'
-                    }
-                }, function (tres) {
-                    let str = '';
-                    tres.on('data', function (buf) {
-                        str += buf;
-                    }).on('end', function () {
-                        console.log(peer + ' returns ' + str);
-                        resolve(JSON.parse(str));
-                        console.log(peer + ' returned');
-                    }).on('error', function (err) {
+        let allResults = channel.query('watcher');
+        if (peers) {
+            allResults += co.yield(Promise.all(peers.map(function (peer) {
+                return new Promise(function (resolve, reject) {
+                    ohttp.request({
+                        method: 'GET',
+                        path: '/',
+                        host: peer,
+                        port: peerPort,
+                        headers: {
+                            'Connection': 'close'
+                        }
+                    }, function (tres) {
+                        let str = '';
+                        tres.on('data', function (buf) {
+                            str += buf;
+                        }).on('end', function () {
+                            resolve(JSON.parse(str));
+                        }).on('error', function (err) {
+                            console.error(err.stack);
+                            resolve(null);
+                        });
+                    }).on('error', function (err) { // cannot contact peer
                         console.error(err.stack);
                         resolve(null);
-                    });
-                }).on('error', function (err) { // cannot contact peer
-                    console.error(err.stack);
-                    resolve(null);
-                }).end();
-            });
-        })));
-        let allResults = Array.prototype.concat.apply(selfResults, peerResults);
-        console.log('all results', allResults);
+                    }).end();
+                });
+            }))).join('');
+        }
+        console.log(allResults);
     }).done();
 }
 
-function send() {
-
+export function add(name, duration, timeStamp) {
+    let argLen = arguments.length;
+    current += prefix + name.replace(/[\W$]/g, '_') + ' ' + (argLen < 2 ? 0 : duration | 0) + ' ' + ((argLen < 3 ? Date.now() : timeStamp) / 1000 | 0) + '\n'
 }
-
-/**
- * Increase a record's count by 1, a time can be supplied
- *
- * @example
- *
- *     q_watcher.recordOne('request_total');
- *     q_watcher.recordOne('request_cost', Date.now() - timeStart);
- *
- * @param {string} name last name of the monitor record
- * @param {number} [time] time of the monitor record
- */
-export function recordOne(name, time) {
-    incrRecord(name, 1);
-
-    if (arguments.length > 1) { // has time
-        let key = name.replace(/[\W$]/g, '_');
-        sumTime[key] = (sumTime[key] || 0) + time;
-    }
-}
-
-/**
- * Set a record's number
- *
- * @example
- *
- *     q_watcher.recordSize('Thread Count', 100)
- *
- * @param {string} name last name of the monitor record
- * @param {number} number number to be set to
- */
-export function recordSize(name, number) {
-    let key = name.replace(/[\W$]/g, '_') + '_Value';
-    current[key] = number | 0;
-}
-
-
-/**
- * Increase a record's count by a varible number
- *
- * @example
- *
- *     q_watcher.incrRecord('foobar', 30)
- *
- * @param {string} name last name of the monitor record
- * @param {number} count value to be increased
- */
-export function incrRecord(name, count) {
-    let key = name.replace(/[\W$]/g, '_') + '_Count';
-    current[key] = (current[key] | 0) + count;
-}
-
-
-/**
- * start background web service
- *
- * @param {number} port HTTP port number to listen to
- */
-export function _listen(port) {
-    listen(port, function (req) {
-        if (req.url !== '/qmonitor.jsp') return response.error(404);
-
-        const results = channel.query('watcher'),
-            self = results.pop(),
-            allNumbers = self[0], allSums = self[1];
-
-        for (let pair of results) {
-            let numbers = pair[0], sums = pair[1];
-            for (let key in numbers) {
-                allNumbers[key] = (allNumbers[key] | 0) + numbers[key];
-            }
-            for (let key in sums) {
-                allSums[key] = (allSums[key] | 0) + sums[key];
-            }
-        }
-
-        let buf = '';
-        for (let key in allSums) {
-            buf += key + '_Time=' + (allSums[key] / allNumbers[key + '_Count'] | 0) + '\n';
-        }
-        for (let key in allNumbers) {
-            buf += key + '=' + allNumbers[key] + '\n';
-        }
-
-        return response.data(buf);
-    });
-}
-

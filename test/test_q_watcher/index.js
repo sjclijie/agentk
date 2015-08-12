@@ -6,6 +6,6 @@ q_watcher.setupPeers(['l-qzz1.fe.dev.cn6', 'l-qzz2.fe.dev.cn6'], require('os').h
 
 setTimeout(function func() {
     let t = Math.random() * 6000;
-    q_watcher.recordOne('t_' + (Math.random() * 5 | 0), t);
+    q_watcher.add('t_' + (Math.random() * 5 | 0), t);
     setTimeout(func, t);
 }, 1000);
