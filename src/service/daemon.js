@@ -33,9 +33,9 @@ const actions = {
         if (dir in programs) throw new Error(`program '${dir}' already started`);
         return startProgram(dir)
     },
-    status: function () {
-        return Object.keys(programs).map(function (dir) {
-            let program = programs[dir];
+    status: function (dirs) {
+        return (dirs || Object.keys(programs)).map(function (dir) {
+            let program = getProgram(dir);
             return {
                 path: dir,
                 workers: program.workers.length,
@@ -158,6 +158,7 @@ function startProgram(dir) {
     try {
         manifest = JSON.parse('' + file.read(path.join(dir, 'manifest.json')));
     } catch (e) { // no manifest
+        console.error(e.stack);
         manifest = null;
         let module = path.join(dir, 'index.js');
         if (!file.exists(module)) {

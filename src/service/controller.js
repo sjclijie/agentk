@@ -155,8 +155,8 @@ export function description() {
     Run \x1b[36msudo init q\x1b[0m to make the uninstallation take effect.`);
 }
 
-export function status() {
-    let data = getData(callService('status'));
+export function status(hasDir) {
+    let data = getData(callService('status', hasDir && [dir]));
 
     if (!data.length) {
         console.log('no program is currently running');

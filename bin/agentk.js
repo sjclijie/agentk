@@ -74,7 +74,7 @@ function commander(dir) {
         }
         process.chdir(dir);
     }
-    callService(cmd)
+    callService(cmd, dir)
 }
 
 let commands = {
@@ -164,9 +164,10 @@ let commands = {
     },
     "status": {
         help: "show program status",
-        maxArgs: 0,
+        maxArgs: 1,
         desc: "display the status of running programs",
-        func: commander
+        func: commander,
+        completion: completeRunningJobs
     },
     "doc": {
         help: "generate documentation",
@@ -424,7 +425,26 @@ let commands = {
             return buf;
 
         }
+    },
+    "rc-create": {
+        help: "create sysv rc/init script for a program",
+        args: "<program directory> <name>",
+        desc: "creates a script file in /etc/init.d that can be used to start|stop|restart|reload the program",
+        func: function (dir, name) {
+            dir = path.resolve(dir);
+            let outFile = '/etc/init.d/' + name;
+            fs.writeFileSync('/etc/init.d/' + name, '#!/bin/sh\n\
+case "$1" in\n\
+    start|stop|restart|reload|status)\n\
+        ' + process.execPath + ' --harmony "' + __filename + '" $1 "' + dir + '"\n\
+        ;;\n\
+    *)\n\
+        echo "Usage: $0 {start|stop|restart|reload|status}"\n\
+        exit 2\n\
+esac\n');
+            fs.chmodSync(name, '766');
 
+        }
     }
 };
 
