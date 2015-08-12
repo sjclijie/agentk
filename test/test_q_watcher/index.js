@@ -2,9 +2,13 @@ import * as q_watcher from '../../src/module/q_watcher.js';
 
 q_watcher.prefix = 't.agentk.q_watcher';
 
-q_watcher.setupPeers(['l-qzz1.fe.dev.cn6', 'l-qzz2.fe.dev.cn6'], require('os').hostname(), 8012);
+const os = require('os');
 
-q_watcher.reg
+q_watcher.setupPeers(['l-qzz1.fe.dev.cn6', 'l-qzz2.fe.dev.cn6'], os.hostname(), 8012);
+
+q_watcher.register('load-' + os.hostname(), function () {
+    return os.loadavg()[0] * 100;
+});
 
 setTimeout(function func() {
     let t = Math.random() * 6000;

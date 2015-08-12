@@ -155,7 +155,7 @@ function sendAll() {
             buf += prefix + '.' + key + '_Time ' + (allSums[key] / allCounts[key] | 0) + ' ' + ts + '\n';
         }
 
-        for (let key of registeredMetrics) {
+        for (let key in registeredMetrics) {
             buf += prefix + '.' + key + ' ' + registeredMetrics[ke]() + ' ' + ts + '\n';
         }
 
