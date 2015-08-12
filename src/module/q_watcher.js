@@ -67,7 +67,12 @@ function sendAll() {
         console.log(allResults);
         let socket = dgram.createSocket('udp4');
         let buf = new Buffer(allResults);
-        co.sync(socket.send, buf, 0, buf.length, port, server);
+        co.promise(function (resolve, reject) {
+            socket.send(buf, 0, buf.length, port, server, function (err) {
+                if (err) reject(err);
+                else resolve();
+            })
+        });
         socket.close();
     }).then(null, function (err) {
         console.error(err.stack);
