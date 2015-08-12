@@ -84,7 +84,7 @@ function trigger() {
     sendingTimer = setTimeout(sendAll, Math.random() * (peers ? peers.length + 1 : 1) * 3000);
 }
 
-const ohttp = require('http');
+const ohttp = require('http'), onet = require('net');
 
 function sendAll() {
     sendingTimer = null;
@@ -151,7 +151,7 @@ function sendAll() {
 
         console.log(buf);
 
-        net.connect({
+        onet.connect({
             port: port,
             host: server
         }).on('error', onerr).end(buf);
