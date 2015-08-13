@@ -43,7 +43,7 @@ export function service_upstart_install(uname) {
     } catch (e) {
         throw new Error('upstart not installed');
     }
-    console.log(version[0] + '', version[1] + '');
+
     let vers = /upstart (\d+)\.(\d+)/.exec(version[0].toString());
     if (!vers) {
         throw new Error('unrecognized output of `initctl version`: ' + version[0]);
@@ -54,8 +54,7 @@ export function service_upstart_install(uname) {
     if (file.exists(filename)) {
         throw new Error(`${uname}: service already installed`);
     }
-
-
+    
     file.write(filename, `description "AgentK: Integrated Node.JS Framework"
 
 start on filesystem
@@ -63,7 +62,6 @@ stop on runlevel [016]
 
 respawn
 chdir ${getHome(uname)}/.agentk
-
 ${vers >= 10004 ? `
 setuid ${uname}
 
