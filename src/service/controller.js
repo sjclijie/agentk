@@ -62,13 +62,14 @@ start on filesystem
 stop on runlevel [016]
 
 respawn
+chdir ${getHome(uname)}/.agentk
+
 ${vers >= 10004 ? `
 setuid ${uname}
-chdir ${getHome(uname)}/.agentk
 
 exec ${nodeScript()}
 ` : `
-exec /bin/su ${uname} <<< "cd ${getHome(uname)}/.agentk; exec ${nodeScript()}"`}
+exec /bin/su ${uname} -c "exec ${nodeScript()}"`}
 `);
 
     console.log(`${uname}: service installed, use \x1b[36msudo initctl start ak_${uname}\x1b[0m to start the service`);
