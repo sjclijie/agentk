@@ -42,15 +42,16 @@ export function service_upstart_install(uname) {
         throw new Error(`${uname}: service already installed`);
     }
 
-    let dir = path.dirname(__dirname);
+
     file.write(filename, `description "AgentK: Integrated Node.JS Framework"
 
 start on filesystem and static-network-up
 stop on runlevel [016]
 
 respawn
-
-exec ${execScript(uname)}
+setuid ${uname}
+chdir ${getHome(uname)}/.agentk
+exec ${nodeScript()}
 `);
 
     console.log(`${uname}: service installed, use \x1b[36msudo initctl start ak_${uname}\x1b[0m to start the service`);
@@ -70,20 +71,12 @@ export function service_systemd_install(uname) {
         throw new Error(`${uname}: service already installed`);
     }
 
-    let m = file.read('/etc/passwd').toString().match(new RegExp(`^${uname}(?::[^:]*){4}:([^:]*)`, 'm')), home;
-    if (m) {
-        home = m[1]
-    } else {
-        home = '/home/' + uname;
-        console.warn(`\x1b[33mWARN\x1b[0m unable to find home directory in /etc/passwd, using ${home}`);
-    }
-
     file.write(filename, `[Unit]
 Description=AgentK: Integrated Node.JS Framework
 
 [Service]
 User=${uname}
-WorkingDirectory=${home}/.agentk
+WorkingDirectory=${getHome(uname)}/.agentk
 ExecStart=${nodeScript()}
 ExecReload=${process.execPath} --harmony ${addslashes(path.join(__dirname, '../../bin/agentk.js'))} reload --all
 KillMode=process
@@ -142,11 +135,7 @@ export function service_sysv_uninst(uname) {
 }
 
 function sysvScript(uname) {
-    return `:2345:respawn:${execScript(uname)}\n`;
-}
-
-function execScript(uname) {
-    return `/bin/su ${addslashes(uname)} <<< "cd; mkdir -p .agentk; cd .agentk; exec ${nodeScript()}"`
+    return `:2345:respawn:/bin/su ${addslashes(uname)} <<< "cd; mkdir -p .agentk; cd .agentk; exec ${nodeScript()}"\n`;
 }
 
 function nodeScript() {
@@ -207,7 +196,7 @@ export function description() {
 \x1b[32;1m● \x1b[32mak service upstart_install [username]\x1b[0m: like \x1b[36msystemd_install\x1b[0m, but uses upstart
     to control the service.
     Upstart is a event-driven service manager. You can run
-        \x1b[36msudo initctl --version\x1b[0m to see whether your system supports upstart.
+        \x1b[36msudo initctl version\x1b[0m to see whether your system supports upstart.
     To make the installation to take effect immediately, run
         \x1b[36msudo initctl start ak_[username]\x1b[0m
 
@@ -362,4 +351,13 @@ function forkAndCall(name, data) {
 }
 function addslashes(str) {
     return str.replace(/[^0-9a-zA-Z.-_+=\/~]/g, '\\$&');
+}
+function getHome(uname) {
+    let m = file.read('/etc/passwd').toString().match(new RegExp(`^${uname}(?::[^:]*){4}:([^:]*)`, 'm'));
+    if (m) {
+        return m[1]
+    } else {
+        console.warn(`\x1b[33mWARN\x1b[0m unable to find home directory in /etc/passwd, using /home/${uname}`);
+        return '/home/' + uname;
+    }
 }
