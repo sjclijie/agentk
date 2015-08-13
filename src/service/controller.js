@@ -69,7 +69,7 @@ setuid ${uname}
 
 exec ${nodeScript()}
 ` : `
-exec /bin/su ${uname} -c "exec ${nodeScript()}"`}
+exec /bin/su ${uname} <<< "exec ${nodeScript()}"`}
 `);
 
     console.log(`${uname}: service installed, use \x1b[36msudo initctl start ak_${uname}\x1b[0m to start the service`);
