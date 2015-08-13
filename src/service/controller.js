@@ -64,6 +64,48 @@ export function service_upstart_uninst(uname) {
     file.rm(filename);
 }
 
+export function service_systemd_install(uname) {
+    const filename = `/etc/systemd/system/ak_${uname}.service`;
+    if (file.exists(filename)) {
+        throw new Error(`${uname}: service already installed`);
+    }
+
+    let m = file.read('/etc/passwd').toString().match(new RegExp(`^${uname}(?::[^:]*){4}:([^:]*)`, 'm')), home;
+    if (m) {
+        home = m[1]
+    } else {
+        home = '/home/' + uname;
+        console.warn(`\x1b[33mWARN\x1b[0m unable to find home directory in /etc/passwd, using ${home}`);
+    }
+
+    file.write(filename, `[Unit]
+Description=AgentK: Integrated Node.JS Framework
+
+[Service]
+User=${uname}
+WorkingDirectory=${home}/.agentk
+ExecStart=${nodeScript()}
+ExecReload=${process.execPath} --harmony ${addslashes(path.join(__dirname, '../../bin/agentk.js'))} reload --all
+KillMode=process
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+`);
+
+    file.symlink(`../ak_${uname}.service`, `/etc/systemd/system/multi-user.target.wants/ak_${uname}.service`);
+    console.log(`${uname}: service installed, use \x1b[36msudo systemctl start ak_${uname}.service\x1b[0m to start the service`);
+}
+
+export function service_systemd_uninst(uname) {
+    const filename = `/etc/systemd/system/ak_${uname}.service`;
+    if (!file.exists(filename)) {
+        throw new Error(`${uname}: service not installed`);
+    }
+    file.rm(filename);
+    file.rm(`/etc/systemd/system/multi-user.target.wants/ak_${uname}.service`);
+}
+
 export function service_sysv_install(uname) {
     let inittab = '/etc/inittab',
         script = sysvScript(uname),
@@ -104,8 +146,12 @@ function sysvScript(uname) {
 }
 
 function execScript(uname) {
+    return `/bin/su ${addslashes(uname)} <<< "cd; mkdir -p .agentk; cd .agentk; exec ${nodeScript()}"`
+}
+
+function nodeScript() {
     let dir = addslashes(path.join(__dirname, '../..'));
-    return `/bin/su ${addslashes(uname)} <<< "cd; mkdir -p .agentk; cd .agentk; exec ${addslashes(process.execPath)} --harmony ${dir}/index.js load ${dir}/src/service/daemon.js >> out.log 2>> err.log"`
+    return `${addslashes(process.execPath)} --harmony ${dir}/index.js load ${dir}/src/service/daemon.js >> out.log 2>> err.log`;
 }
 
 function getData(result) {
@@ -116,45 +162,68 @@ function getData(result) {
 }
 
 export function description() {
-    console.log(`\x1b[32mak service <command>\x1b[0m controls service status or installs/uninstalls service from operating system. A\
- \x1b[33mservice\x1b[0m is a background process that runs and controls the user program, restarts it when it has exited\
- unexpectedly.
+    console.log(`\x1b[32mak service <command>\x1b[0m controls service status or installs/uninstalls service from
+   operating system. A \x1b[33mservice\x1b[0m is a background process that runs and controls
+   the user program, restarts it when it has exited unexpectedly.
 
 \x1b[36mSYNPOSIS\x1b[0m
 
   ak service start
   ak service stop
+  ak service systemd_install [username]
+  ak service systemd_uninst  [username]
   ak service upstart_install [username]
-  ak service upstart_uninst [username]
-  ak service sysv_install [username]
-  ak service sysv_uninst [username]
+  ak service upstart_uninst  [username]
+  ak service sysv_install    [username]
+  ak service sysv_uninst     [username]
 
 \x1b[36mDESCRIPTION\x1b[0m
 
-  \x1b[32mak service start\x1b[0m: starts the service if it has not ben started.
-    If there are running user programs when the service is stopped or killed, they will be respawned. Command \x1b[32mak\
- start <program>\x1b[0m will also restart the service if it has not been started.
+\x1b[32;1m● \x1b[32mak service start\x1b[0m: starts the service if it has not ben started.
+    If there are running user programs when the service is stopped or killed,
+    they will be respawned. Command \x1b[32mak start <program>\x1b[0m will also restarts the
+    service if it has not been started.
 
-  \x1b[32mak service stop\x1b[0m: stops the service.
-    All running programs will be killed, and will be respawned when the service starts again
+\x1b[32;1m● \x1b[32mak service stop\x1b[0m: stops the service.
+    All running programs will be killed, and will be respawned when the service
+    starts again
 
-  \x1b[32mak service upstart_install [username]\x1b[0m: installs daemon service into operating system's upstart scripts.
-    Upstart is a event-driven service manager. You can run the next command to see if your system supports upstart:
-        \x1b[36msudo initctl --version\x1b[0m
-    A username should be supplied to run the service, otherwise \x1b[31;1mroot\x1b[0m will be used.
-    The daemon service will be automatically started when the computer finishes its boot, and respawned if killed unexpectedly.
-    To make the installation to take effect immediately, run \x1b[36msudo initctl start ak_[username]\x1b[0m
+\x1b[32;1m● \x1b[32mak service systemd_install [username]\x1b[0m: installs daemon service into operating
+    system's systemd scripts.
+    Systemd is a high performance service manager. You can run
+        \x1b[36msudo systemctl --version\x1b[0m to see whether your system supports systemd.
+    The daemon service will be automatically started when the computer finishes
+    its boot, and respawned if killed unexpectedly.
+    A username should be supplied, otherwise \x1b[31;1mroot\x1b[0m will be used.
+    To make the installation to take effect immediately, run
+        \x1b[36msudo systemctl start ak_[username].service\x1b[0m
 
-  \x1b[32mak service upstart_install [username]\x1b[0m: removes the upstart service installation.
-    PLEASE DO stop the service before it is uninstalled, run \x1b[36msudo initctl status ak_[username]\x1b[0m to check whether\
- the service is stopped, run \x1b[36msudo initctl stop ak_[username]\x1b[0m to stop the service
+\x1b[32;1m● \x1b[32mak service systemd_uninst [username]\x1b[0m: removes the systemd service installation
+    \x1b[33mPLEASE DO\x1b[0m stop the service before it is uninstalled, run
+        \x1b[36msudo systemctl status ak_[username].service\x1b[0m to check whether the service
+    is running or stopped, and run
+        \x1b[36msudo systemctl stop ak_[username].service\x1b[0m to stop the service.
 
-  \x1b[32mak service sysv_install [username]\x1b[0m: like the \x1b[36mupstart_install\x1b[0m, but uses sysvinit rather than upstart\
- to spawn and guard the daemon service. You should use the upstart version if it is available, for more information about which to choose, please\
- contact your system admin.
-    After the installation, Run \x1b[36msudo init q\x1b[0m to make the installation take effect.
+\x1b[32;1m● \x1b[32mak service upstart_install [username]\x1b[0m: like \x1b[36msystemd_install\x1b[0m, but uses upstart
+    to control the service.
+    Upstart is a event-driven service manager. You can run
+        \x1b[36msudo initctl --version\x1b[0m to see whether your system supports upstart.
+    To make the installation to take effect immediately, run
+        \x1b[36msudo initctl start ak_[username]\x1b[0m
 
-  \x1b[32mak service sysv_uninst [username]\x1b[0m: removes the sysvinit service installation.
+\x1b[32;1m● \x1b[32mak service upstart_uninst [username]\x1b[0m: removes the upstart service installation
+    \x1b[33mPLEASE DO\x1b[0m stop the service before it is uninstalled, run
+        \x1b[36msudo initctl status ak_[username]\x1b[0m to check whether the service
+    is running or stopped, and run
+        \x1b[36msudo initctl stop ak_[username]\x1b[0m to stop the service.
+
+\x1b[32;1m● \x1b[32mak service sysv_install [username]\x1b[0m: like \x1b[36msystemd_install\x1b[0m, but uses sysvinit
+    to spawn and guard the daemon service. The sysvinit service manager is out
+    of date, if you don't know which to choose, please contact your system admin
+    To make the installation to take effect immediately, run
+        \x1b[36msudo init q\x1b[0m
+
+\x1b[32;1m● \x1b[32mak service sysv_uninst [username]\x1b[0m: removes the sysvinit service installation.
     Run \x1b[36msudo init q\x1b[0m to make the uninstallation take effect.`);
 }
 

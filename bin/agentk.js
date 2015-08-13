@@ -296,7 +296,7 @@ let commands = {
     },
     "service": {
         help: "service controlling scripts",
-        args: "start|stop|upstart_install|upstart_uninst|sysv_install|sysv_uninst",
+        args: "start|stop|systemd_install|systemd_uninst|upstart_install|upstart_uninst|sysv_install|sysv_uninst",
         maxArgs: 2,
         get desc() {
             callService('description');
