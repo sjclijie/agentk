@@ -1,6 +1,6 @@
 import * as http from '../module/http.js';
 import * as file from '../module/file.js';
-import {fork} from '../module/child_process.js';
+import * as child_process from '../module/child_process.js';
 
 const path = require('path');
 
@@ -37,6 +37,19 @@ export function service_stop() {
 }
 
 export function service_upstart_install(uname) {
+    let version;
+    try {
+        version = child_process.exec('initctl version');
+    } catch (e) {
+        throw new Error('upstart not installed');
+    }
+    console.log(version[0] + '', version[1] + '');
+    let vers = /upstart (\d+)\.(\d+)/.exec(version[0].toString());
+    if (!vers) {
+        throw new Error('unrecognized output of `initctl version`: ' + version[0]);
+    }
+    vers = vers[0] * 10000 + vers[1] * 1;
+
     const filename = `/etc/init/ak_${uname}.conf`;
     if (file.exists(filename)) {
         throw new Error(`${uname}: service already installed`);
@@ -45,13 +58,17 @@ export function service_upstart_install(uname) {
 
     file.write(filename, `description "AgentK: Integrated Node.JS Framework"
 
-start on filesystem and static-network-up
+start on filesystem
 stop on runlevel [016]
 
 respawn
+${vers >= 10004 ? `
 setuid ${uname}
 chdir ${getHome(uname)}/.agentk
+
 exec ${nodeScript()}
+` : `
+exec /bin/su ${uname} <<< "cd ${getHome(uname)}/.agentk; exec ${nodeScript()}"`}
 `);
 
     console.log(`${uname}: service installed, use \x1b[36msudo initctl start ak_${uname}\x1b[0m to start the service`);
@@ -100,6 +117,7 @@ export function service_systemd_uninst(uname) {
 }
 
 export function service_sysv_install(uname) {
+
     let inittab = '/etc/inittab',
         script = sysvScript(uname),
         current = '' + file.read(inittab);
@@ -336,7 +354,7 @@ function forkAndCall(name, data) {
         stdout = path.join(service_dir, 'out.log'),
         stderr = path.join(service_dir, 'err.log');
 
-    fork(path.join(__dirname, '../../index.js'), {
+    child_process.fork(path.join(__dirname, '../../index.js'), {
         args: ['load', path.join(__dirname, 'daemon.js')],
         directory: service_dir,
         stdout: stdout,
