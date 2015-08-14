@@ -1,0 +1,221 @@
+<!doctype html>
+<html>
+<head>
+    <title>channel -- AgentK Documentation Generator</title>
+    <link rel="stylesheet" href="doc.css"/>
+</head>
+<body class="frames">
+<ul>
+    <li>channel</li>
+    <li><a href="child_process.html" title="Wrapper for child process">child_process</a></li>
+    <li><a href="crypto.html">crypto</a></li>
+    <li><a href="doc.html" title="AgentK documentation generator">doc</a></li>
+    <li><a href="file.html">file</a></li>
+    <li><a href="http.html">http</a></li>
+    <li><a href="http_response.html" title="Wrapper class for http response, and basic methods to construct a response.">http_response</a></li>
+    <li><a href="legacy.html" title="Legacy support module">legacy</a></li>
+    <li><a href="q_watcher.html" title="Qunar Watcher module">q_watcher</a></li>
+    <li><a href="router.html">router</a></li>
+    <li><a href="static_file.html" title="static file request handler">static_file</a></li>
+    <li><a href="stream.html">stream</a></li>
+    <li><a href="test.html">test</a></li>
+    <li><a href="view.html">view</a></li>
+    <li><a href="zlib.html">zlib</a></li>
+    
+</ul>
+<div class="content">
+<h1>channel</h1>
+
+<p>cross process message gathering and dispatching system
+ </p>
+
+
+
+<div class="meta-description">
+    <p> Channel can be used for cross process communication, in two modes:</p>
+
+<ul><li>provider and query mode: a process can query all pairs for a data, with a channel name</li><li>dispatcher and listener mode: a process can dispatch a message to all pairs, with a channel name</li></ul>
+</div>
+
+
+<h4>Example</h4>
+<pre> import * as channel from &#39;../src/module/channel.js&#39;;
+ channel.registerProvider(&#39;get_pid&#39;, function () {
+     return process.pid
+ });
+ channel.registerListener(&#39;notify&#39;, function (data) {
+     console.log(&#39;received notify&#39;, data)
+ });
+ setInterval(function () {
+     co.run(function () {
+         console.log(process.pid, channel.query(&#39;get_pid&#39;));
+         channel.dispatch(&#39;notify&#39;, Math.random())
+     }).done();
+ }, 3000);
+</pre>
+
+
+
+
+
+<ul>
+    
+    
+    <li><a href="#registerProvider">function registerProvider(ch, cb, direct) </a></li><li><a href="#registerListener">function registerListener(ch, cb) </a></li><li><a href="#query">function query(ch) </a></li><li><a href="#dispatch">function dispatch(ch, data) </a></li><li><a href="#onWorker">function onWorker(worker) </a></li>
+    
+</ul>
+
+<dl id="definitions">
+
+    <dt id="registerProvider">
+        <div>registerProvider()</div>
+        <sub>method</sub>
+    </dt>
+    <dd>
+        <p class="proto">function registerProvider(ch, cb, direct) 
+
+        <p class="desc">
+            <p> register a provider for <a href="#query">query</a>. when called by one child, all pairs will be queried and the result
+ is returned as an array.</p>
+
+<p> <code>cb</code> is called inside coroutine if <code>direct</code> is set to false</p>
+        </p>
+
+        
+
+        
+        <h4>Parameters</h4>
+        <dl>
+            
+            <dt>ch <code>string</code></dt>
+            
+            <dd><p>channel name to be queried</p></dd>
+            <dt>cb <code>function</code></dt>
+            
+            <dd><p>callback method to get the data</p></dd>
+            <dt>direct <code>boolean</code></dt>
+            
+            <dd><p>whether cb should run directly or inside coroutine, default to false
+ </p></dd>
+        </dl>
+        
+        
+    </dd>
+
+    <dt id="registerListener">
+        <div>registerListener()</div>
+        <sub>method</sub>
+    </dt>
+    <dd>
+        <p class="proto">function registerListener(ch, cb) 
+
+        <p class="desc">
+            <p> register a listener to dispatch</p>
+
+<p> <code>cb</code> is called outside coroutine</p>
+        </p>
+
+        
+
+        
+        <h4>Parameters</h4>
+        <dl>
+            
+            <dt>ch <code>string</code></dt>
+            
+            <dd><p>channel name that listens to</p></dd>
+            <dt>cb <code>function</code></dt>
+            
+            <dd><p>callback method receive the dispatched data
+ </p></dd>
+        </dl>
+        
+        
+    </dd>
+
+    <dt id="query">
+        <div>query()</div>
+        <sub>method</sub>
+    </dt>
+    <dd>
+        <p class="proto">function query(ch) 
+
+        <p class="desc">
+            <p> query all processes, get the data by the provider registered, and return them as an array</p>
+        </p>
+
+        
+
+        
+        <h4>Parameters</h4>
+        <dl>
+            
+            <dt>ch <code>string</code></dt>
+            
+            <dd><p>channel name to be queried</p></dd>
+        </dl>
+        
+        
+        <h4>Returns</h4>
+        <p style="margin-left: 1em"><code>Array</code>all results of the pairs that registered a provider for this channel</p>
+        
+    </dd>
+
+    <dt id="dispatch">
+        <div>dispatch()</div>
+        <sub>method</sub>
+    </dt>
+    <dd>
+        <p class="proto">function dispatch(ch, data) 
+
+        <p class="desc">
+            <p> dispatch a message to all processes</p>
+        </p>
+
+        
+
+        
+        <h4>Parameters</h4>
+        <dl>
+            
+            <dt>ch <code>string</code></dt>
+            
+            <dd><p>channel to be dispatched</p></dd>
+            <dt>data</dt>
+            
+            <dd><p>data to be dispatched, must be json serializable
+ </p></dd>
+        </dl>
+        
+        
+    </dd>
+
+    <dt id="onWorker">
+        <div>onWorker()</div>
+        <sub>method</sub>
+    </dt>
+    <dd>
+        <p class="proto">function onWorker(worker) 
+
+        <p class="desc">
+            <p> This method is called by daemon at worker start</p>
+        </p>
+
+        
+
+        
+        <h4>Parameters</h4>
+        <dl>
+            
+            <dt>worker <code><a href="https://nodejs.org/api/child_process.html#child_process_class_childprocess">ChildProcess</a></code></dt>
+            
+        </dl>
+        
+        
+    </dd>
+
+</dl>
+
+</div>
+</body>
+</html>

@@ -1,15 +1,39 @@
-<!-- @rev 63a8c2d60b5cb1883749f5094a7e30d1 e1cb8a -->
 <!doctype html>
 <html>
 <head>
     <title>static_file -- AgentK Documentation Generator</title>
     <link rel="stylesheet" href="doc.css"/>
 </head>
-<body>
+<body class="frames">
+<ul>
+    <li><a href="channel.html" title="cross process message gathering and dispatching system">channel</a></li>
+    <li><a href="child_process.html" title="Wrapper for child process">child_process</a></li>
+    <li><a href="crypto.html">crypto</a></li>
+    <li><a href="doc.html" title="AgentK documentation generator">doc</a></li>
+    <li><a href="file.html">file</a></li>
+    <li><a href="http.html">http</a></li>
+    <li><a href="http_response.html" title="Wrapper class for http response, and basic methods to construct a response.">http_response</a></li>
+    <li><a href="legacy.html" title="Legacy support module">legacy</a></li>
+    <li><a href="q_watcher.html" title="Qunar Watcher module">q_watcher</a></li>
+    <li><a href="router.html">router</a></li>
+    <li>static_file</li>
+    <li><a href="stream.html">stream</a></li>
+    <li><a href="test.html">test</a></li>
+    <li><a href="view.html">view</a></li>
+    <li><a href="zlib.html">zlib</a></li>
+    
+</ul>
+<div class="content">
 <h1>static_file</h1>
 
 <p>static file request handler
  </p>
+
+
+
+<div class="meta-description">
+    
+</div>
 
 
 
@@ -33,9 +57,7 @@
         <p class="proto">mimeTypes:<code>object</code>
 
         <p class="desc">
-            
- filename extension to mime type map
-
+            <p> filename extension to mime type map</p>
         </p>
 
         
@@ -68,21 +90,21 @@
             <dt>directory <code>string</code></dt>
             
             <dd><p>absolute path or relative to working directory</p></dd>
-            <dt>option <code>object</code></dt>
+            <dt><sub>optional</sub>option <code>object</code></dt>
             
-            <dd><p>optional parameters:</p>
+            <dd><p>optional arguments:</p>
 
 <ul><li>no_cache:<code>boolean</code> disable file cache, default to false</li><li>expires:<code>number</code> duration before expiration in ms, default to 0</li><li>cached:<code>number</code> file modification check iteration in ms, default to 3s</li><li>gzip:<code>boolean</code> enable gzip, default to false</li></ul></dd>
         </dl>
         
         
         <h4>Returns</h4>
-        <p style="margin-left: 1em"><code><a href="#function">function</a></code>router handle</p>
+        <p style="margin-left: 1em"><code>function</code>router handle</p>
         
     </dd>
 
 </dl>
 
-
+</div>
 </body>
 </html>

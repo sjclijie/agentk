@@ -72,7 +72,7 @@ h4 {
 dt {
     font-weight: bold;
     color: #444;
-    margin-left: 10px;
+    margin-left: 4px;
     line-height: 24px;
     margin-top: 6px;
     margin-bottom: -6px;
@@ -80,6 +80,11 @@ dt {
 
 dd {
     margin-left: 16px;
+}
+
+#definitions dl>dt {
+    background-color: #EEE;
+    padding: 2px 6px;
 }
 
 a, a:visited {
@@ -114,6 +119,23 @@ ul {
     line-height: 20px;
 }
 
-.frames > iframe {
-    flex: 1
+.frames > .content {
+    flex: 1;
+    overflow-y: scroll;
+    padding: 20px;
+}
+
+.meta-description {
+    font-size: 14px;
+    padding: 6px;
+    background: #F8F8F8;
+    box-shadow: 0 0 1px #EEE;
+}
+
+sub {
+    border-radius: 4px;
+    padding: 2px 6px;
+    margin-right: 2px;
+    font-weight: normal;
+    vertical-align: middle;
 }

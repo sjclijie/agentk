@@ -1,39 +1,75 @@
-<!-- @rev dc9b17f7130179949beed544c0479e0c e1cb8a -->
 <!doctype html>
 <html>
 <head>
     <title>http -- AgentK Documentation Generator</title>
     <link rel="stylesheet" href="doc.css"/>
 </head>
-<body>
+<body class="frames">
+<ul>
+    <li><a href="channel.html" title="cross process message gathering and dispatching system">channel</a></li>
+    <li><a href="child_process.html" title="Wrapper for child process">child_process</a></li>
+    <li><a href="crypto.html">crypto</a></li>
+    <li><a href="doc.html" title="AgentK documentation generator">doc</a></li>
+    <li><a href="file.html">file</a></li>
+    <li>http</li>
+    <li><a href="http_response.html" title="Wrapper class for http response, and basic methods to construct a response.">http_response</a></li>
+    <li><a href="legacy.html" title="Legacy support module">legacy</a></li>
+    <li><a href="q_watcher.html" title="Qunar Watcher module">q_watcher</a></li>
+    <li><a href="router.html">router</a></li>
+    <li><a href="static_file.html" title="static file request handler">static_file</a></li>
+    <li><a href="stream.html">stream</a></li>
+    <li><a href="test.html">test</a></li>
+    <li><a href="view.html">view</a></li>
+    <li><a href="zlib.html">zlib</a></li>
+    
+</ul>
+<div class="content">
 <h1>http</h1>
 
 
 
-<p> Wrapper for http server/client API.</p>
+<div class="meta-description">
+    <p> Wrapper for http server/client API.</p>
+</div>
+
+
+
+
 
 
 <ul>
-    
-    <li>variable <a href="#maxSockets">maxSockets</a>:<code>number</code></li>
-    <li><a href="#listen">function listen(port, cb) </a></li><li><a href="#request">function request(options, body) </a></li><li><a href="#read">function read(incoming) </a></li>
+    <li>constant <a href="#agent">agent</a>:<code><a href="https://nodejs.org/api/http.html#http_class_http_agent">http.Agent</a></code></li>
+    <li>variable <a href="#client_ua">client_ua</a>:<code>string</code></li>
+    <li><a href="#listen">function listen(port, cb, host, backlog) </a></li><li><a href="#request">function request(options, body) </a></li><li><a href="#pipe">function pipe(options, stream) </a></li><li><a href="#read">function read(incoming) </a></li><li><a href="#buildQuery">function buildQuery(obj) </a></li><li><a href="#parseQuery">function parseQuery(query) </a></li>
     
 </ul>
 
 <dl id="definitions">
 
-    <dt id="maxSockets">
-        <div>maxSockets</div>
+    <dt id="agent">
+    <div>agent</div>
+    <sub>constant</sub>
+    </dt>
+    <dd>
+        <p class="proto">agent:<code><a href="https://nodejs.org/api/http.html#http_class_http_agent">http.Agent</a></code>
+
+        <p class="desc">
+            <p> default agent for http request. You can set
+ maximum socket per host when calling request</p>
+        </p>
+
+        
+    </dd>
+
+    <dt id="client_ua">
+        <div>client_ua</div>
         <sub>variable</sub>
     </dt>
     <dd>
-        <p class="proto">maxSockets:<code>number</code> = <code>5</code>
-    
+        <p class="proto">client_ua:<code>string</code>
 
         <p class="desc">
-            
- maximum socket per host when calling request
-
+            <p> default User Agent for http request</p>
         </p>
 
         
@@ -44,12 +80,16 @@
         <sub>method</sub>
     </dt>
     <dd>
-        <p class="proto">function listen(port, cb) 
+        <p class="proto">function listen(port, cb, host, backlog) 
 
         <p class="desc">
             <p> Create a new http server, bind it to a port or socket file. A callback is supplied which accepts a
  <a href="https://nodejs.org/api/http.html#http_http_incomingmessage"><code>http.IncomingMessage</code></a> object as
  parameter and returns a <a href="http_response.html#HttpResponse"><code>HttpResponse</code></a></p>
+
+<p> There are some extra properties that can be accessed with the <code>req</code> object:</p>
+
+<ul><li>req.pathname <code>string</code> request&#39;s pathname, could be overwritten by <code>Router.prefix</code> method</li><li>req.search <code>string</code> search string, looks like <code>?foo=bar</code></li><li>req.query <code>object</code> key-value map of the query string</li><li>req.body <code>Buffer</code> request payload</li></ul>
         </p>
 
         
@@ -67,9 +107,15 @@
             <dt>port <code>number|string</code></dt>
             
             <dd><p>TCP port number or unix domain socket path to listen to</p></dd>
-            <dt>cb <code><a href="#function">function</a>|<a href="router.html#Router">router::Router</a></code></dt>
+            <dt>cb <code>function|<a href="router.html#Router">router::Router</a></code></dt>
             
             <dd><p>request handler callback</p></dd>
+            <dt><sub>optional</sub>host <code>string</code></dt>
+            
+            <dd><p>hostname to listen to, only valid if port is a 0-65535 number</p></dd>
+            <dt><sub>optional</sub>backlog <code>number</code></dt>
+            
+            <dd><p>maximum requests pending to be accepted, only valid if port is a 0-65535 number</p></dd>
         </dl>
         
         
@@ -86,12 +132,61 @@
         <p class="proto">function request(options, body) 
 
         <p class="desc">
-            
+            <p> Create a http request, the</p>
         </p>
 
         
 
         
+        <h4>Parameters</h4>
+        <dl>
+            
+            <dt>options <code>object</code></dt>
+            
+            <dd><p>See <a href="https://nodejs.org/api/http.html#http_http_request_options_callback">request</a> on Node.JS documentation.</p>
+
+<p> Available options are:</p>
+
+<ul><li>options.host <code>string</code> hostname to connect to</li><li>options.port <code>number</code> port number to connect to, default to <code>80</code></li><li>options.socketPath <code>string</code> against host:port, use socketPath to create connection</li><li>options.method <code>string</code> request method, default to <code>&quot;GET&quot;</code></li><li>options.path <code>string</code> request url pathname and query string, default to <code>&quot;/&quot;</code></li><li>options.headers <code>object</code> request header names and values map</li><li>options.proxy <code>string|object</code> http proxy server, maybe string like: <code>&quot;&lt;user&gt;:&lt;password&gt;@&lt;host&gt;:&lt;port&gt;&quot;</code> or object with these keys</li></ul></dd>
+            <dt>body <code>string|<a href="https://nodejs.org/api/buffer.html#buffer_class_buffer">Buffer</a></code></dt>
+            
+            <dd><p>data to be sent to as payload, maybe null or undefined if there is no payload</p></dd>
+        </dl>
+        
+        
+        <h4>Returns</h4>
+        <p style="margin-left: 1em"><code><a href="https://nodejs.org/api/http.html#http_class_http_serverresponse">http.ServerResponse</a></code>a response object that can be operated and read as a stream.</p>
+        
+    </dd>
+
+    <dt id="pipe">
+        <div>pipe()</div>
+        <sub>method</sub>
+    </dt>
+    <dd>
+        <p class="proto">function pipe(options, stream) 
+
+        <p class="desc">
+            <p> Similar to <a href="#request">request</a>, but requires a <code>stream.Readable</code> object rather than a string/buffer as the request payload.</p>
+        </p>
+
+        
+
+        
+        <h4>Parameters</h4>
+        <dl>
+            
+            <dt>options <code>object</code></dt>
+            
+            <dd><p>similar to <a href="#request">request</a></p></dd>
+            <dt>stream <code><a href="https://nodejs.org/api/stream.html#stream_class_stream_readable">stream.Readable</a></code></dt>
+            
+            <dd><p>a readable stream</p></dd>
+        </dl>
+        
+        
+        <h4>Returns</h4>
+        <p style="margin-left: 1em"><code><a href="https://nodejs.org/api/http.html#http_class_http_serverresponse">http.ServerResponse</a></code></p>
         
     </dd>
 
@@ -103,17 +198,105 @@
         <p class="proto">function read(incoming) 
 
         <p class="desc">
-            
+            <p> Read and return a <code>http.ServerResponse</code>&#39;s body. Similar to <code>stream.read</code>, but it can handle gzipped response content.</p>
         </p>
 
         
 
         
+        <h4>Parameters</h4>
+        <dl>
+            
+            <dt>incoming <code><a href="https://nodejs.org/api/http.html#http_class_http_serverresponse">http.ServerResponse</a></code></dt>
+            
+            <dd><p>a server response</p></dd>
+        </dl>
+        
+        
+        <h4>Returns</h4>
+        <p style="margin-left: 1em"><code><a href="https://nodejs.org/api/buffer.html#buffer_class_buffer">Buffer</a></code>response body</p>
+        
+    </dd>
+
+    <dt id="buildQuery">
+        <div>buildQuery()</div>
+        <sub>method</sub>
+    </dt>
+    <dd>
+        <p class="proto">function buildQuery(obj) 
+
+        <p class="desc">
+            <p> Build a http query string from a key-value map</p>
+        </p>
+
+        
+        <h4>Example</h4>
+        <pre> let body = {&#34;foo&#34;: &#34;bar&#34;}
+ let payload = http.buildQuery(forms); // &#34;foo=bar&#34;
+ // compose a POST request
+ let response = http.request({
+     method: &#34;POST&#34;,
+     host: &#34;...&#34;,
+     path: &#34;/api/data.php&#34;,
+     headers: {
+         &#39;Content-Type&#39;: &#39;application/x-www-form-urlencoded&#39;
+     }
+ }, payload);
+</pre>
+        
+
+        
+        <h4>Parameters</h4>
+        <dl>
+            
+            <dt>obj <code>object</code></dt>
+            
+            <dd><p>keys and values</p></dd>
+        </dl>
+        
+        
+        <h4>Returns</h4>
+        <p style="margin-left: 1em"><code>string</code>query string</p>
+        
+    </dd>
+
+    <dt id="parseQuery">
+        <div>parseQuery()</div>
+        <sub>method</sub>
+    </dt>
+    <dd>
+        <p class="proto">function parseQuery(query) 
+
+        <p class="desc">
+            <p> Parse a http query string into a key-value map.
+ May throw error if malformed UTF-8 escape sequence found</p>
+        </p>
+
+        
+        <h4>Example</h4>
+        <pre> // read a request&#39;s body and parse its content
+ let payload = req.body.toString(); // &#34;foo=bar&#34;
+ let body = http.parseQuery(payload); // {&#34;foo&#34;: &#34;bar&#34;}
+</pre>
+        
+
+        
+        <h4>Parameters</h4>
+        <dl>
+            
+            <dt>query <code>string</code></dt>
+            
+            <dd><p>query string to be parsed</p></dd>
+        </dl>
+        
+        
+        <h4>Returns</h4>
+        <p style="margin-left: 1em"><code>object</code>keys and values</p>
         
     </dd>
 
 </dl>
 
-
+</div>
 </body>
 </html>
