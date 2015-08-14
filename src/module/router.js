@@ -1,6 +1,6 @@
 /**
  *
- * @param {function|Router} cb optional, handler first called before all rules
+ * @param {function|Router} [cb] handler first called before all rules
  * @returns {Router}
  * @constructor
  */

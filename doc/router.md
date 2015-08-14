@@ -1,4 +1,4 @@
-<!-- @rev 8aeb5f22c8bb08023fee1654f4ea380a a1202b -->
+<!-- @rev 093ae07607fdae1eb9cb89d7cf0b2ee3 20ae7b -->
 # router
 
 ----
@@ -20,8 +20,8 @@ function Router(cb)
 
 **Params**
 
-  - cb `function|Router`
-    <br>optional, handler first called before all rules
+  - cb(optional) `function|Router`
+    <br>handler first called before all rules
 
 **Returns**
 

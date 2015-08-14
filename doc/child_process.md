@@ -1,4 +1,4 @@
-<!-- @rev 7a1a0e2419e22852fc291bec06a2127a a1202b -->
+<!-- @rev c5cfb3e42ce089b66894e92d478b1503 20ae7b -->
 # child_process
 
 Wrapper for child process
@@ -27,9 +27,10 @@ function fork(module, options)
 
   - module `string`
     <br>bootstrap module path (filename or directory with a `package.json` present)
-  - options `object`
+  - options(optional) `object`
     <br>optional arguments
 
+   - options.directory: working directory
    - options.stdout: stdout file path to be forwarded
    - options.stderr: stderr file path to be forwarded
    - options.ipc: create a ipc channel (which enables `child_process.send` and `process.send`)
@@ -37,9 +38,38 @@ function fork(module, options)
    - options.uid: setuid
    - options.gid: setgid
    - options.env: environment variables
+   - options.args: extra arguments
 
 
 **Returns**
 
 > {node.child_process::ChildProcess}
+ 
+
+------------------------------------------------------------------------
+### exec()
+
+```js
+function exec(cmd, options) 
+```
+
+
+ Runs a shell command and returns its output, throws if command failed
+
+
+**Params**
+
+  - cmd `string`
+    <br>command string to be executed
+  - options(optional) `object`
+    <br>optional arguments
+
+   - options.uid: setuid
+   - options.gid: setgid
+   - options.env: environment variables
+
+
+**Returns**
+
+> {Array} `[stdout, stderr]`
  

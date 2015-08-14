@@ -7,8 +7,8 @@ import {md5} from '../src/module/crypto.js';
 export default function (args) {
     let host = process.env.MODULE_SERVER_HOST, port;
     if (!host) {
-        console.error("WARN: MODULE_SERVER_HOST environment varible is not set, using localhost:8800");
-        host = "localhost:8800"
+        host = JSON.parse(read(require('path').join(__dirname, 'manifest.json')).toString()).config.storage.host;
+        console.error("WARN: MODULE_SERVER_HOST environment varible is not set, using " + host);
     }
     let idx = host.lastIndexOf(':');
     if (idx === -1) {

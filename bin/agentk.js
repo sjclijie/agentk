@@ -45,12 +45,7 @@ function xtermEscape(str) {
 }
 
 function callService(cmd, options) {
-
-    let co = require('../src/co.js'),
-        load = require('../index.js').load;
-    co.run(function () {
-        let module = co.yield(load(path.join(__dirname, '../src/service/controller.js')));
-
+    loadAndRun('../src/service/controller.js', function (module) {
         try {
             module[cmd.replace(' ', '_')](options);
         } catch (err) {
@@ -59,10 +54,11 @@ function callService(cmd, options) {
             } else {
                 console.error('command \'' + cmd + '\' failed, ' + err.message)
             }
-            process.exit(-1)
+            process.exit(1)
         }
     }).done();
 }
+
 
 function commander(dir) {
     if (dir === '--all') {
@@ -78,7 +74,7 @@ function commander(dir) {
         }
         process.chdir(dir);
     }
-    callService(cmd)
+    callService(cmd, dir)
 }
 
 let commands = {
@@ -168,9 +164,10 @@ let commands = {
     },
     "status": {
         help: "show program status",
-        maxArgs: 0,
+        maxArgs: 1,
         desc: "display the status of running programs",
-        func: commander
+        func: commander,
+        completion: completeRunningJobs
     },
     "doc": {
         help: "generate documentation",
@@ -243,11 +240,9 @@ let commands = {
         "will upload ‘http.js’ and ‘file.js’ to the server",
         func: function () {
             let args = arguments;
-            let module = require('../index.js').load(path.join(__dirname, '../server/publish.js'));
-            let co = require('../src/co.js');
-            co.run(function () {
-                co.yield(module)[Symbol.for('default')](args)
-            }).done()
+            loadAndRun('../server/publish.js', function (module) {
+                module[Symbol.for('default')](args)
+            }).done();
         },
         completion: function () {
             let added = {};
@@ -301,17 +296,16 @@ let commands = {
     },
     "service": {
         help: "service controlling scripts",
-        args: "start|stop|install|uninst",
+        args: "start|stop|systemd_install|systemd_uninst|upstart_install|upstart_uninst|sysv_install|sysv_uninst",
         maxArgs: 2,
         get desc() {
             callService('description');
-            return '';
         },
         func: function (arg0, arg1) {
-            if (arg0 === 'install' || arg0 === 'uninst') {
-                rcScript(arg0, arg1)
+            if (!arguments.length) {
+                showHelp();
             } else {
-                callService('service ' + arg0);
+                callService('service ' + arg0, arg1);
             }
         },
         completion: function (arg0, arg1) {
@@ -321,14 +315,24 @@ let commands = {
                     output = completion(output, arg0, arg);
                 }
                 return output;
-            } else if (arg0 === 'install') { // two arguments
+            } else if (arg0 === 'upstart_install' || arg0 === 'sysv_install') { // two arguments
+                return completeUsername(arg1);
+            } else if (arg0 === 'upstart_uninst') {
                 let buf = '';
-                for (let line of fs.readFileSync('/etc/passwd', 'binary').split('\n')) {
-                    if (!line || line.substr(line.length - 8) === '/nologin' || line.substr(line.length - 6) === '/false') continue;
-                    buf = completion(buf, arg1, line.substr(0, line.indexOf(':')))
+                for (let file of fs.readdirSync('/etc/init')) {
+                    let m = /^ak_(.+)\.conf$/.exec(file);
+                    if (m) {
+                        buf = completion(buf, arg1, m[1]);
+                    }
                 }
                 return buf;
-            } else if (arg0 === 'uninst') { // TODO: completion
+            } else if (arg0 === 'sysv_uninst') {
+                let buf = '';
+                let inittab = fs.readFileSync('/etc/inittab', 'binary'), r = /^k\w:2345:respawn:\/bin\/sh \S+ "([^"]+)"/gm, m;
+                while (m = r.exec(inittab)) {
+                    buf = completion(buf, arg1, m[1]);
+                }
+                return buf;
             }
         }
     },
@@ -341,22 +345,22 @@ let commands = {
         func: function (p, agentk, arg2) {
             if (!arguments.length) {
                 if (process.stdout.isTTY) {
-                    showHelp()
-                } else {
-                    let file = path.join(__dirname, 'completion.sh');
-                    if (win32) {
-                        if (process.env.MSYSTEM === 'MINGW32') {
-                            file = '/' + file.replace(/[:\\]+/g, '/');
-                        } else {
-                            throw new Error("completion is not supported in this shell, Install MinGW32 and try again")
-                        }
-                    }
-                    console.log('. ' + file)
+                    return showHelp()
                 }
-                return;
-            } else if (p !== "--") {
-                return;
+                let file = path.join(__dirname, 'completion.sh');
+                if (win32) {
+                    if (process.env.MSYSTEM === 'MINGW32') {
+                        file = '/' + file.replace(/[:\\]+/g, '/');
+                    } else {
+                        throw new Error("completion is not supported in this shell, Install MinGW32 and try again")
+                    }
+                }
+                return console.log('. ' + file)
             }
+            if (p !== "--") {
+                return showHelp();
+            }
+
             let ret;
             if (arguments.length === 3) {
                 ret = commands.help.completion(arg2);
@@ -369,26 +373,100 @@ let commands = {
             }
             ret && ret.length && process.stdout.write(ret);
         }
+    },
+    "test": {
+        help: "run autotest scripts",
+        args: "[<test name>]",
+        desc: "will run the test scripts found in the `test` directory",
+        maxArgs: 1,
+        func: function (name) {
+            let projectDir = process.cwd();
+            if (fs.existsSync('manifest.json')) {
+                let manifest = global.manifest = JSON.parse(fs.readFileSync('manifest.json'));
+                if ('directory' in manifest && manifest.directory) {
+                    process.chdir(manifest.directory);
+                }
+            } else {
+                console.warn(xtermEscape('$#Yk<WARN> manifest.json not found'));
+            }
+            let files;
+            if (arguments.length) { // call by name
+                if (!fs.existsSync(path.join(projectDir, '/test/' + name + '.js'))) {
+                    throw new Error('test script not found: ' + name + '.js');
+                }
+
+                files = [name + '.js'];
+            } else {
+                files = fs.readdirSync(projectDir + '/test').filter(RegExp.prototype.test.bind(/\.js$/));
+            }
+            loadAndRun('../src/module/test.js', function (module) {
+                global.IntegrationTest = module.IntegrationTest;
+                global.Test = module.Test;
+                for (let file of files) {
+                    module.run(path.join(projectDir, '/test/' + file));
+                }
+                module.summary();
+            }).done();
+        },
+        completion: function (prefix) {
+            if (!fs.existsSync('test')) return;
+            let buf = '';
+            for (let arr = fs.readdirSync('test'), i = 0, L = arr.length; i < L; i++) {
+                let m = /(.+)\.js$/.exec(arr[i]);
+                if (m) {
+                    buf = completion(buf, prefix, m[1]);
+                }
+            }
+            return buf;
+
+        }
+    },
+    "rc-create": {
+        help: "create sysv rc/init script for a program",
+        args: "<program directory> <filename> [<username>]",
+        maxArgs: 3,
+        desc: "creates a script file in /etc/init.d that can be used to start|stop|restart|reload the program",
+        func: function (dir, filename, username) {
+            dir = path.resolve(dir);
+            let outFile = '/etc/init.d/' + filename;
+            fs.writeFileSync(outFile, '#!/bin/sh\n\
+case "$1" in\n\
+    start|stop|restart|reload|status)\n\
+        su ' + username + ' -c "' + addslashes(process.execPath) + ' --harmony ' + addslashes(__filename) + ' $1 ' + addslashes(dir) + '"\n\
+        ;;\n\
+    *)\n\
+        echo "Usage: $0 {start|stop|restart|reload|status}"\n\
+        exit 2\n\
+esac\n');
+            fs.chmodSync(outFile, '755');
+
+        }, completion: function (a, b, c) {
+            if (arguments.length === 3) {
+                return completeUsername(c);
+            }
+        }
     }
 };
 
+if (!cmd || !(cmd in commands)) {
+    cmd = "help"
+}
+commands[cmd].func.apply(null, process.argv.slice(3));
 
-function rcScript(cmd, uname) {
-    if (process.platform !== 'linux')
-    //return console.log('service is only supported on linux');
-        if (process.getuid()) {
-            return console.log(cmd + ' must be run with root privilege')
-        }
-    if (!uname) {
-        uname = process.env.USER;
-        console.log(xtermEscape('$#ry<WARN> username not specified, using ' + uname));
-    }
-    require('child_process').spawn('/bin/sh', [path.join(__dirname, 'daemon.sh'), cmd], {
-        stdio: 'inherit',
-        env: {
-            NODE_EXEC: process.execPath,
-            INSTALL_USER: uname
-        }
+function showHelp() {
+    process.argv[2] = 'help';
+    commands.help.func(cmd);
+}
+
+function addslashes(str) {
+    return str.replace(/[^0-9a-zA-Z.-_+=\/~]/g, '\\$&');
+}
+
+function loadAndRun(modulePath, cb) {
+    let co = require('../src/co.js'),
+        load = require('../index.js').load;
+    return co.run(function () {
+        return cb(co.yield(load(path.join(__dirname, modulePath))), co);
     });
 }
 
@@ -424,12 +502,11 @@ function completion(buf, arg0) {
     return buf
 }
 
-function showHelp() {
-    process.argv[2] = 'help';
-    commands.help.func(cmd);
+function completeUsername(arg1) {
+    let buf = '';
+    for (let line of fs.readFileSync('/etc/passwd', 'binary').split('\n')) {
+        if (!line || line.substr(line.length - 8) === '/nologin' || line.substr(line.length - 6) === '/false') continue;
+        buf = completion(buf, arg1, line.substr(0, line.indexOf(':')))
+    }
+    return buf;
 }
-
-if (!cmd || !(cmd in commands)) {
-    cmd = "help"
-}
-commands[cmd].func.apply(null, process.argv.slice(3));

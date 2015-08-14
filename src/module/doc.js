@@ -1,4 +1,8 @@
-"use strict";
+/**
+ * Welcome to AgentK documentation generator! This page is automatically generated from source file.
+ *
+ * @title AgentK documentation generator
+ */
 
 import * as file from 'file.js';
 import {md5} from 'crypto.js';
@@ -18,7 +22,7 @@ const parseOption = {
 const presetTypes = {
     Buffer: 'https://nodejs.org/api/buffer.html#buffer_class_buffer'
 };
-const primitiveTypes = /^(boolean|string|number|undefined|null|object|function|array|RegExp|Date|Error)$/;
+const primitiveTypes = /^(boolean|string|number|undefined|null|object|function|Array|RegExp|Date|Error)$/;
 const rNamespace = /^(?:([\w\.]+)::)?([\w\.]+)/;
 
 function parseTypename(name) {
@@ -53,24 +57,40 @@ export default function (outDir, format) {
         template = require('ejs').compile(tpl_content.toString('utf8'));
     file.mkParentDir(cssFile);
 
-    let modules, parseMarkup;
+
+    let parseMarkup;
+
+    let after_module, after_scan;
     if (format === 'html') {
-        modules = [];
+        const modules = [];
+        after_module = function (module) {
+            module.modules = modules;
+            module.parseTypename = parseTypename;
+            module.parseMarkup = parseMarkup;
+            modules.push(module);
+        };
         let cssInput = path.join(__dirname, '../../doc/doc.css'),
-            cssContent = file.read(cssInput),
-            checksum = md5(cssContent);
-        if (!file.exists(cssFile) || Buffer.compare(md5(cssContent), md5(file.read(cssFile)))) {
+            cssContent = file.read(cssInput);
+        if (!file.exists(cssFile) || Buffer.compare(cssContent, file.read(cssFile))) {
             file.write(cssFile, cssContent);
         }
         parseMarkup = require('../markdown.js').toHTML;
+        after_scan = function () {
+            for (let module of modules) {
+                let output = path.join(outDir, module.namespace + '.' + format);
+                file.write(output, template(module));
+            }
+        }
+    } else {
+        after_module = function (module) {
+            let output = path.join(outDir, module.namespace + '.' + format);
+            file.write(output, template(module));
+        };
+        after_scan = Boolean;
     }
+
     onDir('.');
-    if (format === 'html') {
-        let index_content = require('ejs').compile(file.read(path.join(__dirname, '../../doc/index_template.ejs')).toString('utf8'))({
-            modules: modules
-        });
-        file.write(path.join(outDir, 'index.html'), index_content);
-    }
+    after_scan();
 
     function onDir(dir) {
         for (let name of file.readdir(dir)) {
@@ -82,23 +102,13 @@ export default function (outDir, format) {
                     output = path.join(outDir, namespace + '.' + format);
                 let fileContent = file.read(name),
                     checksum = md5(fileContent, 'hex');
-                if (modules) {
-                    modules.push(namespace);
-                }
-                if (file.exists(output)) {
-                    if (file.read(output).slice(0, 53).toString('binary') === `<!-- @rev ${checksum} ${tpl_checksum} -->`) {
-                        console.log(name, 'up to date');
-                        continue
-                    }
-                }
+
                 let module = onFile(fileContent, name);
                 if (!module) return;
                 module.namespace = namespace;
                 module.checksum = checksum;
                 module.tpl_checksum = tpl_checksum;
-                module.parseTypename = parseTypename;
-                module.parseMarkup = parseMarkup;
-                file.write(output, template(module));
+                after_module(module);
             }
         }
     }

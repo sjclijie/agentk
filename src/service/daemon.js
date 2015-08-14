@@ -2,7 +2,8 @@ import * as http from "../module/http.js";
 import * as response from "../module/http_response.js";
 import * as file from '../module/file.js';
 import {fork} from '../module/child_process.js';
-import {onWorker} from 'scheduler.js';
+import * as scheduler from 'scheduler.js';
+import * as channel from '../module/channel.js';
 
 const path = require('path');
 
@@ -32,9 +33,9 @@ const actions = {
         if (dir in programs) throw new Error(`program '${dir}' already started`);
         return startProgram(dir)
     },
-    status: function () {
-        return Object.keys(programs).map(function (dir) {
-            let program = programs[dir];
+    status: function (dirs) {
+        return (dirs || Object.keys(programs)).map(function (dir) {
+            let program = getProgram(dir);
             return {
                 path: dir,
                 workers: program.workers.length,
@@ -157,6 +158,7 @@ function startProgram(dir) {
     try {
         manifest = JSON.parse('' + file.read(path.join(dir, 'manifest.json')));
     } catch (e) { // no manifest
+        console.error(e.stack);
         manifest = null;
         let module = path.join(dir, 'index.js');
         if (!file.exists(module)) {
@@ -231,8 +233,10 @@ function startProgram(dir) {
             restarted[i]++;
             program.lastRestart = Date.now();
             let worker = workers[i] = fork(main, option);
+            worker.program = program;
             worker.on('exit', onExit);
-            onWorker(worker, program);
+            scheduler.onWorker(worker);
+            channel.onWorker(worker);
 
         }
     }

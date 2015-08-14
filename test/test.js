@@ -1,40 +1,20 @@
-import {listen, request, read} from '../src/module/http.js';
-import * as response from '../src/module/http_response.js';
-import Router from '../src/module/router.js';
-import * as view from '../src/module/view.js';
+import * as math from 'module/math.js';
+import getDay from 'module/day.js';
 
-import staticFile from '../src/module/static_file.js';
+const assert = require('assert'), assertEqual = assert.strictEqual;
 
-const route = new Router(function (req) {
-    req.timeStart = Date.now();
+let test = new Test("math");
+test.test("abs", function () {
+    assertEqual(math.abs(1), 1);
+    assertEqual(math.abs(0), 0);
+    assertEqual(math.abs(-1), 1);
+    assert(Object.is(math.abs(NaN), NaN));
 });
 
-route.exact('/', function (req) {
-    return view.render('index', {process: process, req: req})
+test = new IntegrationTest('http handle', getDay);
+
+test.test('get', function () {
+    let response = test.get('/');
+    assertEqual(response.status, 200, 'bad response status');
+    assertEqual('' + response.body, '' + new Date().getDay(), 'bad response content');
 });
-
-route.exact('/favicon.ico', function () {
-    return response.error(404);
-});
-
-route.prefix('/static', staticFile('.', {
-    expires: 5 * 60e3, // 5min
-    gzip: true
-}));
-
-route.match(/^\/([^\/]+)(\/.*)/, function (req, host, path) {
-    console.log(host, path);
-    var tres = request({
-        method: 'GET',
-        host: host,
-        path: path
-    });
-    return response.stream(tres).setStatus(tres.statusCode).setHeaders(tres.headers)
-});
-
-route.all(function (req) {
-    return response.data(req.method + ' ' + req.url + '\n' + JSON.stringify(req.headers, null, 2)).enableGzip();
-});
-
-let server = listen(3000, route);
-console.log('test listening on', server.address());

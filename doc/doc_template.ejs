@@ -1,18 +1,33 @@
-<!-- @rev <%- checksum %> <%- tpl_checksum %> -->
 <!doctype html>
 <html>
 <head>
     <title><%= namespace %> -- AgentK Documentation Generator</title>
     <link rel="stylesheet" href="doc.css"/>
 </head>
-<body>
+<body class="frames">
+<ul>
+    <% modules.forEach(function(module) {
+    %><li><% if(module.namespace === namespace) { %><%- module.namespace %><%
+        } else { %><a href="<%- module.namespace %>.html"<% if(module.meta && module.meta.title) { %> title="<%- module.meta.title.trim() %>"<% } %>><%- module.namespace %></a><% } %></li>
+    <% }) %>
+</ul>
+<div class="content">
 <h1><%= namespace %></h1>
 <% if(meta && meta.title) { %>
 <p><%= meta.title %></p>
 <% } %>
 
 <% if (meta) { %>
-<%- parseMarkup(meta.description) %>
+<div class="meta-description">
+    <%- parseMarkup(meta.description) %>
+</div>
+
+<% if(meta.example) { %>
+<h4>Example</h4>
+<pre><%= meta.example.replace(/^    |^\r?\n/gm, '') %></pre>
+<% }%>
+
+
 <% } %>
 
 <ul>
@@ -34,9 +49,9 @@ consts.forEach(function(obj) {var comment = obj.comment; %>
             if(obj.value) { %> = <code><%- obj.value %></code>
             <% } %>
 
-        <p class="desc">
-            <%= comment.description %>
-        </p>
+        <% if(comment.description) {%><p class="desc">
+            <%- parseMarkup(comment.description)%>
+        </p><% } %>
 
         <% if(comment.example) { %>
         <h4>Example</h4>
@@ -54,9 +69,9 @@ variables.forEach(function(obj) {var comment = obj.comment; %>
     if(obj.value) { %> = <code><%- obj.value %></code>
     <% } %>
 
-        <p class="desc">
-            <%= comment.description %>
-        </p>
+        <% if(comment.description) {%><p class="desc">
+            <%- parseMarkup(comment.description)%>
+        </p><% } %>
 
         <% if(comment.example) { %>
         <h4>Example</h4>
@@ -72,9 +87,9 @@ methods.forEach(function (method) {var comment = method.comment; %>
     <dd>
         <p class="proto"><%- method.prototype %>
 
-        <p class="desc">
-            <%- comment.description ? parseMarkup(comment.description) : '' %>
-        </p>
+        <% if(comment.description) {%><p class="desc">
+            <%- parseMarkup(comment.description)%>
+        </p><% } %>
 
         <% if(comment.example) { %>
         <h4>Example</h4>
@@ -84,8 +99,8 @@ methods.forEach(function (method) {var comment = method.comment; %>
         <% if(comment.param) {%>
         <h4>Parameters</h4>
         <dl>
-            <% comment.param.forEach(function(param){var m = /^(?:\{(.+)\}\s*)?(\w+)\s*([\s\S]*)/.exec(param); %>
-            <dt><%- m[2]%><% if(m[1]) {%> <code><%- parseTypename(m[1])%></code><%}%></dt>
+            <% comment.param.forEach(function(param){var m = /^(?:\{(.+)\}\s*)?(\[\w+\]|\w+)\s*([\s\S]*)/.exec(param); %>
+            <dt><%- m[2][0] === '[' ? '<sub>optional</sub>' + m[2].substr(1, m[2].length - 2)  : m[2] %><% if(m[1]) {%> <code><%- parseTypename(m[1])%></code><%}%></dt>
             <%if(m[3]) {%>
             <dd><%- parseMarkup(m[3])%></dd><%}
             })%>
@@ -99,6 +114,6 @@ methods.forEach(function (method) {var comment = method.comment; %>
 <%})%>
 </dl>
 
-
+</div>
 </body>
 </html>

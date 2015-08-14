@@ -1,6 +1,6 @@
 import * as http from '../module/http.js';
 import * as file from '../module/file.js';
-import {fork} from '../module/child_process.js';
+import * as child_process from '../module/child_process.js';
 
 const path = require('path');
 
@@ -36,6 +36,130 @@ export function service_stop() {
     callService('exit');
 }
 
+export function service_upstart_install(uname) {
+    let version;
+    try {
+        version = child_process.exec('initctl version');
+    } catch (e) {
+        throw new Error('upstart not installed');
+    }
+
+    let vers = /upstart (\d+)\.(\d+)/.exec(version[0].toString());
+    if (!vers) {
+        throw new Error('unrecognized output of `initctl version`: ' + version[0]);
+    }
+    vers = vers[0] * 10000 + vers[1] * 1;
+
+    const filename = `/etc/init/ak_${uname}.conf`;
+    if (file.exists(filename)) {
+        throw new Error(`${uname}: service already installed`);
+    }
+    
+    file.write(filename, `description "AgentK: Integrated Node.JS Framework"
+
+start on filesystem
+stop on runlevel [016]
+
+respawn
+chdir ${getHome(uname)}/.agentk
+${vers >= 10004 ? `
+setuid ${uname}
+
+exec ${nodeScript()}
+` : `
+exec /bin/su ${uname} <<< "exec ${nodeScript()}"`}
+`);
+
+    console.log(`${uname}: service installed, use \x1b[36msudo initctl start ak_${uname}\x1b[0m to start the service`);
+}
+
+export function service_upstart_uninst(uname) {
+    const filename = `/etc/init/ak_${uname}.conf`;
+    if (!file.exists(filename)) {
+        throw new Error(`${uname}: service not installed`);
+    }
+    file.rm(filename);
+}
+
+export function service_systemd_install(uname) {
+    const filename = `/etc/systemd/system/ak_${uname}.service`;
+    if (file.exists(filename)) {
+        throw new Error(`${uname}: service already installed`);
+    }
+
+    file.write(filename, `[Unit]
+Description=AgentK: Integrated Node.JS Framework
+
+[Service]
+User=${uname}
+WorkingDirectory=${getHome(uname)}/.agentk
+ExecStart=${nodeScript()}
+ExecReload=${process.execPath} --harmony ${addslashes(path.join(__dirname, '../../bin/agentk.js'))} reload --all
+KillMode=process
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+`);
+
+    file.symlink(`../ak_${uname}.service`, `/etc/systemd/system/multi-user.target.wants/ak_${uname}.service`);
+    console.log(`${uname}: service installed, use \x1b[36msudo systemctl start ak_${uname}.service\x1b[0m to start the service`);
+}
+
+export function service_systemd_uninst(uname) {
+    const filename = `/etc/systemd/system/ak_${uname}.service`;
+    if (!file.exists(filename)) {
+        throw new Error(`${uname}: service not installed`);
+    }
+    file.rm(filename);
+    file.rm(`/etc/systemd/system/multi-user.target.wants/ak_${uname}.service`);
+}
+
+export function service_sysv_install(uname) {
+
+    let inittab = '/etc/inittab',
+        script = sysvScript(uname),
+        current = '' + file.read(inittab);
+
+    let idx = current.indexOf(script), installed = idx !== -1;
+
+    if (installed) {
+        throw new Error(`${uname}: service already installed`);
+    }
+    let found_ids = current.match(/^k[0-9a-zA-Z]:/mg), next_id;
+    for (let i of '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ') {
+        if (!found_ids || found_ids.indexOf('k' + i + ':') === -1) {
+            next_id = i;
+            break
+        }
+    }
+    if (!next_id) {
+        throw new Error("no unique key available (too many installation)")
+    }
+    file.write(inittab, current + 'k' + next_id + script);
+}
+
+export function service_sysv_uninst(uname) {
+    let inittab = '/etc/inittab',
+        script = sysvScript(uname),
+        current = '' + file.read(inittab);
+
+    let idx = current.indexOf(script), installed = idx !== -1;
+    if (!installed) {
+        throw new Error(`${uname}: service not installed`);
+    }
+    file.write(inittab, current.substr(0, idx - 2) + current.substr(idx + script.length + 2))
+}
+
+function sysvScript(uname) {
+    return `:2345:respawn:/bin/su ${addslashes(uname)} <<< "cd; mkdir -p .agentk; cd .agentk; exec ${nodeScript()}"\n`;
+}
+
+function nodeScript() {
+    let dir = addslashes(path.join(__dirname, '../..'));
+    return `${addslashes(process.execPath)} --harmony ${dir}/index.js load ${dir}/src/service/daemon.js >> out.log 2>> err.log`;
+}
+
 function getData(result) {
     if (result.code !== 200) {
         throw new Error(result.msg)
@@ -44,40 +168,73 @@ function getData(result) {
 }
 
 export function description() {
-    console.log(`\x1b[32mak service <command>\x1b[0m controls service status or installs/uninstalls service from operating system. A\
- \x1b[33mservice\x1b[0m is a background process that runs and controls the user program, restarts it when it has exited\
- unexpectedly.
+    console.log(`\x1b[32mak service <command>\x1b[0m controls service status or installs/uninstalls service from
+   operating system. A \x1b[33mservice\x1b[0m is a background process that runs and controls
+   the user program, restarts it when it has exited unexpectedly.
 
 \x1b[36mSYNPOSIS\x1b[0m
 
   ak service start
   ak service stop
-  ak service install [username]
-  ak service uninst [username]
+  ak service systemd_install [username]
+  ak service systemd_uninst  [username]
+  ak service upstart_install [username]
+  ak service upstart_uninst  [username]
+  ak service sysv_install    [username]
+  ak service sysv_uninst     [username]
 
 \x1b[36mDESCRIPTION\x1b[0m
 
-  \x1b[32mak service start\x1b[0m: starts the service if it has not ben started.
-    If there are running user programs when the service is stopped or killed, they will be respawned. Command \x1b[32mak start <program>\x1b[0m will also restart the service if it has not been started.
+\x1b[32;1m● \x1b[32mak service start\x1b[0m: starts the service if it has not ben started.
+    If there are running user programs when the service is stopped or killed,
+    they will be respawned. Command \x1b[32mak start <program>\x1b[0m will also restarts the
+    service if it has not been started.
 
-  \x1b[32mak service stop\x1b[0m: stops the service.
-    All running programs will be killed, and will be respawned when the service starts again
+\x1b[32;1m● \x1b[32mak service stop\x1b[0m: stops the service.
+    All running programs will be killed, and will be respawned when the service
+    starts again
 
-  \x1b[32mak service install [username]\x1b[0m: installs service into operating system.
-    The installed service will be automatically started when the operating system is restarted.
-    Currently we only support Linux. AgentK uses \x1b[36m'/etc/inittab'\x1b[0m to start the service on system startup,\
- and the service will be automatically respawned when it is unexpectedly stopped or killed. So if you want to stop the\
- running service, you should use \x1b[32mak service uninst\x1b[0m.
-    The service installation will take effect on next boot. If you want it to take effect immediately, run:
-      \x1b[36msudo init q\x1b[0m
-    A username should be supplied to run the service, otherwise \x1b[36m'root'\x1b[0m will be used.
+\x1b[32;1m● \x1b[32mak service systemd_install [username]\x1b[0m: installs daemon service into operating
+    system's systemd scripts.
+    Systemd is a high performance service manager. You can run
+        \x1b[36msudo systemctl --version\x1b[0m to see whether your system supports systemd.
+    The daemon service will be automatically started when the computer finishes
+    its boot, and respawned if killed unexpectedly.
+    A username should be supplied, otherwise \x1b[31;1mroot\x1b[0m will be used.
+    To make the installation to take effect immediately, run
+        \x1b[36msudo systemctl start ak_[username].service\x1b[0m
 
-  \x1b[32mak service uninst [username]\x1b[0m: removes the service installation.
-    Type \x1b[36m'sudo init q'\x1b[0m to stop the service immediately.`);
+\x1b[32;1m● \x1b[32mak service systemd_uninst [username]\x1b[0m: removes the systemd service installation
+    \x1b[33mPLEASE DO\x1b[0m stop the service before it is uninstalled, run
+        \x1b[36msudo systemctl status ak_[username].service\x1b[0m to check whether the service
+    is running or stopped, and run
+        \x1b[36msudo systemctl stop ak_[username].service\x1b[0m to stop the service.
+
+\x1b[32;1m● \x1b[32mak service upstart_install [username]\x1b[0m: like \x1b[36msystemd_install\x1b[0m, but uses upstart
+    to control the service.
+    Upstart is a event-driven service manager. You can run
+        \x1b[36msudo initctl version\x1b[0m to see whether your system supports upstart.
+    To make the installation to take effect immediately, run
+        \x1b[36msudo initctl start ak_[username]\x1b[0m
+
+\x1b[32;1m● \x1b[32mak service upstart_uninst [username]\x1b[0m: removes the upstart service installation
+    \x1b[33mPLEASE DO\x1b[0m stop the service before it is uninstalled, run
+        \x1b[36msudo initctl status ak_[username]\x1b[0m to check whether the service
+    is running or stopped, and run
+        \x1b[36msudo initctl stop ak_[username]\x1b[0m to stop the service.
+
+\x1b[32;1m● \x1b[32mak service sysv_install [username]\x1b[0m: like \x1b[36msystemd_install\x1b[0m, but uses sysvinit
+    to spawn and guard the daemon service. The sysvinit service manager is out
+    of date, if you don't know which to choose, please contact your system admin
+    To make the installation to take effect immediately, run
+        \x1b[36msudo init q\x1b[0m
+
+\x1b[32;1m● \x1b[32mak service sysv_uninst [username]\x1b[0m: removes the sysvinit service installation.
+    Run \x1b[36msudo init q\x1b[0m to make the uninstallation take effect.`);
 }
 
-export function status() {
-    let data = getData(callService('status'));
+export function status(hasDir) {
+    let data = getData(callService('status', hasDir && [dir]));
 
     if (!data.length) {
         console.log('no program is currently running');
@@ -196,7 +353,7 @@ function forkAndCall(name, data) {
         stdout = path.join(service_dir, 'out.log'),
         stderr = path.join(service_dir, 'err.log');
 
-    fork(path.join(__dirname, '../../index.js'), {
+    child_process.fork(path.join(__dirname, '../../index.js'), {
         args: ['load', path.join(__dirname, 'daemon.js')],
         directory: service_dir,
         stdout: stdout,
@@ -209,4 +366,15 @@ function forkAndCall(name, data) {
 
     return callService(name, data);
 }
-
+function addslashes(str) {
+    return str.replace(/[^0-9a-zA-Z.-_+=\/~]/g, '\\$&');
+}
+function getHome(uname) {
+    let m = file.read('/etc/passwd').toString().match(new RegExp(`^${uname}(?::[^:]*){4}:([^:]*)`, 'm'));
+    if (m) {
+        return m[1]
+    } else {
+        console.warn(`\x1b[33mWARN\x1b[0m unable to find home directory in /etc/passwd, using /home/${uname}`);
+        return '/home/' + uname;
+    }
+}

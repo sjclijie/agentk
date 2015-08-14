@@ -36,12 +36,5 @@
   "bugs": {
     "url": "https://github.com/kyriosli/agentk/issues"
   },
-  "homepage": "https://github.com/kyriosli/agentk",
-  "gitHead": "7b7e7a313df693ed2402ed450fa7d19fb8285786",
-  "readme": "# AgentK: Synchronous Node.JS web service framework\r\n\r\n## features\r\n\r\n  - support for new ES6 style module loading\r\n  - write async scripts synchronously\r\n\r\nSee [test/test.js](test/test.js)\r\n\r\n```js\r\nimport {listen, request, read} from '../module/http.js'; // normal\r\nimport * as file from '../module/file.js';\r\n\r\nlisten(3000, function (req, res) {\r\n    var m = /^\\/([^/]+)(.+)/.exec(req.url);\r\n    console.log(m[1], m[2]);\r\n    if (m[1] === 'static') {\r\n        res.setHeader('Content-Type', 'text/javascript');\r\n        res.write(file.read(__dirname + m[2]));\r\n    } else {\r\n        var tres = request({\r\n            method: 'GET',\r\n            host: m[1],\r\n            path: m[2]\r\n        });\r\n        res.write(read(tres));\r\n    }\r\n});\r\n```\r\n",
-  "readmeFilename": "README.md",
-  "_id": "agentk@0.0.1",
-  "_shasum": "628abfe3a6a2439d5e6817bc2dccbb9cb9c7b6c5",
-  "_from": "kyriosli/agentk",
-  "_resolved": "git://github.com/kyriosli/agentk.git#7b7e7a313df693ed2402ed450fa7d19fb8285786"
+  "homepage": "https://github.com/kyriosli/agentk"
 }

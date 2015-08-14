@@ -12,8 +12,9 @@ let ids = 0;
  * for more information about process creation.
  *
  * @param {string} module bootstrap module path (filename or directory with a `package.json` present)
- * @param {object} options optional arguments
+ * @param {object} [options] optional arguments
  *
+ *   - options.directory: working directory
  *   - options.stdout: stdout file path to be forwarded
  *   - options.stderr: stderr file path to be forwarded
  *   - options.ipc: create a ipc channel (which enables `child_process.send` and `process.send`)
@@ -21,6 +22,7 @@ let ids = 0;
  *   - options.uid: setuid
  *   - options.gid: setgid
  *   - options.env: environment variables
+ *   - options.args: extra arguments
  *
  * @returns {node.child_process::ChildProcess}
  */
@@ -45,4 +47,33 @@ export function fork(module, options) {
     if (options.args) args = args.concat(options.args);
 
     return cp.spawn(process.execPath, args, opts);
+}
+
+/**
+ * Runs a shell command and returns its output, throws if command failed
+ *
+ * @param {string} cmd command string to be executed
+ * @param {object} [options] optional arguments
+ *
+ *   - options.uid: setuid
+ *   - options.gid: setgid
+ *   - options.env: environment variables
+ *
+ * @returns {Array} `[stdout, stderr]`
+ */
+export function exec(cmd, options) {
+    options = options || {};
+    const opts = {};
+    if (options.directory) {
+        opts.cwd = options.directory
+    }
+    for (let param of ['uid', 'gid', 'env']) {
+        if (param in options) opts[param] = options[param]
+    }
+    return co.promise(function (resolve, reject) {
+        cp.exec(cmd, opts, function (err, stdout, stderr) {
+            if (err) reject(err);
+            else resolve([stdout, stderr])
+        })
+    });
 }
