@@ -123,8 +123,13 @@ function resumeJobs() {
         }
         for (let program of programs) {
             console.log('resuming ' + program.dir);
-            startProgram(program.dir);
+            try {
+                startProgram(program.dir);
+            } catch(e) {
+                console.error('program %s resume failed: %s', program.dir, e.message);
+            }
         }
+        updateLog()
     }
 }
 
@@ -158,7 +163,7 @@ function startProgram(dir) {
     try {
         manifest = JSON.parse('' + file.read(path.join(dir, 'manifest.json')));
     } catch (e) { // no manifest
-        console.error(e.stack);
+        // console.error(e.stack);
         manifest = null;
         let module = path.join(dir, 'index.js');
         if (!file.exists(module)) {

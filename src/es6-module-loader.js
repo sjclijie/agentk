@@ -5,8 +5,17 @@ const esprima = require('./esprima'),
     path = require('path'),
     vm = require('vm'),
     co = require('./co'),
+    crypto = require('crypto'),
     Module = require('module');
 const definedModules = {}; // name: Primise(module)
+
+let moduleCache;
+
+try {
+    let cache = require('node-shared-cache');
+    moduleCache = new cache.Cache('agentk-module-cache', 1 << 20, cache.SIZE_1K);
+} catch (e) {
+}
 
 let handleTemplate = false;
 
@@ -42,6 +51,7 @@ function include(name, __dirname) {
         }
     }
     let basename = path.basename(name);
+    console.error('downloading module ' + basename);
     return definedModules[name] = require('./publish').download(basename).then(function (buffer) {
         ensureParentDir(name);
         fs.writeFileSync(name, buffer);
@@ -115,10 +125,21 @@ function resolveModulePath(dir) {
 }
 
 System.module = function (source, option) {
-    option = option || {filename: '/', dir: '/'};
-    let result = compile(source, option);
+    option = option || {filename: '/'};
+    option.dir = path.dirname(option.filename);
+    let result;
+    if(moduleCache) {
+        let checksum = crypto.createHash('sha1').update(source).digest('utf16le');
+        result = moduleCache[checksum];
+        if(!result) {
+            result = moduleCache[checksum] = compile(source, option);
+        }
+    } else {
+        result = compile(source, option);
+    }
     //console.log(result);
     let ctor = vm.runInThisContext(result, option);
+    // console.log(option, result, ctor);
 
     let module = {};
     module[loadProgress] = co.run(function () {
@@ -153,8 +174,6 @@ function compile(source, option) {
     const replacer = createReplacement(source),
         replace = replacer.replace,
         globals = {};
-    option = option || {filename: '/'};
-    option.dir = path.dirname(option.filename);
     let hasAliasedImport = findImports(parsed, globals, replace, option);
     let exports = findExports(parsed, replace);
 
