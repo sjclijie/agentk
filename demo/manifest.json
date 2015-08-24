@@ -8,5 +8,8 @@
     "port": 8080,
     "view_engine": "ejs",
     "views": "view"
+  },
+  "action": {
+    "reload": "src/index.js"
   }
 }

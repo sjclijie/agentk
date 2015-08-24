@@ -90,9 +90,7 @@ console.log('starting service...');
 server = http.listen(win32 ? 32761 : listen_path, function (req) {
     console.log(req.method, req.url);
     let action = req.url.substr(1);
-    if (!(action in actions)) {
-        return response.error(404, 'command not found: ' + action)
-    }
+
     let data;
     if ('data' in req.headers) {
         data = JSON.parse(req.headers.data);
@@ -100,6 +98,16 @@ server = http.listen(win32 ? 32761 : listen_path, function (req) {
         data = null
     }
     try {
+        if (typeof data === 'string' && data in programs) {
+            let program = programs[data];
+            if (program.action && action in program.action) {
+                // trigger action
+                return response.json(triggerAction(program, action));
+            }
+        }
+        if (!(action in actions)) {
+            return response.error(404, 'command not found: ' + action)
+        }
         return response.json(actions[action](data));
     } catch (e) {
         console.error(e.stack || e);
@@ -145,6 +153,13 @@ function updateLog() {
         }
     });
     file.write('programs', JSON.stringify(arr));
+}
+
+function triggerAction(program, action) {
+    program.workers.forEach(function (worker) {
+        worker.send({action: 'trigger', cmd: action})
+    });
+    return true;
 }
 
 function startProgram(dir) {
@@ -199,7 +214,8 @@ function startProgram(dir) {
         lastReload: 0,
         lastRestart: 0,
         stopped: false,
-        schedulers: {}
+        schedulers: {},
+        action: manifest && manifest.action
     };
     updateLog();
 

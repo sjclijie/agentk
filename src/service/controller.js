@@ -13,16 +13,8 @@ export function start() {
     getData(tryCallService('start', dir));
 }
 
-export function stop() {
-    getData(callService('stop', dir))
-}
-
-export function reload() {
-    getData(callService('reload', dir))
-}
-
-export function restart() {
-    getData(callService('restart', dir))
+export default function (cmd) {
+    getData(callService(cmd, dir));
 }
 
 export function service_start() {
@@ -54,7 +46,7 @@ export function service_upstart_install(uname) {
     if (file.exists(filename)) {
         throw new Error(`${uname}: service already installed`);
     }
-    
+
     file.write(filename, `description "AgentK: Integrated Node.JS Framework"
 
 start on filesystem

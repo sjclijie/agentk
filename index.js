@@ -22,7 +22,19 @@ exports.run = function (programDir) {
         workdir = path.resolve(programDir, manifest.directory);
     }
     process.chdir(workdir);
-    exports.load(main).done()
+
+    let co = require('./src/co.js');
+    if (manifest.action) {
+        process.on('message', function (msg) {
+            if (msg.action === 'trigger' && msg.cmd in manifest.action) {
+                co.run(onAction, msg.cmd).done();
+            }
+        })
+    }
+    exports.load(main).done();
+    function onAction(action) {
+        co.yield(exports.load(path.resolve(programDir, manifest.action[action])))[action]();
+    }
 };
 
 if (process.mainModule === module) {

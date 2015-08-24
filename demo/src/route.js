@@ -19,6 +19,7 @@ route.exact('/', function (req) {
 });
 
 // TODO: add more url rules
+
 route.all(function () {
     return response.error(404, '<h1>Oops</h1><p>Something bad happened. <a href="javascript:history.back()">back</a></p>')
         .setHeader('Content-Type', 'text/html');

@@ -47,7 +47,9 @@ function xtermEscape(str) {
 function callService(cmd, options) {
     loadAndRun('../src/service/controller.js', function (module) {
         try {
-            module[cmd.replace(' ', '_')](options);
+            let method = module[cmd.replace(' ', '_')];
+            if (method) method(options);
+            else  module[Symbol.for('default')](cmd, options);
         } catch (err) {
             if (err.code === 'ECONNREFUSED' || err.code === 'ENOENT') {
                 console.error('command \'' + cmd + '\' failed, maybe service not started?')
@@ -105,10 +107,18 @@ let commands = {
                 console.log(xtermEscape("  $#yk<" + cmd + ">" + "            ".substr(cmd.length) + commands[cmd].help))
             });
             console.log(xtermEscape("\ntype $#Ck<" + exec + " help> <command> to get more info"));
-        }, completion: function (prefix) {
+        }, completion: function (prefix, triggers) {
             let output = '';
             for (let txt of Object.keys(commands)) {
                 output = completion(output, prefix, txt);
+            }
+            if (triggers) {
+                var config = readConfig();
+                for (var key in config) {
+                    if (key.substr(0, 8) === 'trigger.') {
+                        output = completion(output, prefix, key.substr(8));
+                    }
+                }
             }
             return output;
         }
@@ -349,7 +359,7 @@ let commands = {
                 }
                 let file = path.join(__dirname, 'completion.sh');
                 if (win32) {
-                    if (process.env.MSYSTEM === 'MINGW32') {
+                    if (process.env.SHELL) {
                         file = '/' + file.replace(/[:\\]+/g, '/');
                     } else {
                         throw new Error("completion is not supported in this shell, Install MinGW32 and try again")
@@ -363,13 +373,20 @@ let commands = {
 
             let ret;
             if (arguments.length === 3) {
-                ret = commands.help.completion(arg2);
-            } else if (arguments.length > 3 && arg2 in commands && commands[arg2].completion) {
-                let command = commands[arg2];
-                if ('maxArgs' in command && arguments.length > command.maxArgs + 3) {
-                    return;
+                ret = commands.help.completion(arg2, true);
+            } else if (arguments.length > 3) {
+                if (arg2 in commands) {
+                    let command = commands[arg2];
+                    if (!command.completion || 'maxArgs' in command && arguments.length > command.maxArgs + 3) {
+                        return;
+                    }
+                    ret = commands[arg2].completion.apply(null, [].slice.call(arguments, 3));
+                } else {
+                    let config = readConfig();
+                    if ('trigger.' + arg2 in config) {
+                        ret = completeRunningJobs(arguments[3]);
+                    }
                 }
-                ret = commands[arg2].completion.apply(null, [].slice.call(arguments, 3));
             }
             ret && ret.length && process.stdout.write(ret);
         }
@@ -445,13 +462,66 @@ esac\n');
                 return completeUsername(c);
             }
         }
+    },
+    "config": {
+        help: "configuration helper",
+        args: "[<configuration name>]  [<configuration value>] | -d <configuration name>",
+        desc: "gets and sets configurations for current user.",
+        func: function (name, val) {
+            let config = readConfig();
+            if (arguments.length === 0) {
+                let buf = '';
+                for (var k in config) {
+                    buf += k + ': ' + JSON.stringify(config[k]) + '\n';
+                }
+                process.stdout.write(buf);
+            } else if (arguments.length === 1) {
+                if (name === '-d') {
+                    throw new Error('configuration name to be deleted is required');
+                }
+                if (name in config) {
+                    console.log(config[name]);
+                }
+            } else {
+                if (name === '-d') {
+                    if (!(delete config[val])) return; // not modified
+                } else {
+                    config[name] = val;
+                }
+                fs.writeFileSync(path.join(process.env.HOME, '.agentk/config.json'), JSON.stringify(config, null, 2));
+            }
+        }, completion: function (name) {
+            if (arguments.length === 1) {
+                var buf = '', config = readConfig();
+                for (var key in config) {
+                    buf = completion(buf, name, key);
+                }
+                return buf;
+            }
+        }
     }
 };
 
-if (!cmd || !(cmd in commands)) {
-    cmd = "help"
+if (!cmd) {
+    cmd = 'help';
+} else if (!(cmd in commands)) {
+    let config = readConfig();
+    if ('trigger.' + cmd in config) { // trigger
+        commander(process.argv[3]);
+        cmd = false;
+    } else {
+        cmd = 'help';
+    }
 }
-commands[cmd].func.apply(null, process.argv.slice(3));
+cmd && commands[cmd].func.apply(null, process.argv.slice(3));
+
+function readConfig() {
+    try {
+        return JSON.parse(fs.readFileSync(path.join(process.env.HOME, '.agentk/config.json'), 'utf8'));
+    } catch (e) {
+        return {};
+    }
+}
 
 function showHelp() {
     process.argv[2] = 'help';

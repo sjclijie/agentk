@@ -27,6 +27,7 @@ import * as watcher from '../src/module/q_watcher.js';
 const storage = manifest.config.storage;
 if (storage.name == 'aliyun_oss') {
     const entry = include('aliyun_oss.js', __dirname);
+
     storage.key = JSON.parse(file.read(storage.keyfile).toString());
     storage.get = function (req) {
         let tres = entry.get(storage, req.url, {});
