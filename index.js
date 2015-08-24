@@ -12,6 +12,7 @@ require('./src/es6-module-loader');
 exports.load = System.import;
 
 exports.run = function (programDir) {
+    programDir = path.resolve(programDir);
     let path = require('path');
     // read manifest
     let manifest = global.manifest = JSON.parse(require('fs').readFileSync(path.join(programDir, 'manifest.json'), 'utf8'));

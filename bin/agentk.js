@@ -117,6 +117,8 @@ let commands = {
                 for (var key in config) {
                     if (key.substr(0, 8) === 'trigger.') {
                         output = completion(output, prefix, key.substr(8));
+                    } else if (key.substr(0, 6) === 'alias.') {
+                        output = completion(output, prefix, key.substr(6));
                     }
                 }
             }
@@ -506,7 +508,12 @@ if (!cmd) {
     cmd = 'help';
 } else if (!(cmd in commands)) {
     let config = readConfig();
-    if ('trigger.' + cmd in config) { // trigger
+    if ('alias.' + cmd in config) {
+        cmd = config['alias.' + cmd];
+        if (!(cmd in commands)) {
+            cmd = 'help';
+        }
+    } else if ('trigger.' + cmd in config) { // trigger
         commander(process.argv[3]);
         cmd = false;
     } else {
@@ -516,8 +523,10 @@ if (!cmd) {
 cmd && commands[cmd].func.apply(null, process.argv.slice(3));
 
 function readConfig() {
+    let configFile = path.join(process.env.HOME, '.agentk/config.json');
+    if (!fs.existsSync(configFile)) return {};
     try {
-        return JSON.parse(fs.readFileSync(path.join(process.env.HOME, '.agentk/config.json'), 'utf8'));
+        return JSON.parse(fs.readFileSync(configFile, 'utf8'));
     } catch (e) {
         return {};
     }
