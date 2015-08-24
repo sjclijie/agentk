@@ -45,6 +45,13 @@ export function isDirectory(file) {
     return ofs.statSync(file).isDirectory();
 }
 
+export function mkdirp(file) {
+    if(!exists(file)) {
+        mkParentDir(file);
+        mkdir(file);   
+    }
+}
+
 export function mkParentDir(file) {
     let dir = path.dirname(file);
     if (ofs.existsSync(dir)) return;

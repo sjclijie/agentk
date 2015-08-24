@@ -43,6 +43,7 @@ if (storage.name == 'aliyun_oss') {
         return entry.copy(storage, src, dest);
     };
 } else if (storage.name === 'file') {
+    file.mkdirp(storage.directory);
     process.chdir(storage.directory);
     storage.get = include('../src/module/static_file.js', __dirname)[moduleDefault]('.');
     storage.put = function (req, fullname, buf) {
