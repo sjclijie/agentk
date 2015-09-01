@@ -442,23 +442,67 @@ let commands = {
     },
     "rc-create": {
         help: "create sysv rc/init script for a program",
-        args: "<program directory> <filename> [<username>]",
+        args: "<filename> <program directory> [--user=<username>] [--alias.xxx=xxx ...]",
         maxArgs: 3,
-        desc: "creates a script file in /etc/init.d that can be used to start|stop|restart|reload the program",
-        func: function (dir, filename, username) {
+        desc: "creates a script file in /etc/init.d that can be used to control the program.\n\n" +
+        "Optional arguments:\n" +
+        "  \x1b[36musername\x1b[0m target user to be used to run the script, default to \x1b[32mroot\x1b[0m\n" +
+        "  \x1b[36malias.xxx\x1b[0m add optional behavior or override default behaviors. For example:\n" +
+        "    \x1b[32m--alias.foobar=foobar\x1b[0m  add an optional behavior named foobar\n" +
+        "    \x1b[32m--alias.foobar=foobaz\x1b[0m  add an optional behavior named foobar, which will trigger foobaz\n"+
+        "    \x1b[32m--alias.start=foobaz\x1b[0m   override default behavior start with foobaz\n",
+        func: function (filename, dir) {
+            if (arguments.length < 2)
+                throw new Error('filename and program directory must be specified');
             dir = path.resolve(dir);
             let outFile = '/etc/init.d/' + filename;
+            let defaults = {start: 1, stop: 1, restart: 1, reload: 1, status: 1};
+
+            let username = 'root', scripts = '', keys = '';
+            for (let i = 2, L = arguments.length; i < L; i++) {
+                var m = /^--(user|alias\.\w+)=(.*)/.exec(arguments[i]);
+                if (!m) {
+                    console.warn('unrecognized argument %d: %s', i, arguments[i]);
+                    continue;
+                }
+                if (m[1] === 'user') {
+                    username = m[2]
+                } else { // alias.xxx
+                    let aliased = m[1].substr(6), action = m[2];
+                    if (aliased === action) {
+                        defaults[aliased] = 1;
+                    } else {
+                        delete defaults[aliased];
+                        scripts += '  ' + aliased + ')\n    send_msg ' + JSON.stringify(m[2]) + '\n    ;;\n';
+                        keys += '|' + aliased;
+                    }
+                }
+            }
+
+            let cmd = '  ' + addslashes(process.execPath) + ' --harmony ' + addslashes(__filename) + ' $1 ' + addslashes(dir);
+            if (username !== 'root') {
+                cmd = 'su ' + username + ' << EOF\n' + cmd + '\nEOF'
+            }
+
+            let defaultKeys = Object.keys(defaults).join('|');
+            if (defaultKeys) {
+                scripts = '  ' + defaultKeys + ')\n    send_msg "$1"\n    ;;\n' + scripts;
+                keys = defaultKeys + keys;
+            } else {
+                keys = keys.substr(1);
+            }
+
             fs.writeFileSync(outFile, '#!/bin/sh\n\
-case "$1" in\n\
-    start|stop|restart|reload|status)\n\
-        su ' + username + ' -c "' + addslashes(process.execPath) + ' --harmony ' + addslashes(__filename) + ' $1 ' + addslashes(dir) + '"\n\
-        ;;\n\
-    *)\n\
-        echo "Usage: $0 {start|stop|restart|reload|status}"\n\
-        exit 2\n\
+function send_msg() {\n\
+' + cmd + '\n\
+}\n\n\
+case "$1" in\n' + scripts + '\
+  *)\n\
+    echo "Usage: $0 {' + keys + '}"\n\
+    exit 2\n\
 esac\n');
             fs.chmodSync(outFile, '755');
-
+            console.log('rc script file created.\nUsage: \x1b[36m' + outFile + '\x1b[0m {' + keys + '}');
         }, completion: function (a, b, c) {
             if (arguments.length === 3) {
                 return completeUsername(c);
@@ -493,7 +537,7 @@ esac\n');
                 fs.writeFileSync(path.join(process.env.HOME, '.agentk/config.json'), JSON.stringify(config, null, 2));
             }
         }, completion: function (name) {
-            if (arguments.length === 1) {
+            if (arguments.length === 1 || arguments.length === 2 && name === '-d' && (name = arguments[1])) {
                 var buf = '', config = readConfig();
                 for (var key in config) {
                     buf = completion(buf, name, key);
