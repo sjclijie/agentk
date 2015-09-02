@@ -1,11 +1,20 @@
 "use strict";
 
 import * as http from '../src/module/http.js';
-import {read} from '../src/module/file.js';
+import {read, exists} from '../src/module/file.js';
 import {md5} from '../src/module/crypto.js';
 
 export default function (args) {
     let host = process.env.MODULE_SERVER_HOST, port;
+    if (!host) {
+        let configFile = require('path').join(process.env.HOME, '.agentk/config.json');
+        if (exists(configFile)) {
+            try {
+                host = JSON.parse('' + read(configFile))['server.host'];
+            } catch (e) {
+            }
+        }
+    }
     if (!host) {
         host = JSON.parse(read(require('path').join(__dirname, 'manifest.json')).toString()).config.storage.host;
         console.error("WARN: MODULE_SERVER_HOST environment varible is not set, using " + host);
