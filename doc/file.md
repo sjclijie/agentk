@@ -1,4 +1,4 @@
-<!-- @rev 7750fc3cb397ac0bed795c8f71cb8dcf 20ae7b -->
+<!-- @rev c05a53a46b86d52ad9a2983cea0fdffb 20ae7b -->
 # file
 
 ----
@@ -103,6 +103,16 @@ function isFile(file)
 
 ```js
 function isDirectory(file) 
+```
+
+
+
+
+------------------------------------------------------------------------
+### mkdirp()
+
+```js
+function mkdirp(file) 
 ```
 
 
