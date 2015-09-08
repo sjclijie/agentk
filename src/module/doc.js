@@ -98,8 +98,7 @@ export default function (outDir, format) {
             if (file.isDirectory(name)) {
                 onDir(name);
             } else if (name.substr(name.length - 3) === '.js') {
-                let namespace = name.substr(0, name.length - 3).replace(/[\/\\]/g, '_'),
-                    output = path.join(outDir, namespace + '.' + format);
+                let namespace = name.substr(0, name.length - 3).replace(/[\/\\]/g, '_');
                 let fileContent = file.read(name),
                     checksum = md5(fileContent, 'hex');
 
