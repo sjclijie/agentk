@@ -137,7 +137,7 @@ let commands = {
             if (dir.substr(dir.length - 3) === '.js') {
                 require('../index.js').load(path.resolve(dir)).done();
             } else {
-                require('../index.js').run(dir).done();
+                require('../index.js').run(dir);
             }
         }
     },
