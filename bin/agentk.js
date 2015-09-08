@@ -135,9 +135,9 @@ let commands = {
                 dir = '.'
             }
             if (dir.substr(dir.length - 3) === '.js') {
-                require('../index.js').load(path.resolve(dir));
+                require('../index.js').load(path.resolve(dir)).done();
             } else {
-                require('../index.js').run(dir);
+                require('../index.js').run(dir).done();
             }
         }
     },
@@ -449,7 +449,7 @@ let commands = {
         "  \x1b[36musername\x1b[0m target user to be used to run the script, default to \x1b[32mroot\x1b[0m\n" +
         "  \x1b[36malias.xxx\x1b[0m add optional behavior or override default behaviors. For example:\n" +
         "    \x1b[32m--alias.foobar=foobar\x1b[0m  add an optional behavior named foobar\n" +
-        "    \x1b[32m--alias.foobar=foobaz\x1b[0m  add an optional behavior named foobar, which will trigger foobaz\n"+
+        "    \x1b[32m--alias.foobar=foobaz\x1b[0m  add an optional behavior named foobar, which will trigger foobaz\n" +
         "    \x1b[32m--alias.start=foobaz\x1b[0m   override default behavior start with foobaz\n",
         func: function (filename, dir) {
             if (arguments.length < 2)
