@@ -80,4 +80,9 @@ Router.prototype.apply = function (req, args) {
 function nop() {
 }
 
+function compile(handle) {
+    if (typeof handle === 'function') return handle;
+
+}
+
 export default Router;
