@@ -41,7 +41,7 @@ Test.prototype.test = function (title, cb) {
     try {
         cb.call(this)
     } catch (e) {
-        console.error(`failed: ${e.message} (${this.name}: ${title})`);
+        console.error(`${this.name}::${title} failed: ${e.stack || e.message || e}`);
         passed--;
     }
 };
