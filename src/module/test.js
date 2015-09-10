@@ -25,57 +25,101 @@ export function run(file) {
     ms += end[0] * 1000 + end[1] / 1e6;
 }
 
-/**
- * Unit test
- *
- * @param {name} name
- * @returns {Test}
- */
-export function Test(name) {
-    this.name = name;
-}
 
-Test.prototype.test = function (title, cb) {
-    passed++;
-    total++;
-    try {
-        cb.call(this)
-    } catch (e) {
-        console.error(`${this.name}::${title} failed: ${e.stack || e.message || e}`);
-        passed--;
+export class Test {
+    /**
+     * Unit test
+     *
+     * @param {name} name
+     * @returns {Test}
+     */
+    constructor(name) {
+        this.name = name;
     }
-};
 
-
-/**
- * Integration test on a router handle that accepts a http request and returns a http response
- *
- * @param {string} name
- * @param {function|router::Router} handle
- * @returns {IntegrationTest}
- */
-export function IntegrationTest(name, handle) {
-    Test.call(this, name);
-    this.handle = handle;
+    test(title, cb) {
+        passed++;
+        total++;
+        try {
+            cb.call(this)
+        } catch (e) {
+            console.error(`${this.name}::${title} failed: ${e.stack || e.message || e}`);
+            passed--;
+        }
+    }
 }
-util.inherits(IntegrationTest, Test);
 
 
-IntegrationTest.prototype.get = function (url, options) {
-    options || (options = {});
-    options.url = url;
-    return this.request(options);
-};
+export class IntegrationTest extends Test {
+    /**
+     * Integration test on a router handle that accepts a http request and returns a http response
+     *
+     * @param {string} name
+     * @param {function|router::Router} handle
+     * @returns {IntegrationTest}
+     */
+    constructor(name, handle) {
+        super(name);
+        this.handle = handle;
+    }
 
-IntegrationTest.prototype.postForm = function (url, params, options) {
-    options || (options = {});
-    options.url = url;
-    options.method = 'POST';
-    let headers = options.headers || (options.headers = {});
-    headers['Content-Type'] = 'application/x-www-form-urlencoded';
-    options.body = new Buffer(http.buildQuery(params));
-    return this.request(options);
-};
+    get(url, options) {
+        options || (options = {});
+        options.url = url;
+        return this.request(options);
+    }
+
+    postForm(url, params, options) {
+        options || (options = {});
+        options.url = url;
+        options.method = 'POST';
+        let headers = options.headers || (options.headers = {});
+        headers['Content-Type'] = 'application/x-www-form-urlencoded';
+        options.body = new Buffer(http.buildQuery(params));
+        return this.request(options);
+    }
+
+    request(options) {
+        options.__proto__ = http_defaults;
+        let resp = this.handle.apply(options, [options]);
+
+        return co.promise(function (resolve) {
+            let result = {};
+            let socket = new ostream.Writable();
+            let buffers = [];
+
+            socket._write = function (chunk, encoding, callback) {
+                buffers.push(chunk);
+                callback();
+            };
+
+            let res = new ohttp.ServerResponse(options);
+            res._storeHeader = function (firstLine, headers) {
+                var m = /HTTP\/(1\.\d) (\d+) (.+)/.exec(firstLine);
+                result.version = m[1];
+                result.status = +m[2];
+                result.reason = m[3];
+                result.headers = headers;
+                res._headerSent = true;
+            };
+            res.assignSocket(socket);
+
+            res.once('finish', function () {
+                result.body = Buffer.concat(buffers);
+                resolve(result)
+            });
+
+            if (!resp) return res.end();
+
+            res.statusCode = resp.status;
+            for (let key of Object.keys(resp.headers)) {
+                res.setHeader(key, resp.headers[key])
+            }
+
+            resp.handle(options, res);
+        });
+    }
+}
 
 const http_defaults = {
     method: 'GET',
@@ -129,48 +173,6 @@ function parseUrl(req) {
         }
     })
 }
-
-
-IntegrationTest.prototype.request = function (options) {
-    options.__proto__ = http_defaults;
-    let resp = this.handle.apply(options, [options]);
-
-    return co.promise(function (resolve) {
-        let result = {};
-        let socket = new ostream.Writable();
-        let buffers = [];
-
-        socket._write = function (chunk, encoding, callback) {
-            buffers.push(chunk);
-            callback();
-        };
-
-        let res = new ohttp.ServerResponse(options);
-        res._storeHeader = function (firstLine, headers) {
-            var m = /HTTP\/(1\.\d) (\d+) (.+)/.exec(firstLine);
-            result.version = m[1];
-            result.status = +m[2];
-            result.reason = m[3];
-            result.headers = headers;
-            res._headerSent = true;
-        };
-        res.assignSocket(socket);
-
-        res.once('finish', function () {
-            result.body = Buffer.concat(buffers);
-            resolve(result)
-        });
-
-        if (!resp) return res.end();
-
-        res.statusCode = resp.status;
-        for (let key of Object.keys(resp.headers)) {
-            res.setHeader(key, resp.headers[key])
-        }
-
-        resp.handle(options, res);
-    });
-};
 
 
 export function summary() {

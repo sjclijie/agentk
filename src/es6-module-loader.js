@@ -128,10 +128,10 @@ System.module = function (source, option) {
     option = option || {filename: '/'};
     option.dir = path.dirname(option.filename);
     let result;
-    if(moduleCache) {
+    if (moduleCache) {
         let checksum = crypto.createHash('sha1').update(source).digest('utf16le');
         result = moduleCache[checksum];
-        if(!result) {
+        if (!result) {
             result = moduleCache[checksum] = compile(source, option);
         }
     } else {
@@ -173,7 +173,7 @@ function compile(source, option) {
     }
     const replacer = createReplacement(source),
         replace = replacer.replace,
-        globals = {};
+        globals = Object.create(null);
     let hasAliasedImport = findImports(parsed, globals, replace, option);
     let exports = findExports(parsed, replace);
 
@@ -224,7 +224,8 @@ function findExports(body, replace) {
         if (stmt.type === Syntax.ExportNamedDeclaration) {
             let decl = stmt.declaration;
             if (decl) { // export var | export function
-                if (decl.type == Syntax.FunctionDeclaration) {
+                if (decl.type == Syntax.FunctionDeclaration
+                    || decl.type === Syntax.ClassDeclaration) {
                     names.push(decl.id.name);
                 } else if (decl.type === Syntax.VariableDeclaration) {
                     const isconst = decl.kind === 'const';
@@ -249,13 +250,12 @@ function findExports(body, replace) {
                 replace(stmt, '');
             }
         } else if (stmt.type === Syntax.ExportDefaultDeclaration) {
-            //console.log(stmt);
             if (hasDefault) {
                 throw new Error("export default has already been declared");
             }
             hasDefault = true;
             let defaultName = null;
-            if (stmt.declaration.type === Syntax.FunctionDeclaration) {
+            if (stmt.declaration.type === Syntax.FunctionDeclaration || stmt.declaration.type === Syntax.ClassDeclaration) {
                 arr[i] = stmt.declaration;
                 defaultName = stmt.declaration.id;
             } else {
@@ -266,7 +266,8 @@ function findExports(body, replace) {
             }
 
             if (defaultName) {
-                replace({range: [stmt.range[0], stmt.declaration.range[0]]}, 'Object.defineProperty(module,moduleDefault,{value:' + defaultName.name + '});');
+                replace({range: [stmt.range[0], stmt.declaration.range[0]]}, '');
+                replace({range: [stmt.range[1], stmt.range[1]]}, 'Object.defineProperty(module,moduleDefault,{value:' + defaultName.name + '});');
             } else { // as expression
                 replace({range: [stmt.range[0], stmt.declaration.range[0]]}, 'Object.defineProperty(module,moduleDefault,{value:');
                 replace({range: [stmt.declaration.range[1], stmt.declaration.range[1]]}, '});');
@@ -446,6 +447,45 @@ function handleScope(body, locals, replace) {
                     kase.consequent.forEach(handleStatement);
                 }
                 break;
+            case Syntax.ClassDeclaration:
+            {
+                let body = stmt.body.body;
+                let className = body.className = stmt.id ? stmt.id.name : 'constructor';
+                body.forEach(handleStatement);
+                if (stmt.id) {
+                    replace({
+                        range: [stmt.range[0], stmt.body.range[0] + 1]
+                    }, 'let ' + className + ' = function (super_proto) {' + (body.has_constructor ? 'let ' + className + ';' : 'function ' + className + '() {}') +
+                        'const proto = {__proto__: super_proto');
+                    replace({
+                        range: [stmt.body.range[1] - 1, stmt.range[1]]
+                    }, '}; ' + className + '.prototype = proto; return ' + className + '}(' + (stmt.superClass ? stmt.superClass.name : 'Object') + '.prototype);');
+                } else {
+                    replace({
+                        range: [stmt.range[0], stmt.body.range[0] + 1]
+                    }, 'function (super_proto) {' + (body.has_constructor ? 'let constructor;' : 'function constructor() {}') +
+                        'const proto = {__proto__: super_proto');
+                    replace({
+                        range: [stmt.body.range[1] - 1, stmt.range[1]]
+                    }, '}; constructor.prototype = proto; return constructor}(' + (stmt.superClass ? stmt.superClass.name : 'Object') + '.prototype)');
+                }
+            }
+                break;
+            case Syntax.MethodDefinition:
+                if (stmt.kind === 'constructor') {
+                    replace(stmt.key, ',constructor: ' + arguments[2].className + ' = function');
+                    arguments[2].has_constructor = true;
+                } else if (stmt.kind === 'get' || stmt.kind === 'set') {
+                    replace({
+                        range: [stmt.range[0], stmt.range[0]]
+                    }, ',')
+                } else {
+                    replace({
+                        range: [stmt.range[0], stmt.key.range[1]]
+                    }, ',' + stmt.key.name + ': ' + (stmt.static ? arguments[2].className + '.' + stmt.key.name + ' = ' : '') + 'function');
+                }
+                handleFunction(stmt.value);
+                break;
             case null:
             case Syntax.DebuggerStatement:
             case Syntax.EmptyStatement:
@@ -487,8 +527,32 @@ function handleScope(body, locals, replace) {
                 handleExpr(expr.consequent);
                 handleExpr(expr.alternate);
                 break;
-            case Syntax.NewExpression:
             case Syntax.CallExpression:
+                if (expr.callee.type === Syntax.Super) { // super()
+                    if (!expr['arguments'].length) {
+                        replace(expr, 'super_proto.constructor.call(this)')
+                    } else {
+                        replace({
+                            range: [expr.callee.range[0], expr['arguments'][0].range[0]]
+                        }, 'super_proto.constructor.call(this, ')
+                    }
+                } else if (expr.callee.type === Syntax.MemberExpression && expr.callee.object.type === Syntax.Super) {
+                    handleExpr(expr.callee.object);
+                    if (!expr['arguments'].length) {
+                        replace({
+                            range: [expr.callee.range[1], expr.range[1]]
+                        }, '.call(this)')
+                    } else {
+                        replace({
+                            range: [expr.callee.range[1], expr['arguments'][0].range[0]]
+                        }, '.call(this, ')
+                    }
+                } else {
+                    handleExpr(expr.callee);
+                }
+                expr['arguments'].forEach(handleExpr);
+                break;
+            case Syntax.NewExpression:
                 handleExpr(expr.callee);
                 expr['arguments'].forEach(handleExpr);
                 break;
@@ -557,6 +621,9 @@ function handleScope(body, locals, replace) {
                     }
                 }
                 expr.expressions.forEach(handleExpr);
+                break;
+            case  Syntax.Super:
+                replace(expr, 'super_proto');
                 break;
             default:
                 console.warn('unhandled expr', expr);

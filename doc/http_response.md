@@ -1,4 +1,4 @@
-<!-- @rev f69e3cdc232f63846c6bd655c0a6b7ed 20ae7b -->
+<!-- @rev f3789db3f319781582083894fd392aeb 20ae7b -->
 # http_response
 
 Wrapper class for http response, and basic methods to construct a response.
@@ -28,20 +28,6 @@ Wrapper class for http response, and basic methods to construct a response.
 
 
 ## Methods
-
-------------------------------------------------------------------------
-### HttpResponse()
-
-```js
-function HttpResponse() 
-```
-
-
-
-
-**Returns**
-
-> {HttpResponse}
 
 ------------------------------------------------------------------------
 ### handler()
