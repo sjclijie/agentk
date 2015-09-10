@@ -473,7 +473,7 @@ function handleScope(body, locals, replace) {
                 break;
             case Syntax.MethodDefinition:
                 if (stmt.kind === 'constructor') {
-                    replace(stmt.key, ',constructor: ' + arguments[2].className + ' = function');
+                    replace(stmt.key, ',constructor: ' + arguments[2].className + ' = function ' + arguments[2].className);
                     arguments[2].has_constructor = true;
                 } else if (stmt.kind === 'get' || stmt.kind === 'set') {
                     replace({
