@@ -3,8 +3,30 @@
 const http = require('http'),
     zlib = require('zlib');
 
-let host = process.env.MODULE_SERVER_HOST || require('../server/manifest.json').config.storage.host,
-    port, idx = host.indexOf(':');
+
+function readConfig() {
+    try {
+        return JSON.parse(fs.readFileSync(path.join(process.env.HOME, '.agentk/config.json'), 'utf8'));
+    } catch (e) {
+        return {};
+    }
+}
+
+let host = process.env.MODULE_SERVER_HOST;
+if (!host) {
+    let fs = require('fs'), configFile = require('path').join(process.env.HOME, '.agentk/config.json');
+    if (fs.existsSync(configFile)) {
+        try {
+            host = JSON.parse(fs.readFileSync(configFile, 'utf8'))['server.host'];
+        } catch (e) {
+        }
+    }
+}
+if (!host) {
+    host = require('../server/manifest.json').config.storage.host
+}
+
+let port, idx = host.indexOf(':');
 if (idx !== -1) {
     port = +host.substr(idx + 1);
     host = host.substr(0, idx);

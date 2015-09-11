@@ -13,6 +13,7 @@ exports.load = System.import;
 
 exports.run = function (programDir) {
     let path = require('path');
+    programDir = path.resolve(programDir);
     // read manifest
     let manifest = global.manifest = JSON.parse(require('fs').readFileSync(path.join(programDir, 'manifest.json'), 'utf8'));
     let main = path.resolve(programDir, manifest.main || 'index.js');
@@ -22,7 +23,19 @@ exports.run = function (programDir) {
         workdir = path.resolve(programDir, manifest.directory);
     }
     process.chdir(workdir);
-    exports.load(main).done()
+
+    let co = require('./src/co.js');
+    if (manifest.action) {
+        process.on('message', function (msg) {
+            if (msg.action === 'trigger' && msg.cmd in manifest.action) {
+                co.run(onAction, msg.cmd).done();
+            }
+        })
+    }
+    exports.load(main).done();
+    function onAction(action) {
+        co.yield(exports.load(path.resolve(programDir, manifest.action[action])))[action]();
+    }
 };
 
 if (process.mainModule === module) {

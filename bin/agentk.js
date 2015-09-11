@@ -47,7 +47,9 @@ function xtermEscape(str) {
 function callService(cmd, options) {
     loadAndRun('../src/service/controller.js', function (module) {
         try {
-            module[cmd.replace(' ', '_')](options);
+            let method = module[cmd.replace(' ', '_')];
+            if (method) method(options);
+            else  module[Symbol.for('default')](cmd, options);
         } catch (err) {
             if (err.code === 'ECONNREFUSED' || err.code === 'ENOENT') {
                 console.error('command \'' + cmd + '\' failed, maybe service not started?')
@@ -105,10 +107,20 @@ let commands = {
                 console.log(xtermEscape("  $#yk<" + cmd + ">" + "            ".substr(cmd.length) + commands[cmd].help))
             });
             console.log(xtermEscape("\ntype $#Ck<" + exec + " help> <command> to get more info"));
-        }, completion: function (prefix) {
+        }, completion: function (prefix, triggers) {
             let output = '';
             for (let txt of Object.keys(commands)) {
                 output = completion(output, prefix, txt);
+            }
+            if (triggers) {
+                var config = readConfig();
+                for (var key in config) {
+                    if (key.substr(0, 8) === 'trigger.') {
+                        output = completion(output, prefix, key.substr(8));
+                    } else if (key.substr(0, 6) === 'alias.') {
+                        output = completion(output, prefix, key.substr(6));
+                    }
+                }
             }
             return output;
         }
@@ -123,7 +135,7 @@ let commands = {
                 dir = '.'
             }
             if (dir.substr(dir.length - 3) === '.js') {
-                require('../index.js').load(path.resolve(dir));
+                require('../index.js').load(path.resolve(dir)).done();
             } else {
                 require('../index.js').run(dir);
             }
@@ -349,7 +361,7 @@ let commands = {
                 }
                 let file = path.join(__dirname, 'completion.sh');
                 if (win32) {
-                    if (process.env.MSYSTEM === 'MINGW32') {
+                    if (process.env.SHELL) {
                         file = '/' + file.replace(/[:\\]+/g, '/');
                     } else {
                         throw new Error("completion is not supported in this shell, Install MinGW32 and try again")
@@ -363,13 +375,20 @@ let commands = {
 
             let ret;
             if (arguments.length === 3) {
-                ret = commands.help.completion(arg2);
-            } else if (arguments.length > 3 && arg2 in commands && commands[arg2].completion) {
-                let command = commands[arg2];
-                if ('maxArgs' in command && arguments.length > command.maxArgs + 3) {
-                    return;
+                ret = commands.help.completion(arg2, true);
+            } else if (arguments.length > 3) {
+                if (arg2 in commands) {
+                    let command = commands[arg2];
+                    if (!command.completion || 'maxArgs' in command && arguments.length > command.maxArgs + 3) {
+                        return;
+                    }
+                    ret = commands[arg2].completion.apply(null, [].slice.call(arguments, 3));
+                } else {
+                    let config = readConfig();
+                    if ('trigger.' + arg2 in config) {
+                        ret = completeRunningJobs(arguments[3]);
+                    }
                 }
-                ret = commands[arg2].completion.apply(null, [].slice.call(arguments, 3));
             }
             ret && ret.length && process.stdout.write(ret);
         }
@@ -423,35 +442,139 @@ let commands = {
     },
     "rc-create": {
         help: "create sysv rc/init script for a program",
-        args: "<program directory> <filename> [<username>]",
+        args: "<filename> <program directory> [--user=<username>] [--alias.xxx=xxx ...]",
         maxArgs: 3,
-        desc: "creates a script file in /etc/init.d that can be used to start|stop|restart|reload the program",
-        func: function (dir, filename, username) {
+        desc: "creates a script file in /etc/init.d that can be used to control the program.\n\n" +
+        "Optional arguments:\n" +
+        "  \x1b[36musername\x1b[0m target user to be used to run the script, default to \x1b[32mroot\x1b[0m\n" +
+        "  \x1b[36malias.xxx\x1b[0m add optional behavior or override default behaviors. For example:\n" +
+        "    \x1b[32m--alias.foobar=foobar\x1b[0m  add an optional behavior named foobar\n" +
+        "    \x1b[32m--alias.foobar=foobaz\x1b[0m  add an optional behavior named foobar, which will trigger foobaz\n" +
+        "    \x1b[32m--alias.start=foobaz\x1b[0m   override default behavior start with foobaz\n",
+        func: function (filename, dir) {
+            if (arguments.length < 2)
+                throw new Error('filename and program directory must be specified');
             dir = path.resolve(dir);
             let outFile = '/etc/init.d/' + filename;
+            let defaults = {start: 1, stop: 1, restart: 1, reload: 1, status: 1};
+
+            let username = 'root', scripts = '', keys = '';
+            for (let i = 2, L = arguments.length; i < L; i++) {
+                var m = /^--(user|alias\.\w+)=(.*)/.exec(arguments[i]);
+                if (!m) {
+                    console.warn('unrecognized argument %d: %s', i, arguments[i]);
+                    continue;
+                }
+                if (m[1] === 'user') {
+                    username = m[2]
+                } else { // alias.xxx
+                    let aliased = m[1].substr(6), action = m[2];
+                    if (aliased === action) {
+                        defaults[aliased] = 1;
+                    } else {
+                        delete defaults[aliased];
+                        scripts += '  ' + aliased + ')\n    send_msg ' + JSON.stringify(m[2]) + '\n    ;;\n';
+                        keys += '|' + aliased;
+                    }
+                }
+            }
+
+            let cmd = '  ' + addslashes(process.execPath) + ' --harmony ' + addslashes(__filename) + ' $1 ' + addslashes(dir);
+            if (username !== 'root') {
+                cmd = 'su ' + username + ' << EOF\n' + cmd + '\nEOF'
+            }
+
+            let defaultKeys = Object.keys(defaults).join('|');
+            if (defaultKeys) {
+                scripts = '  ' + defaultKeys + ')\n    send_msg "$1"\n    ;;\n' + scripts;
+                keys = defaultKeys + keys;
+            } else {
+                keys = keys.substr(1);
+            }
+
             fs.writeFileSync(outFile, '#!/bin/sh\n\
-case "$1" in\n\
-    start|stop|restart|reload|status)\n\
-        su ' + username + ' -c "' + addslashes(process.execPath) + ' --harmony ' + addslashes(__filename) + ' $1 ' + addslashes(dir) + '"\n\
-        ;;\n\
-    *)\n\
-        echo "Usage: $0 {start|stop|restart|reload|status}"\n\
-        exit 2\n\
+function send_msg() {\n\
+' + cmd + '\n\
+}\n\n\
+case "$1" in\n' + scripts + '\
+  *)\n\
+    echo "Usage: $0 {' + keys + '}"\n\
+    exit 2\n\
 esac\n');
             fs.chmodSync(outFile, '755');
-
+            console.log('rc script file created.\nUsage: \x1b[36m' + outFile + '\x1b[0m {' + keys + '}');
         }, completion: function (a, b, c) {
             if (arguments.length === 3) {
                 return completeUsername(c);
             }
         }
+    },
+    "config": {
+        help: "configuration helper",
+        args: "[<configuration name>]  [<configuration value>] | -d <configuration name>",
+        desc: "gets and sets configurations for current user.",
+        func: function (name, val) {
+            let config = readConfig();
+            if (arguments.length === 0) {
+                let buf = '';
+                for (var k in config) {
+                    buf += k + ': ' + JSON.stringify(config[k]) + '\n';
+                }
+                process.stdout.write(buf);
+            } else if (arguments.length === 1) {
+                if (name === '-d') {
+                    throw new Error('configuration name to be deleted is required');
+                }
+                if (name in config) {
+                    console.log(config[name]);
+                }
+            } else {
+                if (name === '-d') {
+                    if (!(delete config[val])) return; // not modified
+                } else {
+                    config[name] = val;
+                }
+                fs.writeFileSync(path.join(process.env.HOME, '.agentk/config.json'), JSON.stringify(config, null, 2));
+            }
+        }, completion: function (name) {
+            if (arguments.length === 1 || arguments.length === 2 && name === '-d' && (name = arguments[1])) {
+                var buf = '', config = readConfig();
+                for (var key in config) {
+                    buf = completion(buf, name, key);
+                }
+                return buf;
+            }
+        }
     }
 };
 
-if (!cmd || !(cmd in commands)) {
-    cmd = "help"
+if (!cmd) {
+    cmd = 'help';
+} else if (!(cmd in commands)) {
+    let config = readConfig();
+    if ('alias.' + cmd in config) {
+        cmd = config['alias.' + cmd];
+        if (!(cmd in commands)) {
+            cmd = 'help';
+        }
+    } else if ('trigger.' + cmd in config) { // trigger
+        commander(process.argv[3]);
+        cmd = false;
+    } else {
+        cmd = 'help';
+    }
 }
-commands[cmd].func.apply(null, process.argv.slice(3));
+cmd && commands[cmd].func.apply(null, process.argv.slice(3));
+
+function readConfig() {
+    let configFile = path.join(process.env.HOME, '.agentk/config.json');
+    if (!fs.existsSync(configFile)) return {};
+    try {
+        return JSON.parse(fs.readFileSync(configFile, 'utf8'));
+    } catch (e) {
+        return {};
+    }
+}
 
 function showHelp() {
     process.argv[2] = 'help';

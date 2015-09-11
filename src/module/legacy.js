@@ -35,7 +35,7 @@ export function middleware(cb) {
     return function (req) {
         return co.promise(function (resolve, reject) {
             let res = req.response;
-            initResponse(res);
+            initResponse(res, resolve);
             cb(req, res, function (err) {
                 if (err) reject(err);
                 else resolve();

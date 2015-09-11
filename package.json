@@ -1,6 +1,6 @@
 {
   "name": "agentk",
-  "version": "0.1.0",
+  "version": "1.1.0",
   "description": "synchronous web service framework",
   "main": "index.js",
   "bin": {
@@ -14,7 +14,7 @@
     "ejs": "*"
   },
   "scripts": {
-    "test": "node --harmony test"
+    "test": "ak test"
   },
   "repository": {
     "type": "git",

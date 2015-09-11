@@ -16,61 +16,67 @@ const ofs = require('fs');
  */
 export let gzip_min_body_len = 1024;
 
-/**
- *
- * @returns {HttpResponse}
- * @constructor
- */
-export function HttpResponse() {
-    this.status = 200;
-    this.headers = {};
-    this.gzip = false;
+
+export class HttpResponse {
+    /**
+     *
+     * @returns {HttpResponse}
+     * @constructor
+     */
+    constructor() {
+        this.status = 200;
+        this.headers = {};
+        this.gzip = false;
+    }
+
+
+    setStatus(status) {
+        this.status = status;
+        return this;
+    }
+
+    setHeaders(headers) {
+        for (let key of Object.keys(headers)) {
+            this.headers[key] = headers[key];
+        }
+        return this;
+    }
+
+    setHeader(key, val) {
+        this.headers[key] = val;
+        return this;
+    }
+
+    setCookie(name, value, options) {
+        let val = name + '=' + encodeURIComponent(value);
+        if (options) {
+            for (let key in options) {
+                val += '; ' + key + '=' + options[key]
+            }
+        }
+
+        let headers = this.headers;
+        if (!('Set-Cookie' in headers)) {
+            headers['Set-Cookie'] = val;
+        } else if (typeof headers['Set-Cookie'] === 'string') {
+            headers['Set-Cookie'] = [headers['Set-Cookie'], val];
+        } else {
+            headers['Set-Cookie'].push(val);
+        }
+        return this;
+    }
+
+    enableGzip() {
+        this.gzip = true;
+        return this;
+    }
+
+    handle(req, res) {
+        res.end();
+    }
+
 }
 
-HttpResponse.prototype.setStatus = function (status) {
-    this.status = status;
-    return this;
-};
-
-HttpResponse.prototype.setHeaders = function (headers) {
-    for (let key of Object.keys(headers)) {
-        this.headers[key] = headers[key];
-    }
-    return this;
-};
-
-HttpResponse.prototype.setHeader = function (key, val) {
-    this.headers[key] = val;
-    return this;
-};
-
-HttpResponse.prototype.setCookie = function (name, value, options) {
-    let val = name + '=' + encodeURIComponent(value);
-    if (options) {
-        for (let key in options) {
-            val += '; ' + key + '=' + options[key]
-        }
-    }
-
-    let headers = this.headers;
-    if (!('Set-Cookie' in headers)) {
-        headers['Set-Cookie'] = val;
-    } else if (typeof headers['Set-Cookie'] === 'string') {
-        headers['Set-Cookie'] = [headers['Set-Cookie'], val];
-    } else {
-        headers['Set-Cookie'].push(val);
-    }
-    return this;
-};
-
-HttpResponse.prototype.enableGzip = function () {
-    this.gzip = true;
-    return this;
-};
-
-HttpResponse.prototype.handle = function (req, res) {
-    res.end();
-};
 
 function testGzip(resp, req, res) {
     if (resp.gzip && /\bgzip\b/.test(req.headers['accept-encoding'])) {
