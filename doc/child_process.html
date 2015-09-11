@@ -11,13 +11,14 @@
     <li><a href="crypto.html">crypto</a></li>
     <li><a href="doc.html" title="AgentK documentation generator">doc</a></li>
     <li><a href="file.html">file</a></li>
+    <li><a href="gbk.html">gbk</a></li>
     <li><a href="http.html">http</a></li>
     <li><a href="http_response.html" title="Wrapper class for http response, and basic methods to construct a response.">http_response</a></li>
     <li><a href="legacy.html" title="Legacy support module">legacy</a></li>
     <li><a href="q_watcher.html" title="Qunar Watcher module">q_watcher</a></li>
     <li><a href="router.html">router</a></li>
     <li><a href="static_file.html" title="static file request handler">static_file</a></li>
-    <li><a href="stream.html">stream</a></li>
+    <li><a href="stream.html" title="utils for stream consumption">stream</a></li>
     <li><a href="test.html">test</a></li>
     <li><a href="view.html">view</a></li>
     <li><a href="zlib.html">zlib</a></li>
@@ -43,7 +44,7 @@
 <ul>
     
     
-    <li><a href="#fork">function fork(module, options) </a></li>
+    <li><a href="#fork">function fork(module, options) </a></li><li><a href="#exec">function exec(cmd, options) </a></li>
     
 </ul>
 
@@ -74,12 +75,45 @@
             
             <dd><p>optional arguments</p>
 
-<ul><li>options.stdout: stdout file path to be forwarded</li><li>options.stderr: stderr file path to be forwarded</li><li>options.ipc: create a ipc channel (which enables <code>child_process.send</code> and <code>process.send</code>)</li><li>options.detached: child process is a new process group</li><li>options.uid: setuid</li><li>options.gid: setgid</li><li>options.env: environment variables</li></ul></dd>
+<ul><li>options.directory: working directory</li><li>options.stdout: stdout file path to be forwarded</li><li>options.stderr: stderr file path to be forwarded</li><li>options.ipc: create a ipc channel (which enables <code>child_process.send</code> and <code>process.send</code>)</li><li>options.detached: child process is a new process group</li><li>options.uid: setuid</li><li>options.gid: setgid</li><li>options.env: environment variables</li><li>options.args: extra arguments</li></ul></dd>
         </dl>
         
         
         <h4>Returns</h4>
         <p style="margin-left: 1em"><code><a href="https://nodejs.org/api/child_process.html#child_process_class_childprocess">ChildProcess</a></code></p>
+        
+    </dd>
+
+    <dt id="exec">
+        <div>exec()</div>
+        <sub>method</sub>
+    </dt>
+    <dd>
+        <p class="proto">function exec(cmd, options) 
+
+        <p class="desc">
+            <p> Runs a shell command and returns its output, throws if command failed</p>
+        </p>
+
+        
+
+        
+        <h4>Parameters</h4>
+        <dl>
+            
+            <dt>cmd <code>string</code></dt>
+            
+            <dd><p>command string to be executed</p></dd>
+            <dt><sub>optional</sub>options <code>object</code></dt>
+            
+            <dd><p>optional arguments</p>
+
+<ul><li>options.uid: setuid</li><li>options.gid: setgid</li><li>options.env: environment variables</li></ul></dd>
+        </dl>
+        
+        
+        <h4>Returns</h4>
+        <p style="margin-left: 1em"><code>Array</code>`[stdout, stderr]`</p>
         
     </dd>
 
