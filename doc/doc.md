@@ -1,4 +1,4 @@
-<!-- @rev 5603cbcfdb6691776f7aa947f0aa412e 20ae7b -->
+<!-- @rev 77ea6fc6ade274a6c95be12ff62c8112 20ae7b -->
 # doc
 
 AgentK documentation generator

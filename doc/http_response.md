@@ -1,4 +1,4 @@
-<!-- @rev f3789db3f319781582083894fd392aeb 20ae7b -->
+<!-- @rev b5b5c7be5b6fc3e8f785700b83f88e9e 20ae7b -->
 # http_response
 
 Wrapper class for http response, and basic methods to construct a response.
@@ -28,6 +28,150 @@ Wrapper class for http response, and basic methods to construct a response.
 
 
 ## Methods
+
+------------------------------------------------------------------------
+### HttpResponse()
+
+```js
+function HttpResponse() 
+```
+
+
+ Creates a new http response object that has default status of 200
+
+
+**Returns**
+
+> {HttpResponse}
+
+------------------------------------------------------------------------
+### setStatus()
+
+```js
+function HttpResponse::setStatus(status) 
+```
+
+
+ Sets the status, returns the response object itself.
+
+
+**Params**
+
+  - status `number`
+
+**Returns**
+
+> {HttpResponse}
+     
+
+------------------------------------------------------------------------
+### setHeaders()
+
+```js
+function HttpResponse::setHeaders(headers) 
+```
+
+
+ Bulk sets response headers, returns the response object itself.
+
+
+
+**Params**
+
+  - headers `object`
+    <br>key-value pair of headers to be set
+
+**Returns**
+
+> {HttpResponse}
+     
+
+------------------------------------------------------------------------
+### setHeader()
+
+```js
+function HttpResponse::setHeader(key, val) 
+```
+
+
+ Sets response header, returns the response object itself.
+
+
+**Params**
+
+  - key `string`
+    <br>header name to be set
+  - val `string|Array`
+    <br>header value to be set
+
+**Returns**
+
+> {HttpResponse}
+     
+
+------------------------------------------------------------------------
+### setCookie()
+
+```js
+function HttpResponse::setCookie(name, value, options) 
+```
+
+
+ Adds Set-Cookie header to the response object, returns it itself.
+
+
+**Params**
+
+  - name `string`
+    <br>cookie name to be set
+  - value `string`
+    <br>cookie value to be set
+  - options(optional) `object`
+    <br>optional keys to be appended, which can contain any of `expires`, `domain`, `path` etc.
+
+
+**Returns**
+
+> {HttpResponse}
+     
+
+------------------------------------------------------------------------
+### enableGzip()
+
+```js
+function HttpResponse::enableGzip() 
+```
+
+
+ Enables gzipped output, returns the response object itself.
+
+
+**Returns**
+
+> {HttpResponse}
+     
+
+------------------------------------------------------------------------
+### handle()
+
+```js
+function HttpResponse::handle(req, res) 
+```
+
+
+ handle method to be overridden which yields output to the ServerResponse object.
+ The response status and headers are auto set to the ServerResponse object, so what
+ you need to do is write some data and end the response.
+
+
+**Params**
+
+  - req `node.http::http.IncomingMessage`
+    <br>the original request object
+  - res `node.http::http.ServerResponse`
+    <br>the response object
+     
+
 
 ------------------------------------------------------------------------
 ### handler()

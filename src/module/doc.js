@@ -132,34 +132,37 @@ export default function (outDir, format) {
         }
 
 
-        let stmts = ast.body;
+        let stmts = ast.body,
+            comments = ast.comments;
 
-        // rearrange comments and statements
-        for (let nextStmt = 0, lastStmtEnd = 0, comments = ast.comments, nextComment = 0, lastComment = comments.length;
-             nextStmt < stmts.length && nextComment < comments.length;
-             nextStmt++
-        ) {
-            let nextStmtRange = stmts[nextStmt].range,
-                nextStmtStart = nextStmtRange[0];
-            for (; nextComment < lastComment;) {
-                let cmt = comments[nextComment],
-                    cmt_range = comments[nextComment].range;
-                if (cmt.type !== 'Block' || cmt_range[0] < lastStmtEnd) {
-                    //console.log(name, 'dropped comment', cmt.value);
-                    nextComment++;
-                    continue;
+        function findComments(stmts, lastStmtEnd) {
+            for (let nextStmt = 0, nextComment = 0, lastComment = comments.length;
+                 nextStmt < stmts.length && nextComment < comments.length;
+                 nextStmt++
+            ) {
+                let nextStmtRange = stmts[nextStmt].range,
+                    nextStmtStart = nextStmtRange[0];
+                for (; nextComment < lastComment;) {
+                    let cmt = comments[nextComment],
+                        cmt_range = comments[nextComment].range;
+                    if (cmt.type !== 'Block' || cmt_range[0] < lastStmtEnd) {
+                        //console.log(name, 'dropped comment', cmt.value);
+                        nextComment++;
+                        continue;
+                    }
+                    if (cmt_range[1] > nextStmtStart) {
+                        break;
+                    }
+                    stmts.splice(nextStmt, 0, cmt);
+                    nextStmt++;
+                    //console.log(name, 'insert comment ', cmt_range, 'between', lastStmtEnd, 'and', nextStmtStart);
+                    nextComment++
                 }
-                if (cmt_range[1] > nextStmtStart) {
-                    break;
-                }
-                stmts.splice(nextStmt, 0, cmt);
-                nextStmt++;
-                //console.log(name, 'insert comment ', cmt_range, 'between', lastStmtEnd, 'and', nextStmtStart);
-                nextComment++
+                lastStmtEnd = nextStmtRange[1];
             }
-            lastStmtEnd = nextStmtRange[1];
         }
-        //console.log(name, stmts);
+
+        findComments(stmts, 0);
 
         if (!stmts.length) return module;
 
@@ -192,7 +195,7 @@ export default function (outDir, format) {
             if (stmt.type === Syntax.ExportNamedDeclaration) {
                 let comment = previousComment(i);
                 let decl = stmt.declaration;
-                if (decl) { // export var | export function
+                if (decl) { // export var | export function | export class
                     if (decl.type == Syntax.FunctionDeclaration) {
                         decls[decl.id.name] = decl;
                         decl.comment = comment;
@@ -204,6 +207,9 @@ export default function (outDir, format) {
                             decls[vardecl.id.name] = vardecl;
                             onExportVariableDecl(vardecl, vardecl.id.name);
                         }
+                    } else if (decl.type === Syntax.ClassDeclaration) {
+                        decls[decl.id.name] = decl;
+                        onExportClassDecl(decl, decl.id.name);
                     }
                 } else { // export {xxx}
                     specs = specs.concat(stmt.specifiers);
@@ -219,6 +225,10 @@ export default function (outDir, format) {
                     if (decl.id) {
                         decls[decl.id.name] = decl;
                     }
+                } else if (decl.type === Syntax.ClassDeclaration) {
+                    if (decl.id) {
+                        decls[decl.id.name] = decl;
+                    }
                 }
             } else if (stmt.type === Syntax.FunctionDeclaration) {
                 decls[stmt.id.name] = stmt;
@@ -228,6 +238,8 @@ export default function (outDir, format) {
                     vardecl.kind = stmt.kind;
                     decls[vardecl.id.name] = vardecl;
                 }
+            } else if (stmt.type === Syntax.ClassDeclaration) {
+                decls[stmt.id.name] = stmt;
             }
         }
 
@@ -241,6 +253,8 @@ export default function (outDir, format) {
             //console.log(decl);
             if (decl.type === Syntax.FunctionDeclaration) {
                 onExportFunctionDecl(decl, spec.exported.name)
+            } else if (decl.type === Syntax.ClassDeclaration) {
+                onExportClassDecl(decl, spec.exported.name);
             } else if (decl.type === Syntax.VariableDeclarator) {
                 onExportVariableDecl(decl, spec.exported.name)
             }
@@ -257,11 +271,22 @@ export default function (outDir, format) {
 
                 } else {
                     if (!hasDefault.exported) {
-                        onExportFunctionDecl(hasDefault, hasDefault.id.name);
-                        methods[methods.length - 1]._default = true;
+                        onExportFunctionDecl(hasDefault, hasDefault.id.name, true);
                     }
                     module._default = {
                         type: 'function',
+                        name: hasDefault.id && hasDefault.id.name
+                    };
+                }
+            } else if (hasDefault.type === Syntax.ClassDeclaration) {
+                if (!hasDefault.id) { // TODO: no id
+
+                } else {
+                    if (!hasDefault.exported) {
+                        onExportClassDecl(hasDefault, hasDefault.id.name, true);
+                    }
+                    module._default = {
+                        type: 'class',
                         name: hasDefault.id && hasDefault.id.name
                     };
                 }
@@ -271,7 +296,7 @@ export default function (outDir, format) {
                     kind: hasDefault.kind
                 }
             } else if (hasDefault.type === Syntax.Literal) { // expression
-                console.log(name, 'has default', hasDefault);
+                //console.log(name, 'has default', hasDefault);
                 module._default = {
                     type: 'literal',
                     valueType: '{' + typeof hasDefault.value + '}',
@@ -294,13 +319,56 @@ export default function (outDir, format) {
 
 
         // console.log(name, requires, exports);
-        function onExportFunctionDecl(decl, name) {
+        function onExportFunctionDecl(decl, name, isDefault) {
             decl.exported = true;
             methods.push({
                 name: name,
                 prototype: script.substring(decl.range[0], decl.body.range[0]),
-                comment: decl.comment || {}
+                comment: decl.comment || {},
+                _default: isDefault
             })
+        }
+
+        function onExportClassDecl(decl, name, isDefault) {
+            decl.exported = true;
+            let body = decl.body.body;
+            findComments(body, decl.range[0]);
+            //console.log(require('util').inspect(decl, {depth: 10}));
+            let methodsFound = 0;
+            for (let i = 0, L = body.length; i < L; i++) {
+                let stmt = body[i];
+                if (stmt.type === Syntax.MethodDefinition) {
+                    let cmt = body[i - 1];
+                    if (cmt && cmt.type === 'Block') cmt = splitComment(cmt.value);
+                    else cmt = {};
+
+                    if (stmt.kind === 'constructor') {
+                        cmt.constructor = true;
+                        let obj = {
+                            name: name,
+                            prototype: 'function ' + name + script.substring(stmt.value.range[0], stmt.value.body.range[0]),
+                            comment: cmt,
+                            _default: isDefault
+                        };
+                        methods.splice(methods.length - methodsFound, 0, obj)
+                    } else if (stmt.kind === 'method') {
+                        methods.push({
+                            name: stmt.key.name,
+                            prototype: 'function ' + name + '::' + stmt.key.name + script.substring(stmt.value.range[0], stmt.value.body.range[0]),
+                            comment: cmt
+                        });
+                        methodsFound++;
+                    } else { // getter | setter
+                        cmt[stmt.kind + 'ter'] = true;
+                        methods.push({
+                            name: stmt.key.name,
+                            prototype: stmt.kind.substr(0, 3) + ' ' + name + '::' + stmt.key.name + script.substring(stmt.value.range[0], stmt.value.body.range[0]),
+                            comment: cmt
+                        });
+                        methodsFound++;
+                    }
+                }
+            }
         }
 
         function onExportVariableDecl(decl, name) {
@@ -329,7 +397,7 @@ export default function (outDir, format) {
 
         function splitComment(comment) {
             let parts = {};
-            let lines = comment.split(/\r?\n \*/);
+            let lines = comment.split(/\r?\n +\*/);
             if (lines[0] === '' || lines[0] === '*') lines.shift();
             let prev = 'description', cache = '';
             for (let i = 0, L = lines.length; i < L; i++) {

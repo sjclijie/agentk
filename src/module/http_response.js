@@ -19,6 +19,7 @@ export let gzip_min_body_len = 1024;
 
 export class HttpResponse {
     /**
+     * Creates a new http response object that has default status of 200
      *
      * @returns {HttpResponse}
      * @constructor
@@ -29,12 +30,24 @@ export class HttpResponse {
         this.gzip = false;
     }
 
-
+    /**
+     * Sets the status, returns the response object itself.
+     *
+     * @param {number} status
+     * @returns {HttpResponse}
+     */
     setStatus(status) {
-        this.status = status;
+        this.status = status | 0;
         return this;
     }
 
+    /**
+     * Bulk sets response headers, returns the response object itself.
+     *
+     *
+     * @param {object} headers key-value pair of headers to be set
+     * @returns {HttpResponse}
+     */
     setHeaders(headers) {
         for (let key of Object.keys(headers)) {
             this.headers[key] = headers[key];
@@ -42,11 +55,28 @@ export class HttpResponse {
         return this;
     }
 
+    /**
+     * Sets response header, returns the response object itself.
+     *
+     * @param {string} key header name to be set
+     * @param {string|Array} val header value to be set
+     * @returns {HttpResponse}
+     */
     setHeader(key, val) {
         this.headers[key] = val;
         return this;
     }
 
+
+    /**
+     * Adds Set-Cookie header to the response object, returns it itself.
+     *
+     * @param {string} name cookie name to be set
+     * @param {string} value cookie value to be set
+     * @param {object} [options] optional keys to be appended, which can contain any of `expires`, `domain`, `path` etc.
+     *
+     * @returns {HttpResponse}
+     */
     setCookie(name, value, options) {
         let val = name + '=' + encodeURIComponent(value);
         if (options) {
@@ -66,11 +96,24 @@ export class HttpResponse {
         return this;
     }
 
+    /**
+     * Enables gzipped output, returns the response object itself.
+     *
+     * @returns {HttpResponse}
+     */
     enableGzip() {
         this.gzip = true;
         return this;
     }
 
+    /**
+     * handle method to be overridden which yields output to the ServerResponse object.
+     * The response status and headers are auto set to the ServerResponse object, so what
+     * you need to do is write some data and end the response.
+     *
+     * @param {node.http::http.IncomingMessage} req the original request object
+     * @param {node.http::http.ServerResponse} res the response object
+     */
     handle(req, res) {
         res.end();
     }
