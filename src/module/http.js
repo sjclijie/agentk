@@ -41,11 +41,11 @@ export class Headers {
      * @param {object} [headers] initial name-value map of headers
      */
     constructor(headers) {
-        let arr = this[header_entries] = []; // [[lower-cased, name, value], ...]
+        let arr = this[header_entries] = []; // [[lower-cased name, value], ...]
 
         if (headers && typeof headers === 'object') {
             for (let key in headers) {
-                arr.push([key.toLowerCase(), key, '' + headers[key]]);
+                arr.push([key.toLowerCase(), '' + headers[key]]);
             }
         }
     }
@@ -58,7 +58,7 @@ export class Headers {
      */
     append(name, value) {
         name = '' + name;
-        this[header_entries].push([name.toLowerCase(), name, '' + value]);
+        this[header_entries].push([name.toLowerCase(), '' + value]);
     }
 
     /**
@@ -95,7 +95,7 @@ export class Headers {
     forEach(cb) {
         const self = this;
         for (let entry of this[header_entries]) {
-            cb(entry[2], entry[0], this)
+            cb(entry[1], entry[0], this)
         }
     }
 
@@ -110,7 +110,7 @@ export class Headers {
     get(name) {
         name = ('' + name).toLowerCase();
         for (let entry of this[header_entries]) {
-            if (entry[0] === name) return entry[2];
+            if (entry[0] === name) return entry[1];
         }
         return null
     }
@@ -125,7 +125,7 @@ export class Headers {
         name = ('' + name).toLowerCase();
         let result = [];
         for (let entry of this[header_entries]) {
-            if (entry[0] === name) result.push(entry[2]);
+            if (entry[0] === name) result.push(entry[1]);
         }
         return result
     }
@@ -137,7 +137,7 @@ export class Headers {
      * @returns {boolean}
      */
     has(name) {
-        return get(name) !== null
+        return this.get(name) !== null
     }
 
     /**
@@ -147,7 +147,7 @@ export class Headers {
      */
     entries() {
         return new Iterator(this[header_entries], function (entry) {
-            return [entry[0], entry[2]]
+            return [entry[0], entry[1]]
         })
     }
 
@@ -183,53 +183,218 @@ export class Headers {
     }
 }
 
+const stream_Readable = require('stream').Readable,
+    body_payload = Symbol('payload'),
+    body_stream = Symbol('stream');
+
+export class Body {
+    /**
+     * Abstract class for http request/response entity
+     * 
+     */
+    constructor(body) {
+        let payload;
+        if(body && body instanceof stream_Readable) {
+            this[body_payload] = null;
+            this[body_stream] = body;
+        } else {
+            if(!body) {
+                body = new Buffer(0)
+            } else if(typeof body === 'string') {
+                body = new Buffer(body)
+            } else if(body instanceof Buffer) {
+            } else if(body instanceof ArrayBuffer) {
+                body = new Buffer(new Uint8Array(body))
+            } else {
+                throw new Error('body accepts only string, Buffer, ArrayBuffer or stream.Readable');
+            }
+            this[body_payload] = Promise.resolve(body)
+        }
+    }
+
+    /**
+     * 
+     * @returns {Promise} a promise that yields the request payload as a string
+     */
+    text() {
+        return this.buffer().then(function(buf) {
+            return buf.toString()
+        })
+    }
+
+    /**
+     * 
+     * @returns {Promise} a promise that yields the request payload as a JSON object
+     */
+    json() {
+        return this.buffer().then(function(buf) {
+            return JSON.parse(buf.toString())
+        })
+    }
+
+    /**
+     * 
+     * @returns {ArrayBuffer} a promise that yields the request payload as an ArrayBuffer
+     */
+    arrayBuffer() {
+        return this.buffer().then(function(buf) {
+            return new Uint8Array(buf).buffer
+        })
+    }
+
+    /**
+     * 
+     * @returns {Promise} a promise that yields the request payload as a Buffer
+     */
+    buffer() {
+        let ret = this[body_payload];
+        if(!ret) { // start stream reading
+            let body = this[body_stream];
+            this[body_stream] = null;
+            ret = this[body_payload] = new Promise(function(resolve, reject) {
+                let bufs = [];
+                body.on('data', function(buf) {
+                    bufs.push(buf)
+                }).once('end', function() {
+                    resolve(Buffer.concat(bufs))
+                }).once('error', reject)
+            });
+        }
+        return ret
+    }
+
+    /**
+     * 
+     * @returns {Promise} a promise that yields the request payload as a readable stream
+     */
+    stream() {
+        let body = this[body_stream];
+
+        if(body) { // start stream reading
+            this.buffer()
+        } else {
+            body = new stream_Readable();
+            body._read = function() {};
+            this[body_payload].then(function(buf) {
+                body.push(buf);
+                body.push(null);
+            })
+        }
+
+        return body;
+    }
+}
+
 const request_method = Symbol('method'),
     request_url = Symbol('url'),
     request_headers = Symbol('headers');
 
-export class Request {
+export class Request extends Body {
     /**
      * A `Request` is an representation of a client request that will be sent to a remote server, or a server request
      * that received from the remote client.
      *
+     * @extends Body
      * @param {string} url a remote url
      * @param {object} [options] optional arguments, which contains any of:
-     *   - method `String`: request method
+     *
+     *   - method `String`: request method, e.g., "GET" or "POST"
      *   - headers `object|Headers` request headers
-     *   - body `string|Buffer` request payload
+     *   - body `string|Buffer|ArrayBuffer|node.stream::stream.Readable` request payload to be sent or received
+     *
      * @returns {Request}
      */
     constructor(url, options) {
-
         if (options && typeof options !== 'object') options = null;
+        super(options && options.body);
+
+        this[request_url] = url;
+
 
         this[request_method] = options && 'method' in options ? '' + options['method'] : 'GET';
         this[request_headers] = options && 'headers' in options && typeof options.headers === 'object' ?
             options.headers instanceof Headers ? options.headers : new Headers(options.headers) : new Headers();
     }
 
+    /**
+     * 
+     * @returns {string} request method, e.g., `"GET"` `"POST"`
+     */
     get method() {
         return this[request_method]
     }
 
+    /**
+     * 
+     * @returns {string} request uri, like `"http://www.example.com/test?foo=bar"`
+     */
     get url() {
         return this[request_url]
     }
 
+    /**
+     * 
+     * @returns {Headers} request headers
+     */
     get headers() {
         return this[request_headers]
     }
+}
 
-    text() {
+const response_status = Symbol('status'),
+    response_statusText = Symbol('url');
 
+export class Response extends Body {
+    /**
+     * A `Response` is an representation of a server response that will be sent to a remote client, or a client response
+     * that received from the remote server
+     * 
+     * @extends Body
+     * @param {string|Buffer|ArrayBuffer|node.stream::stream.Readable} [body]
+     * @param {object} [options] optional arguments,  which contains any of:
+     * 
+     *   - status `number`: The status code for the reponse, e.g., 200.
+     *   - statusText `string`: The status message associated with the staus code, e.g., OK.
+     *   - headers `object|Headers`: the response headers
+     */
+    constructor(body, options) {
+        super(body);
+
+        if(options && typeof options !== 'object') options = null;
+
+        this[response_status] = options && 'status' in options ? options.status | 0 : 200;
+        this[response_statusText] = options && 'statusText' in options ? '' + options.statusText : ohttp.STATUS_CODES[this[response_status]] || '';
+        this[request_headers] = options && 'headers' in options && typeof options.headers === 'object' ?
+            options.headers instanceof Headers ? options.headers : new Headers(options.headers) : new Headers();
     }
 
-    json() {
-
+    /**
+     * @returns {number}
+     */
+    get status() {
+        return this[response_status]
     }
 
-    buffer() {
+    /**
+     * @returns {string}
+     */
+    get statusText() {
+        return this[response_statusText]
+    }
 
+    /**
+     * @returns {boolean}
+     */
+    get ok () {
+        return this[response_status] >= 200 && this[response_status] <= 299
+    }
+
+    /**
+     * 
+     * @returns {Headers} response headers
+     */
+    get headers() {
+        return this[request_headers]
     }
 }
 

@@ -1,4 +1,4 @@
-<!-- @rev 6501876273fc00fc296d7fedc93f88da 20ae7b -->
+<!-- @rev 4c1162f1e9d83bdce4dad8d346e9e027 20ae7b -->
 # http
 
 ----
@@ -35,6 +35,462 @@
 
 
 ## Methods
+
+------------------------------------------------------------------------
+### Headers()
+
+```js
+function Headers(headers) 
+```
+
+
+ Headers represents a set of name-value pairs which will be used in:
+  - client request object
+  - remote server response
+  - server request event
+
+
+**Params**
+
+  - headers(optional) `object`
+    <br>initial name-value map of headers
+     
+
+
+------------------------------------------------------------------------
+### append()
+
+```js
+function Headers::append(name, value) 
+```
+
+
+ Appends an entry to the object.
+
+
+**Params**
+
+  - name `string`
+  - value `string`
+
+
+------------------------------------------------------------------------
+### set()
+
+```js
+function Headers::set(name, value) 
+```
+
+
+ Sets a header to the object.
+
+
+**Params**
+
+  - name `string`
+  - value `string`
+
+
+------------------------------------------------------------------------
+### ["delete"]()
+
+```js
+function Headers::["delete"](name) 
+```
+
+
+ Deletes all headers named `name`
+
+
+**Params**
+
+  - name `string`
+
+
+------------------------------------------------------------------------
+### forEach()
+
+```js
+function Headers::forEach(cb) 
+```
+
+
+ cb will be called with 3 arguments: value, name, and this Headers object
+
+
+**Params**
+
+  - cb `function`
+
+
+------------------------------------------------------------------------
+### get()
+
+```js
+function Headers::get(name) 
+```
+
+
+ Returns the value of an entry of this object, or null if none exists.
+
+ The first will be returned if multiple entries were found.
+
+
+**Params**
+
+  - name `string`
+
+**Returns**
+
+> {null|string}
+     
+
+------------------------------------------------------------------------
+### getAll()
+
+```js
+function Headers::getAll(name) 
+```
+
+
+ Returns All values of this object with the name
+
+
+**Params**
+
+  - name `string`
+
+**Returns**
+
+> {Array}
+     
+
+------------------------------------------------------------------------
+### has()
+
+```js
+function Headers::has(name) 
+```
+
+
+ Returns whether an entry of the name exists
+
+
+**Params**
+
+  - name `string`
+
+**Returns**
+
+> {boolean}
+     
+
+------------------------------------------------------------------------
+### entries()
+
+```js
+function Headers::entries() 
+```
+
+
+ Returns an iterator that yields name-value pair of all entries
+
+
+**Returns**
+
+> {Iterator}
+     
+
+------------------------------------------------------------------------
+### keys()
+
+```js
+function Headers::keys() 
+```
+
+
+ Returns an iterator that yields names of all entries
+
+
+**Returns**
+
+> {Iterator}
+     
+
+------------------------------------------------------------------------
+### values()
+
+```js
+function Headers::values() 
+```
+
+
+ Returns an iterator that yields values of all entries
+
+
+**Returns**
+
+> {Iterator}
+     
+
+------------------------------------------------------------------------
+### [Symbol.iterator]()
+
+```js
+function Headers::[Symbol.iterator]() 
+```
+
+
+ Returns an iterator that yields name-value pair of all entries
+
+
+**Returns**
+
+> {Iterator}
+     
+
+------------------------------------------------------------------------
+### Body()
+
+```js
+function Body(body) 
+```
+
+
+ Abstract class for http request/response entity
+ 
+     
+
+
+------------------------------------------------------------------------
+### text()
+
+```js
+function Body::text() 
+```
+
+
+ 
+
+**Returns**
+
+> {Promise} a promise that yields the request payload as a string
+     
+
+------------------------------------------------------------------------
+### json()
+
+```js
+function Body::json() 
+```
+
+
+ 
+
+**Returns**
+
+> {Promise} a promise that yields the request payload as a JSON object
+     
+
+------------------------------------------------------------------------
+### arrayBuffer()
+
+```js
+function Body::arrayBuffer() 
+```
+
+
+ 
+
+**Returns**
+
+> {ArrayBuffer} a promise that yields the request payload as an ArrayBuffer
+     
+
+------------------------------------------------------------------------
+### buffer()
+
+```js
+function Body::buffer() 
+```
+
+
+ 
+
+**Returns**
+
+> {Promise} a promise that yields the request payload as a Buffer
+     
+
+------------------------------------------------------------------------
+### stream()
+
+```js
+function Body::stream() 
+```
+
+
+ 
+
+**Returns**
+
+> {Promise} a promise that yields the request payload as a readable stream
+     
+
+------------------------------------------------------------------------
+### Request()
+
+```js
+function Request(url, options) 
+```
+
+
+ A `Request` is an representation of a client request that will be sent to a remote server, or a server request
+ that received from the remote client.
+
+
+**Params**
+
+  - url `string`
+    <br>a remote url
+  - options(optional) `object`
+    <br>optional arguments, which contains any of:
+
+   - method `String`: request method, e.g., "GET" or "POST"
+   - headers `object|Headers` request headers
+   - body `string|Buffer|ArrayBuffer|node.stream::stream.Readable` request payload to be sent or received
+
+
+**Returns**
+
+> {Request}
+     
+
+------------------------------------------------------------------------
+### method()
+
+```js
+get Request::method() 
+```
+
+
+ 
+
+**Returns**
+
+> {string} request method, e.g., `"GET"` `"POST"`
+     
+
+------------------------------------------------------------------------
+### url()
+
+```js
+get Request::url() 
+```
+
+
+ 
+
+**Returns**
+
+> {string} request uri, like `"http://www.example.com/test?foo=bar"`
+     
+
+------------------------------------------------------------------------
+### headers()
+
+```js
+get Request::headers() 
+```
+
+
+ 
+
+**Returns**
+
+> {Headers} request headers
+     
+
+------------------------------------------------------------------------
+### Response()
+
+```js
+function Response(body, options) 
+```
+
+
+ A `Response` is an representation of a server response that will be sent to a remote client, or a client response
+ that received from the remote server
+ 
+
+**Params**
+
+  - body(optional) `string|Buffer|ArrayBuffer|node.stream::stream.Readable`
+  - options(optional) `object`
+    <br>optional arguments,  which contains any of:
+ 
+   - status `number`: The status code for the reponse, e.g., 200.
+   - statusText `string`: The status message associated with the staus code, e.g., OK.
+   - headers `object|Headers`: the response headers
+     
+
+
+------------------------------------------------------------------------
+### status()
+
+```js
+get Response::status() 
+```
+
+
+
+**Returns**
+
+> {number}
+     
+
+------------------------------------------------------------------------
+### statusText()
+
+```js
+get Response::statusText() 
+```
+
+
+
+**Returns**
+
+> {string}
+     
+
+------------------------------------------------------------------------
+### ok()
+
+```js
+get Response::ok() 
+```
+
+
+
+**Returns**
+
+> {boolean}
+     
+
+------------------------------------------------------------------------
+### headers()
+
+```js
+get Response::headers() 
+```
+
+
+ 
+
+**Returns**
+
+> {Headers} response headers
+     
 
 ------------------------------------------------------------------------
 ### listen()

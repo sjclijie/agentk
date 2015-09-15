@@ -301,7 +301,7 @@ function findExports(body, replace, insert) {
     } else {
         tail = '';
     }
-    let trailer = hasDefault ? '' : 'Object.defineProperty(module,moduleDefault,{value:undefined});';
+    let trailer = hasDefault ? '' : '\nObject.defineProperty(module,moduleDefault,{value:undefined});';
     return [head, tail, trailer];
 }
 

@@ -33,7 +33,7 @@
 <ul>
     <% consts.forEach(function(obj) {%><li>constant <a href="#<%- obj.name %>"><%- obj.name %></a><% if(obj.comment.type) { %>:<code><%- parseTypename(obj.comment.type) %></code><% } %></li><%})%>
     <% variables.forEach(function(obj) {%><li>variable <a href="#<%- obj.name %>"><%- obj.name %></a><% if(obj.comment.type) { %>:<code><%- parseTypename(obj.comment.type) %></code><% } %></li><%})%>
-    <% methods.forEach(function(method) {%><li><a href="#<%- method.name %>"><%- method.prototype %></a></li><%})%>
+    <% methods.forEach(function(method) {%><li><a href="#<%- method.name %>"><%- method.prototype %></a><% if (method.comment.hasOwnProperty('constructor')) {%> <b>constructor</b><%} %></li><%})%>
     <% if(_default) {%><li>module default: <a href="#<%- _default.name %>"><%- _default.type %> <%- _default.name %></a></li><% } %>
 </ul>
 
@@ -88,10 +88,14 @@ methods.forEach(function (method) {var comment = method.comment; %>
     </dt>
     <dd>
         <p class="proto"><%- method.prototype %>
-
         <% if(comment.description) {%><p class="desc">
             <%- parseMarkup(comment.description)%>
         </p><% } %>
+
+        <% if(comment.extends) { %>
+        <h4>Parent Class</h4>
+        <p><%- parseTypename(comment.extends.trim()) %></p>
+        <% }%>
 
         <% if(comment.example) { %>
         <h4>Example</h4>

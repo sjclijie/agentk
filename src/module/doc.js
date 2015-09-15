@@ -22,7 +22,7 @@ const parseOption = {
 const presetTypes = {
     Buffer: 'https://nodejs.org/api/buffer.html#buffer_class_buffer'
 };
-const primitiveTypes = /^(boolean|string|number|undefined|null|object|function|Array|RegExp|Date|Error)$/;
+const primitiveTypes = /^([bB]oolean|[sS]tring|[nN]umber|[uU]ndefined|[nN]ull|[oO]bject|[fF]unction|[aA]rray|RegExp|Date|Error|Promise|ArrayBuffer)$/;
 const rNamespace = /^(?:([\w\.]+)::)?([\w\.]+)/;
 
 function parseTypename(name) {
@@ -352,7 +352,6 @@ export default function (outDir, format) {
                         };
                         methods.splice(methods.length - methodsFound, 0, obj)
                     } else if (stmt.kind === 'method') {
-                        stmt.key.type === Syntax.Identifier || console.log(stmt.key);
                         let methodname = stmt.key.type === Syntax.Identifier ? stmt.key.name : '[' + script.substring(stmt.key.range[0], stmt.key.range[1]) + ']';
                         methods.push({
                             name: methodname,
