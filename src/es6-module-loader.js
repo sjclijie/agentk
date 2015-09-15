@@ -173,17 +173,18 @@ function compile(source, option) {
     }
     const replacer = createReplacement(source),
         replace = replacer.replace,
+        insert = replacer.insert,
         globals = Object.create(null);
     let hasAliasedImport = findImports(parsed, globals, replace, option);
-    let exports = findExports(parsed, replace);
+    let exports = findExports(parsed, replace, insert);
 
     if (hasAliasedImport || handleTemplate) {
-        handleScope(parsed, globals, replace);
+        handleScope(parsed, globals, replace, insert);
 
         if (hasAliasedImport && exports[1]) {// replace exports
             const exports_replacer = createReplacement(exports[1]);
             let parsed_export = esprima.parse(exports[1], parseOption);
-            handleScope(parsed_export, globals, exports_replacer.replace);
+            handleScope(parsed_export, globals, exports_replacer.replace, exports_replacer.insert);
             exports[1] = exports_replacer.concat();
         }
     }
@@ -213,11 +214,14 @@ function createReplacement(source) {
             }
             result += source.substring(currentPos);
             return result;
+        },
+        insert: function (pos, str) {
+            replaces.push([pos, pos, str]);
         }
     }
 }
 
-function findExports(body, replace) {
+function findExports(body, replace, insert) {
     let names = [], locals = {}, consts = {}, hasDefault = false;
     for (let i = 0, arr = body.body, L = arr.length; i < L; i++) {
         let stmt = arr[i];
@@ -267,10 +271,10 @@ function findExports(body, replace) {
 
             if (defaultName) {
                 replace({range: [stmt.range[0], stmt.declaration.range[0]]}, '');
-                replace({range: [stmt.range[1], stmt.range[1]]}, 'Object.defineProperty(module,moduleDefault,{value:' + defaultName.name + '});');
+                insert(stmt.range[1], 'Object.defineProperty(module,moduleDefault,{value:' + defaultName.name + '});');
             } else { // as expression
                 replace({range: [stmt.range[0], stmt.declaration.range[0]]}, 'Object.defineProperty(module,moduleDefault,{value:');
-                replace({range: [stmt.declaration.range[1], stmt.declaration.range[1]]}, '});');
+                insert(stmt.declaration.range[1], '});');
             }
         } else if (stmt.type === Syntax.VariableDeclaration && stmt.kind === 'const') {
             for (let vardecl of stmt.declarations) {
@@ -352,7 +356,7 @@ function findImports(body, globals, replace, option) {
     }
     return hasAliasedImport;
 }
-function handleScope(body, locals, replace) {
+function handleScope(body, locals, replace, insert) {
     //console.log('handle scope', body.type, body.range);
     body.body.forEach(handleVarAndFunc);
     body.body.forEach(handleStatement);
@@ -390,7 +394,7 @@ function handleScope(body, locals, replace) {
                 break;
 
             case Syntax.BlockStatement:
-                handleScope(stmt, {__proto__: locals}, replace);
+                handleScope(stmt, {__proto__: locals}, replace, insert);
                 break;
             case Syntax.IfStatement:
                 handleExpr(stmt.test);
@@ -428,7 +432,7 @@ function handleScope(body, locals, replace) {
                 for (let handler of stmt.handlers) {
                     let scope = {__proto__: locals};
                     scope[handler.param.name] = VARIABLE_TYPE;
-                    handleScope(handler.body, scope, replace);
+                    handleScope(handler.body, scope, replace, insert);
                 }
                 handleBlockOrStatement(stmt.finalizer);
                 break;
@@ -452,37 +456,47 @@ function handleScope(body, locals, replace) {
                 let body = stmt.body.body;
                 let className = body.className = stmt.id ? stmt.id.name : 'constructor';
                 body.forEach(handleStatement);
-                if (stmt.id) {
-                    replace({
-                        range: [stmt.range[0], stmt.body.range[0] + 1]
-                    }, 'let ' + className + ' = function (super_proto) {' + (body.has_constructor ? 'let ' + className + ';' : 'function ' + className + '() {}') +
-                        'const proto = {__proto__: super_proto');
-                    replace({
-                        range: [stmt.body.range[1] - 1, stmt.range[1]]
-                    }, '}; ' + className + '.prototype = proto; return ' + className + '}(' + (stmt.superClass ? stmt.superClass.name : 'Object') + '.prototype);');
-                } else {
-                    replace({
-                        range: [stmt.range[0], stmt.body.range[0] + 1]
-                    }, 'function (super_proto) {' + (body.has_constructor ? 'let constructor;' : 'function constructor() {}') +
-                        'const proto = {__proto__: super_proto');
-                    replace({
-                        range: [stmt.body.range[1] - 1, stmt.range[1]]
-                    }, '}; constructor.prototype = proto; return constructor}(' + (stmt.superClass ? stmt.superClass.name : 'Object') + '.prototype)');
-                }
+                replace({
+                    range: [stmt.range[0], stmt.body.range[0] + 1]
+                }, (stmt.id ? 'let ' + className + ' = ' : '') + 'function (super_proto) {' +
+                    (body.has_constructor ? 'let ' + className + ';' : 'function ' + className + '() {}') +
+                    'const proto = {__proto__: super_proto};');
+                replace({
+                    range: [stmt.body.range[1] - 1, stmt.range[1]]
+                }, className + '.prototype = proto; return ' + className + '}(' + (stmt.superClass ? stmt.superClass.name : 'Object') + '.prototype);');
             }
                 break;
             case Syntax.MethodDefinition:
                 if (stmt.kind === 'constructor') {
-                    replace(stmt.key, ',constructor: ' + arguments[2].className + ' = function ' + arguments[2].className);
+                    replace(stmt.key, 'proto.constructor = ' + arguments[2].className + ' = function ' + arguments[2].className);
+                    insert(stmt.range[1], ';');
                     arguments[2].has_constructor = true;
                 } else if (stmt.kind === 'get' || stmt.kind === 'set') {
-                    replace({
-                        range: [stmt.range[0], stmt.range[0]]
-                    }, ',')
+                    if (stmt.key.type === Syntax.Identifier) {
+                        replace({
+                            range: [stmt.range[0], stmt.key.range[0]]
+                        }, 'proto.__define' + stmt.kind[0].toUpperCase() + stmt.kind.substr(1) + 'ter__("');
+                        insert(stmt.key.range[1], '", function');
+                    } else {
+                        replace({
+                            range: [stmt.range[0], stmt.key.range[0]]
+                        }, 'proto.__define' + stmt.kind[0].toUpperCase() + stmt.kind.substr(1) + 'ter__(');
+                        replace({
+                            range: [stmt.key.range[1], stmt.value.range[0]]
+                        }, ', function ');
+                    }
+                    insert(stmt.range[1], ');')
                 } else {
-                    replace({
-                        range: [stmt.range[0], stmt.key.range[1]]
-                    }, ',' + stmt.key.name + ': ' + (stmt.static ? arguments[2].className + '.' + stmt.key.name + ' = ' : '') + 'function');
+                    let receiver = stmt.static ? arguments[2].className : 'proto';
+                    if (stmt.key.type === Syntax.Identifier) {
+                        replace({
+                            range: [stmt.range[0], stmt.key.range[1]]
+                        }, receiver + '.' + stmt.key.name + ' = function');
+                    } else {
+                        insert(stmt.range[0] - 1, receiver);
+                        insert(stmt.value.range[0], ' = function');
+                    }
+                    insert(stmt.range[1], ';');
                 }
                 handleFunction(stmt.value);
                 break;
@@ -674,7 +688,7 @@ function handleScope(body, locals, replace) {
     function handleBlockOrStatement(stmt) {
         if (!stmt) return;
         if (stmt.type === Syntax.BlockStatement) {
-            handleScope(stmt, {__proto__: locals}, replace);
+            handleScope(stmt, {__proto__: locals}, replace, insert);
         } else {
             handleStatement(stmt);
         }
@@ -699,7 +713,7 @@ function handleScope(body, locals, replace) {
             scope[param.name] = VARIABLE_TYPE;
         }
         if (expr.body.type === Syntax.BlockStatement) {
-            handleScope(expr.body, scope, replace);
+            handleScope(expr.body, scope, replace, insert);
         } else {
             let oldLocal = locals;
             locals = scope;

@@ -11,6 +11,228 @@ const ohttp = require('http'),
     ourl = require('url'),
     oquerystring = require('querystring');
 
+
+const header_entries = Symbol('entries');
+
+class Iterator {
+    constructor(handle, transform) {
+        const iterator = handle[Symbol.iterator]();
+        this.next = function () {
+            let obj = iterator.next();
+            if (obj.done) return obj;
+            obj.value = transform(obj.value);
+            return obj;
+        }
+    }
+
+    [Symbol.iterator]() {
+        return this
+    }
+}
+
+
+export class Headers {
+    /**
+     * Headers represents a set of name-value pairs which will be used in:
+     *  - client request object
+     *  - remote server response
+     *  - server request event
+     *
+     * @param {object} [headers] initial name-value map of headers
+     */
+    constructor(headers) {
+        let arr = this[header_entries] = []; // [[lower-cased, name, value], ...]
+
+        if (headers && typeof headers === 'object') {
+            for (let key in headers) {
+                arr.push([key.toLowerCase(), key, '' + headers[key]]);
+            }
+        }
+    }
+
+    /**
+     * Appends an entry to the object.
+     *
+     * @param {string} name
+     * @param {string} value
+     */
+    append(name, value) {
+        name = '' + name;
+        this[header_entries].push([name.toLowerCase(), name, '' + value]);
+    }
+
+    /**
+     * Sets a header to the object.
+     *
+     * @param {string} name
+     * @param {string} value
+     */
+    set(name, value) {
+        this.delete(name, value);
+        this.append(name, value);
+    }
+
+    /**
+     * Deletes all headers named `name`
+     *
+     * @param {string} name
+     */
+    ["delete"] (name) {
+        name = ('' + name).toLowerCase();
+        for (let arr = this[header_entries], L = arr.length; L--;) {
+            if (arr[L][0] === name) {
+                arr.splice(L, 1);
+            }
+        }
+    }
+
+
+    /**
+     * cb will be called with 3 arguments: value, name, and this Headers object
+     *
+     * @param {function} cb
+     */
+    forEach(cb) {
+        const self = this;
+        for (let entry of this[header_entries]) {
+            cb(entry[2], entry[0], this)
+        }
+    }
+
+    /**
+     * Returns the value of an entry of this object, or null if none exists.
+     *
+     * The first will be returned if multiple entries were found.
+     *
+     * @param {string} name
+     * @returns {null|string}
+     */
+    get(name) {
+        name = ('' + name).toLowerCase();
+        for (let entry of this[header_entries]) {
+            if (entry[0] === name) return entry[2];
+        }
+        return null
+    }
+
+    /**
+     * Returns All values of this object with the name
+     *
+     * @param {string} name
+     * @returns {Array}
+     */
+    getAll(name) {
+        name = ('' + name).toLowerCase();
+        let result = [];
+        for (let entry of this[header_entries]) {
+            if (entry[0] === name) result.push(entry[2]);
+        }
+        return result
+    }
+
+    /**
+     * Returns whether an entry of the name exists
+     *
+     * @param {string} name
+     * @returns {boolean}
+     */
+    has(name) {
+        return get(name) !== null
+    }
+
+    /**
+     * Returns an iterator that yields name-value pair of all entries
+     *
+     * @returns {Iterator}
+     */
+    entries() {
+        return new Iterator(this[header_entries], function (entry) {
+            return [entry[0], entry[2]]
+        })
+    }
+
+    /**
+     * Returns an iterator that yields names of all entries
+     *
+     * @returns {Iterator}
+     */
+    keys() {
+        return new Iterator(this[header_entries], function (entry) {
+            return entry[0]
+        })
+    }
+
+    /**
+     * Returns an iterator that yields values of all entries
+     *
+     * @returns {Iterator}
+     */
+    values() {
+        return new Iterator(this[header_entries], function (entry) {
+            return entry[1]
+        })
+    }
+
+    /**
+     * Returns an iterator that yields name-value pair of all entries
+     *
+     * @returns {Iterator}
+     */
+    [Symbol.iterator]() {
+        return this.entries()
+    }
+}
+
+const request_method = Symbol('method'),
+    request_url = Symbol('url'),
+    request_headers = Symbol('headers');
+
+export class Request {
+    /**
+     * A `Request` is an representation of a client request that will be sent to a remote server, or a server request
+     * that received from the remote client.
+     *
+     * @param {string} url a remote url
+     * @param {object} [options] optional arguments, which contains any of:
+     *   - method `String`: request method
+     *   - headers `object|Headers` request headers
+     *   - body `string|Buffer` request payload
+     * @returns {Request}
+     */
+    constructor(url, options) {
+
+        if (options && typeof options !== 'object') options = null;
+
+        this[request_method] = options && 'method' in options ? '' + options['method'] : 'GET';
+        this[request_headers] = options && 'headers' in options && typeof options.headers === 'object' ?
+            options.headers instanceof Headers ? options.headers : new Headers(options.headers) : new Headers();
+    }
+
+    get method() {
+        return this[request_method]
+    }
+
+    get url() {
+        return this[request_url]
+    }
+
+    get headers() {
+        return this[request_headers]
+    }
+
+    text() {
+
+    }
+
+    json() {
+
+    }
+
+    buffer() {
+
+    }
+}
+
 /**
  * default agent for http request. You can set
  * maximum socket per host when calling request
@@ -48,6 +270,7 @@ const reqGetters = {
         }
     }
 };
+
 
 /**
  * Create a new http server, bind it to a port or socket file. A callback is supplied which accepts a

@@ -352,9 +352,11 @@ export default function (outDir, format) {
                         };
                         methods.splice(methods.length - methodsFound, 0, obj)
                     } else if (stmt.kind === 'method') {
+                        stmt.key.type === Syntax.Identifier || console.log(stmt.key);
+                        let methodname = stmt.key.type === Syntax.Identifier ? stmt.key.name : '[' + script.substring(stmt.key.range[0], stmt.key.range[1]) + ']';
                         methods.push({
-                            name: stmt.key.name,
-                            prototype: 'function ' + name + '::' + stmt.key.name + script.substring(stmt.value.range[0], stmt.value.body.range[0]),
+                            name: methodname,
+                            prototype: 'function ' + name + '::' + methodname + script.substring(stmt.value.range[0], stmt.value.body.range[0]),
                             comment: cmt
                         });
                         methodsFound++;

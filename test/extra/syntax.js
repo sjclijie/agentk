@@ -16,13 +16,22 @@ export class Test {
     }
 
     get foo() {
+        console.log('getting foo');
+        return this.name;
+    }
 
+    set ["foo"](x) {
+        console.log('setting foo', x);
     }
 
     static bar() {
         console.log('bar called with', this);
     }
 
+
+    [Symbol.iterator]() {
+
+    }
 }
 
 export default class MyTest extends Test {
@@ -37,6 +46,10 @@ export default class MyTest extends Test {
     }
 }
 
-new MyTest('abc').foobar();
+let a = new MyTest('abc');
+a.foobar();
+void a.foo;
+a.foo = 0;
+
 
 Test.bar();
