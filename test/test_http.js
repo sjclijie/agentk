@@ -1,247 +1,247 @@
-import * as http from '../src/module/http.js';
+import {Headers, Body} from '../src/module/http.js';
 
 
 const assert = require('assert'), assertEqual = assert.strictEqual;
 let test_headers = new Test("Headers");
 
-test_headers.test('constructor', function() {
-	let headers = new http.Headers(), entries = headers[Object.getOwnPropertySymbols(headers)[0]];
-	assertEqual(entries.length, 0);
+test_headers.test('constructor', function () {
+    let headers = new Headers(), entries = headers[Object.getOwnPropertySymbols(headers)[0]];
+    assertEqual(entries.length, 0);
 
-	assert_entries(null, 0);
-	assert_entries(true, 0);
-	assert_entries({}, 0);
-	assert_entries({a: 0}, 1);
-	assert_entries({a: 0, A: 0}, 2);
+    assert_entries(null, 0);
+    assert_entries(true, 0);
+    assert_entries({}, 0);
+    assert_entries({a: 0}, 1);
+    assert_entries({a: 0, A: 0}, 2);
 
-	function assert_entries(param, count) {
-		let headers = new http.Headers(param), entries = headers[Object.getOwnPropertySymbols(headers)[0]];
-		assertEqual(entries.length, count);
-	}
+    function assert_entries(param, count) {
+        let headers = new Headers(param), entries = headers[Object.getOwnPropertySymbols(headers)[0]];
+        assertEqual(entries.length, count);
+    }
 });
 
-test_headers.test('entries', function() {
-	let headers = new http.Headers({
-		a: 0,
-		b: 1,
-		A: 2
-	}), iterator = headers.entries();
+test_headers.test('entries', function () {
+    let headers = new Headers({
+        a: 0,
+        b: 1,
+        A: 2
+    }), iterator = headers.entries();
 
-	check(headers.entries());
-	check(headers[Symbol.iterator]());
+    check(headers.entries());
+    check(headers[Symbol.iterator]());
 
-	function check(iterator) {
-		assert.deepEqual(iterator.next(), {
-			done: false,
-			value: ['a', '0']
-		});
-		assert.deepEqual(iterator.next(), {
-			done: false,
-			value: ['b', '1']
-		});
-		assert.deepEqual(iterator.next(), {
-			done: false,
-			value: ['a', '2']
-		});
-		assert.deepEqual(iterator.next(), {
-			done: true,
-			value: undefined
-		});	
-		assertEqual(iterator[Symbol.iterator](), iterator);
-	}
+    function check(iterator) {
+        assert.deepEqual(iterator.next(), {
+            done: false,
+            value: ['a', '0']
+        });
+        assert.deepEqual(iterator.next(), {
+            done: false,
+            value: ['b', '1']
+        });
+        assert.deepEqual(iterator.next(), {
+            done: false,
+            value: ['a', '2']
+        });
+        assert.deepEqual(iterator.next(), {
+            done: true,
+            value: undefined
+        });
+        assertEqual(iterator[Symbol.iterator](), iterator);
+    }
 });
 
-test_headers.test('keys', function() {
-	let headers = new http.Headers({
-		a: 0,
-		b: 1,
-		A: 2
-	}), iterator = headers.keys();
+test_headers.test('keys', function () {
+    let headers = new Headers({
+        a: 0,
+        b: 1,
+        A: 2
+    }), iterator = headers.keys();
 
-	assert.deepEqual(iterator.next(), {
-		done: false,
-		value: 'a'
-	});
-	assert.deepEqual(iterator.next(), {
-		done: false,
-		value: 'b'
-	});
-	assert.deepEqual(iterator.next(), {
-		done: false,
-		value: 'a'
-	});
-	assert.deepEqual(iterator.next(), {
-		done: true,
-		value: undefined
-	});	
-	assertEqual(iterator[Symbol.iterator](), iterator);
+    assert.deepEqual(iterator.next(), {
+        done: false,
+        value: 'a'
+    });
+    assert.deepEqual(iterator.next(), {
+        done: false,
+        value: 'b'
+    });
+    assert.deepEqual(iterator.next(), {
+        done: false,
+        value: 'a'
+    });
+    assert.deepEqual(iterator.next(), {
+        done: true,
+        value: undefined
+    });
+    assertEqual(iterator[Symbol.iterator](), iterator);
 });
 
-test_headers.test('values', function() {
-	let headers = new http.Headers({
-		a: 0,
-		b: 1,
-		A: 2
-	}), iterator = headers.values();
+test_headers.test('values', function () {
+    let headers = new Headers({
+        a: 0,
+        b: 1,
+        A: 2
+    }), iterator = headers.values();
 
-	assert.deepEqual(iterator.next(), {
-		done: false,
-		value: '0'
-	});
-	assert.deepEqual(iterator.next(), {
-		done: false,
-		value: '1'
-	});
-	assert.deepEqual(iterator.next(), {
-		done: false,
-		value: '2'
-	});
-	assert.deepEqual(iterator.next(), {
-		done: true,
-		value: undefined
-	});	
-	assertEqual(iterator[Symbol.iterator](), iterator);
+    assert.deepEqual(iterator.next(), {
+        done: false,
+        value: '0'
+    });
+    assert.deepEqual(iterator.next(), {
+        done: false,
+        value: '1'
+    });
+    assert.deepEqual(iterator.next(), {
+        done: false,
+        value: '2'
+    });
+    assert.deepEqual(iterator.next(), {
+        done: true,
+        value: undefined
+    });
+    assertEqual(iterator[Symbol.iterator](), iterator);
 });
 
-test_headers.test('forEach', function() {
-	let headers = new http.Headers({
-		a: 0,
-		b: 1,
-		A: 2
-	});
+test_headers.test('forEach', function () {
+    let headers = new Headers({
+        a: 0,
+        b: 1,
+        A: 2
+    });
 
-	let expected = [
-		['a', '0'],
-		['b', '1'],
-		['a', '2']
-	];
+    let expected = [
+        ['a', '0'],
+        ['b', '1'],
+        ['a', '2']
+    ];
 
-	headers.forEach(function(val, name, target) {
-		let part = expected.shift();
-		assertEqual(arguments.length, 3);
-		assertEqual(val, part[1]);
-		assertEqual(name, part[0]);
-		assertEqual(target, headers);
-	});
-	assertEqual(expected.length, 0)
+    headers.forEach(function (val, name, target) {
+        let part = expected.shift();
+        assertEqual(arguments.length, 3);
+        assertEqual(val, part[1]);
+        assertEqual(name, part[0]);
+        assertEqual(target, headers);
+    });
+    assertEqual(expected.length, 0)
 });
 
-test_headers.test('append', function() {
-	let headers = new http.Headers({
-		a: 0,
-		b: 1,
-		A: 2
-	});
+test_headers.test('append', function () {
+    let headers = new Headers({
+        a: 0,
+        b: 1,
+        A: 2
+    });
 
-	let entries = [];
+    let entries = [];
 
-	headers.forEach(push);
-	assert.deepEqual(entries, ['a: 0', 'b: 1', 'a: 2']);
+    headers.forEach(push);
+    assert.deepEqual(entries, ['a: 0', 'b: 1', 'a: 2']);
 
-	entries.length = 0;
-	headers.append('c', '3');
-	headers.forEach(push);
-	assert.deepEqual(entries, ['a: 0', 'b: 1', 'a: 2', 'c: 3']);
+    entries.length = 0;
+    headers.append('c', '3');
+    headers.forEach(push);
+    assert.deepEqual(entries, ['a: 0', 'b: 1', 'a: 2', 'c: 3']);
 
-	entries.length = 0;
-	headers.append('a', '4');
-	headers.forEach(push);
-	assert.deepEqual(entries, ['a: 0', 'b: 1', 'a: 2', 'c: 3', 'a: 4']);
+    entries.length = 0;
+    headers.append('a', '4');
+    headers.forEach(push);
+    assert.deepEqual(entries, ['a: 0', 'b: 1', 'a: 2', 'c: 3', 'a: 4']);
 
-	function push(val, name) {
-		entries.push(name + ': ' + val);
-	}
+    function push(val, name) {
+        entries.push(name + ': ' + val);
+    }
 });
 
-test_headers.test('delete', function() {
-	let headers = new http.Headers({
-		a: 0,
-		b: 1,
-		A: 2
-	});
+test_headers.test('delete', function () {
+    let headers = new Headers({
+        a: 0,
+        b: 1,
+        A: 2
+    });
 
-	let entries = [];
+    let entries = [];
 
-	headers.forEach(push);
-	assert.deepEqual(entries, ['a: 0', 'b: 1', 'a: 2']);
+    headers.forEach(push);
+    assert.deepEqual(entries, ['a: 0', 'b: 1', 'a: 2']);
 
-	entries.length = 0;
-	headers.delete('b');
-	headers.forEach(push);
-	assert.deepEqual(entries, ['a: 0', 'a: 2']);
+    entries.length = 0;
+    headers.delete('b');
+    headers.forEach(push);
+    assert.deepEqual(entries, ['a: 0', 'a: 2']);
 
-	entries.length = 0;
-	headers.append('c', '3');
-	headers.delete('a');
-	headers.forEach(push);
-	assert.deepEqual(entries, ['c: 3']);
+    entries.length = 0;
+    headers.append('c', '3');
+    headers.delete('a');
+    headers.forEach(push);
+    assert.deepEqual(entries, ['c: 3']);
 
-	function push(val, name) {
-		entries.push(name + ': ' + val);
-	}
+    function push(val, name) {
+        entries.push(name + ': ' + val);
+    }
 });
 
-test_headers.test('set', function() {
-	let headers = new http.Headers({
-		a: 0,
-		b: 1,
-		A: 2
-	});
+test_headers.test('set', function () {
+    let headers = new Headers({
+        a: 0,
+        b: 1,
+        A: 2
+    });
 
-	let entries = [];
+    let entries = [];
 
-	headers.forEach(push);
-	assert.deepEqual(entries, ['a: 0', 'b: 1', 'a: 2']);
+    headers.forEach(push);
+    assert.deepEqual(entries, ['a: 0', 'b: 1', 'a: 2']);
 
-	entries.length = 0;
-	headers.set('c', '3');
-	headers.forEach(push);
-	assert.deepEqual(entries, ['a: 0', 'b: 1', 'a: 2', 'c: 3']);
+    entries.length = 0;
+    headers.set('c', '3');
+    headers.forEach(push);
+    assert.deepEqual(entries, ['a: 0', 'b: 1', 'a: 2', 'c: 3']);
 
-	entries.length = 0;
-	headers.set('a', '4');
-	headers.forEach(push);
-	assert.deepEqual(entries, ['b: 1', 'c: 3', 'a: 4']);
+    entries.length = 0;
+    headers.set('a', '4');
+    headers.forEach(push);
+    assert.deepEqual(entries, ['b: 1', 'c: 3', 'a: 4']);
 
-	function push(val, name) {
-		entries.push(name + ': ' + val);
-	}
+    function push(val, name) {
+        entries.push(name + ': ' + val);
+    }
 });
 
-test_headers.test('get', function() {
-	let headers = new http.Headers({
-		a: 0,
-		b: 1,
-		A: 2
-	});
+test_headers.test('get', function () {
+    let headers = new Headers({
+        a: 0,
+        b: 1,
+        A: 2
+    });
 
-	assertEqual(headers.get('a'), '0');
-	assertEqual(headers.get('B'), '1');
-	assertEqual(headers.get('c'), null);
+    assertEqual(headers.get('a'), '0');
+    assertEqual(headers.get('B'), '1');
+    assertEqual(headers.get('c'), null);
 });
 
-test_headers.test('getAll', function() {
-	let headers = new http.Headers({
-		a: 0,
-		b: 1,
-		A: 2
-	});
+test_headers.test('getAll', function () {
+    let headers = new Headers({
+        a: 0,
+        b: 1,
+        A: 2
+    });
 
-	assert.deepEqual(headers.getAll('a'), ['0', '2']);
-	assert.deepEqual(headers.getAll('B'), ['1']);
-	assert.deepEqual(headers.getAll('c'), []);
+    assert.deepEqual(headers.getAll('a'), ['0', '2']);
+    assert.deepEqual(headers.getAll('B'), ['1']);
+    assert.deepEqual(headers.getAll('c'), []);
 });
 
-test_headers.test('has', function() {
-	let headers = new http.Headers({
-		a: 0,
-		b: 1,
-		A: 2
-	});
+test_headers.test('has', function () {
+    let headers = new Headers({
+        a: 0,
+        b: 1,
+        A: 2
+    });
 
-	assertEqual(headers.has('a'), true);
-	assertEqual(headers.has('B'), true);
-	assertEqual(headers.has('c'), false);
+    assertEqual(headers.has('a'), true);
+    assertEqual(headers.has('B'), true);
+    assertEqual(headers.has('c'), false);
 });
 
 // ====================== END TEST HEADERS =======================
@@ -250,37 +250,85 @@ let test_body = new Test("Body");
 const Readable = require('stream').Readable;
 
 function mkReadable(bufs) {
-	let ret = new Readable();
-	ret._read = function() {
-		ret._read = function(){};
+    let ret = new Readable();
+    ret._read = function () {
+        ret._read = function () {
+        };
 
-		setTimeout(sched, 0);
+        setTimeout(sched, 0);
 
-		function sched() {
-			if(bufs.length) {
-				ret.push(bufs.shift());
-				setTimeout(sched, 10);
-			} else {
-				ret.push(null)
-			}
-		}
-	};
-	return ret;
+        function sched() {
+            if (bufs.length) {
+                ret.push(bufs.shift());
+                setTimeout(sched, 10);
+            } else {
+                ret.push(null)
+            }
+        }
+    };
+    return ret;
 }
 
-test_body.test("constructor", function() {
-	assertEqual(co.yield(new http.Body('foobar').text()), 'foobar');
-	assertEqual(co.yield(new http.Body(new Buffer('foobar')).text()), 'foobar');
-	assertEqual(co.yield(new http.Body(new Uint8Array(new Buffer('foobar')).buffer).text()), 'foobar');
-	assertEqual(co.yield(new http.Body(mkReadable([new Buffer('foobar')])).text()), 'foobar');
+test_body.test("constructor", function () {
+    assertEqual(co.yield(new Body('foobar').text()), 'foobar');
+    assertEqual(co.yield(new Body(new Buffer('foobar')).text()), 'foobar');
+    assertEqual(co.yield(new Body(new Uint8Array(new Buffer('foobar')).buffer).text()), 'foobar');
+    assertEqual(co.yield(new Body(mkReadable([new Buffer('foobar')])).text()), 'foobar');
 
-	let hasCaught = false;
-	try {
-		new http.Body({});
-	} catch(e) {
-		assert(/^body accepts only/.test(e.message));
-		hasCaught = true;
-	}
-	assert(hasCaught);
+    let hasCaught = false;
+    try {
+        new Body({});
+    } catch (e) {
+        assert(/^body accepts only/.test(e.message));
+        hasCaught = true;
+    }
+    assert(hasCaught);
 });
 
+test_body.test("buffer", function () {
+    assert(!Buffer.compare(co.yield(new Body('foo bar').buffer()),
+        new Buffer('foo bar')));
+});
+
+test_body.test("arraybuffer", function () {
+    assert.deepEqual(Array.prototype.slice.call(new Uint8Array(co.yield(new Body('foobar').arrayBuffer()))),
+        Array.prototype.slice.call(new Buffer('foobar')));
+});
+
+test_body.test("json", function () {
+    let data = {"foo": "bar", "baz": [1, 2, true]};
+    assert.deepEqual(co.yield(new Body(JSON.stringify(data)).json()), data);
+
+    let hasCaught = false;
+    try {
+        co.yield(new Body('{bad json}').json());
+    } catch (e) {
+        assert(/Unexpected token/.test(e.message));
+        hasCaught = true;
+    }
+    assert(hasCaught);
+});
+
+function stream_read(incoming) {
+    return co.promise(function (resolve, reject) {
+        let bufs = [];
+        incoming.on('data', function (data) {
+            bufs.push(data);
+        }).on('end', function () {
+            resolve(Buffer.concat(bufs));
+        })
+    })
+}
+
+test_body.test("streaming", function () {
+    let stream = mkReadable([new Buffer('foo'), new Buffer('bar')]);
+    let body = new Body(stream);
+    assertEqual(co.yield(body.stream()), stream);
+
+    assertEqual(stream_read(body.stream()).toString(), 'foobar');
+    assertEqual(stream_read(body.stream()).toString(), 'foobar');
+    body = new Body('foobar');
+    assertEqual(stream_read(body.stream()).toString(), 'foobar');
+});
+
+// =================== END TEST BODY ================

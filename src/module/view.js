@@ -1,4 +1,4 @@
-import * as response from 'http_response.js';
+import {Response} from 'http.js';
 import * as file from 'file.js';
 
 const opath = require('path');
@@ -92,6 +92,10 @@ export function render(name, locals, mimeType) {
     if (!file.exists(filename)) {
         throw new Error("template file not found: " + name);
     }
-    return response.data(co.sync(engine, filename, locals)).setHeader('Content-Type', mimeType || 'text/html');
+    return new Response(co.sync(engine, filename, locals), {
+        headers: {
+            'content-type': mimeType || 'text/html'
+        }
+    });
 }
 

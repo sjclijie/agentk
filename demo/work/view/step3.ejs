@@ -27,15 +27,19 @@
     directory named <code>step3.js</code>, paste the following code into it:
 </p>
 
-<pre>import {redirect} from 'module/http_response.js';
-import {parseQuery} from 'module/http.js';
+<pre>import {Response, parseQuery} from 'module/http.js';
 
 export default function (req) {
-    let form = parseQuery(req.body);
-    return redirect('/step4').setCookie('name', form.name, {
+    let body = co.yield(req.text());
+
+    let form = parseQuery(body);
+
+    let resp = Response.redirect('/step4');
+    resp.setCookie('name', form.name, {
         path: '/',
         expires: new Date('2099-12-31').toGMTString()
-    })
+    });
+    return resp;
 }</pre>
 
 <p>Then we can import it into routes. Paste the following line into <code>src/route.js</code> after the imports:</p>

@@ -1,4 +1,4 @@
-<!-- @rev 4c1162f1e9d83bdce4dad8d346e9e027 20ae7b -->
+<!-- @rev e04a7730585d8e4f1060a404705c1f50 20ae7b -->
 # http
 
 ----
@@ -258,8 +258,11 @@ function Body(body)
 
 
  Abstract class for http request/response entity
- 
-     
+
+
+**Params**
+
+  - body `string|Buffer|ArrayBuffer|node.stream::stream.Readable`
 
 
 ------------------------------------------------------------------------
@@ -270,7 +273,7 @@ function Body::text()
 ```
 
 
- 
+
 
 **Returns**
 
@@ -285,7 +288,7 @@ function Body::json()
 ```
 
 
- 
+
 
 **Returns**
 
@@ -300,7 +303,7 @@ function Body::arrayBuffer()
 ```
 
 
- 
+
 
 **Returns**
 
@@ -315,7 +318,7 @@ function Body::buffer()
 ```
 
 
- 
+
 
 **Returns**
 
@@ -330,7 +333,7 @@ function Body::stream()
 ```
 
 
- 
+
 
 **Returns**
 
@@ -374,7 +377,7 @@ get Request::method()
 ```
 
 
- 
+
 
 **Returns**
 
@@ -389,7 +392,7 @@ get Request::url()
 ```
 
 
- 
+
 
 **Returns**
 
@@ -404,7 +407,7 @@ get Request::headers()
 ```
 
 
- 
+
 
 **Returns**
 
@@ -420,48 +423,25 @@ function Response(body, options)
 
 
  A `Response` is an representation of a server response that will be sent to a remote client, or a client response
- that received from the remote server
- 
+ that received from the remote server.
+
+ Additional fields can be used to manuplate the response object, which are:
+
+   - status `number`: status code of the response
+   - statusText `number`: status text of the response
+
 
 **Params**
 
   - body(optional) `string|Buffer|ArrayBuffer|node.stream::stream.Readable`
   - options(optional) `object`
     <br>optional arguments,  which contains any of:
- 
+
    - status `number`: The status code for the reponse, e.g., 200.
    - statusText `string`: The status message associated with the staus code, e.g., OK.
    - headers `object|Headers`: the response headers
      
 
-
-------------------------------------------------------------------------
-### status()
-
-```js
-get Response::status() 
-```
-
-
-
-**Returns**
-
-> {number}
-     
-
-------------------------------------------------------------------------
-### statusText()
-
-```js
-get Response::statusText() 
-```
-
-
-
-**Returns**
-
-> {string}
-     
 
 ------------------------------------------------------------------------
 ### ok()
@@ -485,12 +465,105 @@ get Response::headers()
 ```
 
 
- 
+
 
 **Returns**
 
 > {Headers} response headers
      
+
+------------------------------------------------------------------------
+### setCookie()
+
+```js
+function Response::setCookie(name, value, options) 
+```
+
+
+ Adds Set-Cookie header to the response object
+
+
+**Params**
+
+  - name `string`
+    <br>cookie name to be set
+  - value `string`
+    <br>cookie value to be set
+  - options(optional) `object`
+    <br>optional keys to be appended, which can contain any of `expires`, `domain`, `path` etc.
+     
+
+
+------------------------------------------------------------------------
+### error()
+
+```js
+function Response.error(status, reason) 
+```
+
+
+ Creates an error response
+
+
+**Params**
+
+  - status `number`
+  - reason `Error|string|Buffer`
+    <br>message of the error as the response body
+     
+
+
+------------------------------------------------------------------------
+### json()
+
+```js
+function Response.json(obj) 
+```
+
+
+ Creates a json response, a `content-type` header will be added to the headers
+
+
+**Params**
+
+  - obj
+    <br>data to be sent
+
+**Returns**
+
+> {Response}
+     
+
+------------------------------------------------------------------------
+### redirect()
+
+```js
+function Response.redirect(url) 
+```
+
+
+ Creates a redirect response, the status will be set to 302, and a `location` header will be added
+
+
+**Params**
+
+  - url `string`
+    <br>redirect url, e.g. 'http://www.example.com' or '/foo/bar'
+
+**Returns**
+
+> {Response}
+     
+
+------------------------------------------------------------------------
+### file()
+
+```js
+function Response.file(file) 
+```
+
+
+
 
 ------------------------------------------------------------------------
 ### listen()
@@ -501,15 +574,16 @@ function listen(port, cb, host, backlog)
 
 
  Create a new http server, bind it to a port or socket file. A callback is supplied which accepts a
- [`http.IncomingMessage`](https://nodejs.org/api/http.html#http_http_incomingmessage) object as
- parameter and returns a [`HttpResponse`](http_response.html#HttpResponse)
+ [`Request`](#class-Request) object as parameter and returns a [`Response`](#class-Response)
 
  There are some extra properties that can be accessed with the `req` object:
 
+   - req.request [`http.IncomingMessage`](https://nodejs.org/api/http.html#http_http_incomingmessage) original request object
+   - req.response [`http.ServerResponse`](https://nodejs.org/api/http.html#http_class_http_serverresponse) original response object
+   - req.originalUrl `string` request's original url, should not be overwritten
    - req.pathname `string` request's pathname, could be overwritten by `Router.prefix` method
-   - req.search `string` search string, looks like `?foo=bar`
+   - req.search `string` search string, e.g. `?foo=bar`
    - req.query `object` key-value map of the query string
-   - req.body `Buffer` request payload
 
 
 **Params**
@@ -525,7 +599,7 @@ function listen(port, cb, host, backlog)
 
 **Returns**
 
-> {node.http::http.Server}
+> {node.http::http.Server} returned after the `listening` event has been fired
  
 
 ------------------------------------------------------------------------

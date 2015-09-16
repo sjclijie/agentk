@@ -9,10 +9,11 @@ import {read as stream_read} from 'stream.js'
 
 const ohttp = require('http'),
     ourl = require('url'),
+    ofs = require('fs'),
     oquerystring = require('querystring');
 
 
-const header_entries = Symbol('entries');
+const header_entries = Symbol('entries'), header_names = Symbol('names');
 
 class Iterator {
     constructor(handle, transform) {
@@ -42,10 +43,13 @@ export class Headers {
      */
     constructor(headers) {
         let arr = this[header_entries] = []; // [[lower-cased name, value], ...]
+        let names = this[header_names] = Object.create(null);
 
         if (headers && typeof headers === 'object') {
             for (let key in headers) {
-                arr.push([key.toLowerCase(), '' + headers[key]]);
+                let name = key.toLowerCase();
+                arr.push([name, '' + headers[key]]);
+                names[name] = true;
             }
         }
     }
@@ -57,8 +61,9 @@ export class Headers {
      * @param {string} value
      */
     append(name, value) {
-        name = '' + name;
-        this[header_entries].push([name.toLowerCase(), '' + value]);
+        name = ('' + name).toLowerCase();
+        this[header_entries].push([name, '' + value]);
+        this[header_names][name] = true;
     }
 
     /**
@@ -68,8 +73,18 @@ export class Headers {
      * @param {string} value
      */
     set(name, value) {
-        this.delete(name, value);
-        this.append(name, value);
+        let names = this[header_names],
+            entries = this[header_entries];
+        if (name in names) {
+            for (let L = entries.length; L--;) {
+                if (entries[L][0] === name) {
+                    entries.splice(L, 1);
+                }
+            }
+        } else {
+            names[name] = true;
+        }
+        entries.push([name, '' + value]);
     }
 
     /**
@@ -79,11 +94,14 @@ export class Headers {
      */
     ["delete"] (name) {
         name = ('' + name).toLowerCase();
+        let names = this[header_names];
+        if (!(name in names)) return;
         for (let arr = this[header_entries], L = arr.length; L--;) {
             if (arr[L][0] === name) {
                 arr.splice(L, 1);
             }
         }
+        delete names[name]
     }
 
 
@@ -93,7 +111,6 @@ export class Headers {
      * @param {function} cb
      */
     forEach(cb) {
-        const self = this;
         for (let entry of this[header_entries]) {
             cb(entry[1], entry[0], this)
         }
@@ -109,10 +126,10 @@ export class Headers {
      */
     get(name) {
         name = ('' + name).toLowerCase();
+        if (!(name in this[header_names])) return null;
         for (let entry of this[header_entries]) {
             if (entry[0] === name) return entry[1];
         }
-        return null
     }
 
     /**
@@ -124,8 +141,10 @@ export class Headers {
     getAll(name) {
         name = ('' + name).toLowerCase();
         let result = [];
-        for (let entry of this[header_entries]) {
-            if (entry[0] === name) result.push(entry[1]);
+        if (name in this[header_names]) {
+            for (let entry of this[header_entries]) {
+                if (entry[0] === name) result.push(entry[1]);
+            }
         }
         return result
     }
@@ -137,7 +156,8 @@ export class Headers {
      * @returns {boolean}
      */
     has(name) {
-        return this.get(name) !== null
+        name = ('' + name).toLowerCase();
+        return name in this[header_names]
     }
 
     /**
@@ -190,20 +210,20 @@ const stream_Readable = require('stream').Readable,
 export class Body {
     /**
      * Abstract class for http request/response entity
-     * 
+     *
+     * @param {string|Buffer|ArrayBuffer|node.stream::stream.Readable} body
      */
     constructor(body) {
-        let payload;
-        if(body && body instanceof stream_Readable) {
+        if (body && body instanceof stream_Readable) {
             this[body_payload] = null;
             this[body_stream] = body;
         } else {
-            if(!body) {
+            if (!body) {
                 body = new Buffer(0)
-            } else if(typeof body === 'string') {
+            } else if (typeof body === 'string') {
                 body = new Buffer(body)
-            } else if(body instanceof Buffer) {
-            } else if(body instanceof ArrayBuffer) {
+            } else if (body instanceof Buffer) {
+            } else if (body instanceof ArrayBuffer) {
                 body = new Buffer(new Uint8Array(body))
             } else {
                 throw new Error('body accepts only string, Buffer, ArrayBuffer or stream.Readable');
@@ -213,49 +233,51 @@ export class Body {
     }
 
     /**
-     * 
+     *
      * @returns {Promise} a promise that yields the request payload as a string
      */
     text() {
-        return this.buffer().then(function(buf) {
+        return this.buffer().then(function (buf) {
             return buf.toString()
         })
     }
 
     /**
-     * 
+     *
      * @returns {Promise} a promise that yields the request payload as a JSON object
      */
     json() {
-        return this.buffer().then(function(buf) {
+        return this.buffer().then(function (buf) {
             return JSON.parse(buf.toString())
         })
     }
 
     /**
-     * 
+     *
      * @returns {ArrayBuffer} a promise that yields the request payload as an ArrayBuffer
      */
     arrayBuffer() {
-        return this.buffer().then(function(buf) {
+        return this.buffer().then(function (buf) {
             return new Uint8Array(buf).buffer
         })
     }
 
     /**
-     * 
+     *
      * @returns {Promise} a promise that yields the request payload as a Buffer
      */
     buffer() {
+        console.log('getting buffer');
         let ret = this[body_payload];
-        if(!ret) { // start stream reading
+        if (!ret) { // start stream reading
             let body = this[body_stream];
+            console.log('start reading stream');
             this[body_stream] = null;
-            ret = this[body_payload] = new Promise(function(resolve, reject) {
+            ret = this[body_payload] = new Promise(function (resolve, reject) {
                 let bufs = [];
-                body.on('data', function(buf) {
+                body.on('data', function (buf) {
                     bufs.push(buf)
-                }).once('end', function() {
+                }).once('end', function () {
                     resolve(Buffer.concat(bufs))
                 }).once('error', reject)
             });
@@ -264,18 +286,19 @@ export class Body {
     }
 
     /**
-     * 
+     *
      * @returns {Promise} a promise that yields the request payload as a readable stream
      */
     stream() {
         let body = this[body_stream];
 
-        if(body) { // start stream reading
+        if (body) { // start stream reading
             this.buffer()
         } else {
             body = new stream_Readable();
-            body._read = function() {};
-            this[body_payload].then(function(buf) {
+            body._read = function () {
+            };
+            this[body_payload].then(function (buf) {
                 body.push(buf);
                 body.push(null);
             })
@@ -317,7 +340,7 @@ export class Request extends Body {
     }
 
     /**
-     * 
+     *
      * @returns {string} request method, e.g., `"GET"` `"POST"`
      */
     get method() {
@@ -325,7 +348,7 @@ export class Request extends Body {
     }
 
     /**
-     * 
+     *
      * @returns {string} request uri, like `"http://www.example.com/test?foo=bar"`
      */
     get url() {
@@ -333,7 +356,7 @@ export class Request extends Body {
     }
 
     /**
-     * 
+     *
      * @returns {Headers} request headers
      */
     get headers() {
@@ -341,18 +364,20 @@ export class Request extends Body {
     }
 }
 
-const response_status = Symbol('status'),
-    response_statusText = Symbol('url');
-
 export class Response extends Body {
     /**
      * A `Response` is an representation of a server response that will be sent to a remote client, or a client response
-     * that received from the remote server
-     * 
+     * that received from the remote server.
+     *
+     * Additional fields can be used to manuplate the response object, which are:
+     *
+     *   - status `number`: status code of the response
+     *   - statusText `number`: status text of the response
+     *
      * @extends Body
      * @param {string|Buffer|ArrayBuffer|node.stream::stream.Readable} [body]
      * @param {object} [options] optional arguments,  which contains any of:
-     * 
+     *
      *   - status `number`: The status code for the reponse, e.g., 200.
      *   - statusText `string`: The status message associated with the staus code, e.g., OK.
      *   - headers `object|Headers`: the response headers
@@ -360,41 +385,91 @@ export class Response extends Body {
     constructor(body, options) {
         super(body);
 
-        if(options && typeof options !== 'object') options = null;
+        if (options && typeof options !== 'object') options = null;
 
-        this[response_status] = options && 'status' in options ? options.status | 0 : 200;
-        this[response_statusText] = options && 'statusText' in options ? '' + options.statusText : ohttp.STATUS_CODES[this[response_status]] || '';
+        let status = this.status = options && 'status' in options ? options.status | 0 : 200;
+        this.statusText = options && 'statusText' in options ? '' + options.statusText : ohttp.STATUS_CODES[status] || '';
         this[request_headers] = options && 'headers' in options && typeof options.headers === 'object' ?
             options.headers instanceof Headers ? options.headers : new Headers(options.headers) : new Headers();
     }
 
     /**
-     * @returns {number}
-     */
-    get status() {
-        return this[response_status]
-    }
-
-    /**
-     * @returns {string}
-     */
-    get statusText() {
-        return this[response_statusText]
-    }
-
-    /**
      * @returns {boolean}
      */
-    get ok () {
-        return this[response_status] >= 200 && this[response_status] <= 299
+    get ok() {
+        return this.status >= 200 && this.status <= 299
     }
 
     /**
-     * 
+     *
      * @returns {Headers} response headers
      */
     get headers() {
         return this[request_headers]
+    }
+
+
+    /**
+     * Adds Set-Cookie header to the response object
+     *
+     * @param {string} name cookie name to be set
+     * @param {string} value cookie value to be set
+     * @param {object} [options] optional keys to be appended, which can contain any of `expires`, `domain`, `path` etc.
+     */
+    setCookie(name, value, options) {
+        let val = name + '=' + encodeURIComponent(value);
+        if (options) {
+            for (let key in options) {
+                val += '; ' + key + '=' + options[key]
+            }
+        }
+
+        this.headers.append('set-cookie', val);
+    }
+
+    /**
+     * Creates an error response
+     *
+     * @param {number} status
+     * @param {Error|string|Buffer} reason message of the error as the response body
+     */
+    static error(status, reason) {
+        return new Response(reason && (reason.message || '' + reason), {
+            status: status
+        });
+    }
+
+    /**
+     * Creates a json response, a `content-type` header will be added to the headers
+     *
+     * @param obj data to be sent
+     * @returns {Response}
+     */
+    static json(obj) {
+        console.log('json', obj);
+        return new Response(JSON.stringify(obj), {
+            headers: {'content-type': 'application/json'}
+        })
+    }
+
+    /**
+     * Creates a redirect response, the status will be set to 302, and a `location` header will be added
+     *
+     * @param {string} url redirect url, e.g. 'http://www.example.com' or '/foo/bar'
+     * @returns {Response}
+     */
+    static redirect(url) {
+        return new Response(null, {
+            status: 302,
+            headers: {'location': url}
+        })
+    }
+
+    static file(file) {
+        return new Response(ofs.createReadStream(file).on('error', function (err) {
+            console.error('unexpected file error', err);
+            this.push(null)
+        }));
     }
 }
 
@@ -426,60 +501,74 @@ const reqGetters = {
             parseUrl(this);
             return this.query;
         }
-    }, body: {
-        configurable: true,
-        get: function () {
-            let body = stream_read(this);
-            Object.defineProperty(this, 'body', {value: body});
-            return body;
-        }
     }
 };
 
 
 /**
  * Create a new http server, bind it to a port or socket file. A callback is supplied which accepts a
- * [`http.IncomingMessage`](https://nodejs.org/api/http.html#http_http_incomingmessage) object as
- * parameter and returns a [`HttpResponse`](http_response.html#HttpResponse)
+ * [`Request`](#class-Request) object as parameter and returns a [`Response`](#class-Response)
  *
  * There are some extra properties that can be accessed with the `req` object:
  *
+ *   - req.request [`http.IncomingMessage`](https://nodejs.org/api/http.html#http_http_incomingmessage) original request object
+ *   - req.response [`http.ServerResponse`](https://nodejs.org/api/http.html#http_class_http_serverresponse) original response object
+ *   - req.originalUrl `string` request's original url, should not be overwritten
  *   - req.pathname `string` request's pathname, could be overwritten by `Router.prefix` method
- *   - req.search `string` search string, looks like `?foo=bar`
+ *   - req.search `string` search string, e.g. `?foo=bar`
  *   - req.query `object` key-value map of the query string
- *   - req.body `Buffer` request payload
  *
  * @example
  *     http.listen(8080, function(req) {
- *         return http_response.ok()
+ *         return new http.Response('<h1>Hello world</h1>', {
+ *             status: 200,
+ *             headers: {
+ *                 'content-type': 'text/html'
+ *             }
+ *         })
  *     });
  *
  * @param {number|string} port TCP port number or unix domain socket path to listen to
  * @param {function|router::Router} cb request handler callback
  * @param {string} [host] hostname to listen to, only valid if port is a 0-65535 number
  * @param {number} [backlog] maximum requests pending to be accepted, only valid if port is a 0-65535 number
- * @returns {node.http::http.Server}
+ * @returns {node.http::http.Server} returned after the `listening` event has been fired
  */
 export function listen(port, cb, host, backlog) {
     return co.promise(function (resolve, reject) {
-        ohttp.createServer(function (req, res) {
+        ohttp.createServer(function (request, response) {
+            request.body = request;
+            let req = new Request('http://' + request.headers.host + request.url, request);
+
+            req.request = request;
+            req.response = response;
+
             // init req object
             req.originalUrl = req.url;
             Object.defineProperties(req, reqGetters);
-            req.response = res;
 
             co.run(resolver, req).then(function (resp) { // succ
                 if (!resp) return res.end();
-
-                res.statusCode = resp.status;
-                for (let key of Object.keys(resp.headers)) {
-                    res.setHeader(key, resp.headers[key])
+                if (!(resp instanceof Response)) {
+                    throw new Error('illegal response object');
                 }
 
-                resp.handle(req, res)
+                response.statusCode = resp.status;
+
+                for (let entry of resp.headers[header_entries]) {
+                    response.setHeader(entry[0], entry[1])
+                }
+
+                if (resp[body_stream]) {
+                    resp[body_stream].pipe(response);
+                } else {
+                    resp[body_payload].then(function (buffer) {
+                        response.end(buffer);
+                    })
+                }
             }).then(null, function (err) { // on error
-                res.writeHead(500);
-                res.end(err.message);
+                response.writeHead(500);
+                response.end(err.message);
                 console.error(err.stack);
             })
         }).listen(port, host, backlog, function () {

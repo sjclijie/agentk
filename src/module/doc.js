@@ -39,7 +39,7 @@ function parseTypename(name) {
                     let module = m[1].substr(5);
                     parts[i] = `<a href="https://nodejs.org/api/${module}.html#${module}_class_${m[2].toLowerCase().replace(/\./g, '_')}">${m[2]}</a>`
                 } else {
-                    parts[i] = `<a href="${m[1] ? m[1] + '.html' : ''}#${m[2]}">${m[0]}</a>`
+                    parts[i] = `<a href="${m[1] ? m[1] + '.html' : ''}#class-${m[2]}">${m[0]}</a>`
                 }
             }
         }
@@ -322,6 +322,7 @@ export default function (outDir, format) {
         function onExportFunctionDecl(decl, name, isDefault) {
             decl.exported = true;
             methods.push({
+                title: 'fun-' + name,
                 name: name,
                 prototype: script.substring(decl.range[0], decl.body.range[0]),
                 comment: decl.comment || {},
@@ -345,6 +346,7 @@ export default function (outDir, format) {
                     if (stmt.kind === 'constructor') {
                         cmt.constructor = true;
                         let obj = {
+                            title: 'class-' + name,
                             name: name,
                             prototype: 'function ' + name + script.substring(stmt.value.range[0], stmt.value.body.range[0]),
                             comment: cmt,
@@ -354,14 +356,17 @@ export default function (outDir, format) {
                     } else if (stmt.kind === 'method') {
                         let methodname = stmt.key.type === Syntax.Identifier ? stmt.key.name : '[' + script.substring(stmt.key.range[0], stmt.key.range[1]) + ']';
                         methods.push({
+                            title: `fun-${name}-${methodname}`,
                             name: methodname,
-                            prototype: 'function ' + name + '::' + methodname + script.substring(stmt.value.range[0], stmt.value.body.range[0]),
+                            prototype: `function ${name}${stmt.static ? '.' : '::'}${methodname}${script.substring(stmt.value.range[0], stmt.value.body.range[0])}`,
+                            "static": stmt.static,
                             comment: cmt
                         });
                         methodsFound++;
                     } else { // getter | setter
                         cmt[stmt.kind + 'ter'] = true;
                         methods.push({
+                            title: `${stmt.kind}-${name}-${stmt.key.name}`,
                             name: stmt.key.name,
                             prototype: stmt.kind.substr(0, 3) + ' ' + name + '::' + stmt.key.name + script.substring(stmt.value.range[0], stmt.value.body.range[0]),
                             comment: cmt

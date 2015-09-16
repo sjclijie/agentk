@@ -33,7 +33,9 @@
 <ul>
     <% consts.forEach(function(obj) {%><li>constant <a href="#<%- obj.name %>"><%- obj.name %></a><% if(obj.comment.type) { %>:<code><%- parseTypename(obj.comment.type) %></code><% } %></li><%})%>
     <% variables.forEach(function(obj) {%><li>variable <a href="#<%- obj.name %>"><%- obj.name %></a><% if(obj.comment.type) { %>:<code><%- parseTypename(obj.comment.type) %></code><% } %></li><%})%>
-    <% methods.forEach(function(method) {%><li><a href="#<%- method.name %>"><%- method.prototype %></a><% if (method.comment.hasOwnProperty('constructor')) {%> <b>constructor</b><%} %></li><%})%>
+    <% methods.forEach(function(method) {%><li><a href="#<%- method.title %>"><%- method.prototype %></a><%
+        if (method.comment.hasOwnProperty('constructor')) { %> <b>constructor</b><%
+        } else if(method.static) { %><b>static</b><%} %></li><%})%>
     <% if(_default) {%><li>module default: <a href="#<%- _default.name %>"><%- _default.type %> <%- _default.name %></a></li><% } %>
 </ul>
 
@@ -80,11 +82,11 @@ variables.forEach(function(obj) {var comment = obj.comment; %>
     </dd>
 <% });
 methods.forEach(function (method) {var comment = method.comment; %>
-    <dt id="<%- method.name %>">
-        <div><%- method.name %>()</div>
-        <sub><%- comment.hasOwnProperty('constructor') ? 'class'
+    <dt id="<%- method.title %>">
+        <div><%- method.name %>()</div><sub><%- comment.hasOwnProperty('constructor') ? 'class'
                     : comment.hasOwnProperty('getter') ? 'getter'
-                    : comment.hasOwnProperty('setter') ? 'setter' : 'method' %></sub>
+                    : comment.hasOwnProperty('setter') ? 'setter'
+                    : method.static ? 'static method' : 'method' %></sub>
     </dt>
     <dd>
         <p class="proto"><%- method.prototype %>
