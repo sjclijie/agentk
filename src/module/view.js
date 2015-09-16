@@ -43,22 +43,6 @@ export let module_loader = function (name) {
     return require(name).__express
 };
 
-Object.defineProperty(engines, 'ejs', {
-    configurable: true,
-    get: function () {
-        let ejs;
-        try {
-            ejs = module_loader('ejs');
-        } catch (e) {
-            ejs = require('ejs').__express;
-        }
-        Object.defineProperty(this, 'ejs', {
-            value: ejs
-        });
-        return ejs;
-    }
-});
-
 /**
  * render a template file into response content, returns a `HttpResponse`.
  * User should specify content type if needed.

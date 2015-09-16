@@ -19,7 +19,6 @@
  */
 
 import * as http from '../src/module/http.js';
-import * as response from '../src/module/http_response.js';
 import * as file from '../src/module/file.js';
 import {md5} from '../src/module/crypto.js';
 import * as watcher from '../src/module/q_watcher.js';
@@ -31,7 +30,7 @@ if (storage.name == 'aliyun_oss') {
     storage.key = JSON.parse(file.read(storage.keyfile).toString());
     storage.get = function (req) {
         let tres = entry.get(storage, req.url, {});
-        return response.stream(tres).setStatus(tres.statusCode);
+        return new http.Response(tres, {status: tres.statusCode});
     };
     storage.put = function (req, fullname, buf, sum) {
         return entry.put(storage, buf, fullname, {
@@ -62,35 +61,39 @@ if (storage.name == 'aliyun_oss') {
 
 
 let server = http.listen(manifest.config.port, function (req) {
-    console.log(req.method, req.url);
+    console.log(req.method, req.originalUrl);
     if (req.method === 'PUT') {
         let uploadStart = Date.now();
-        let m = /^\/([^\/]+)\.js$/.exec(req.url);
+        let m = /^\/([^\/]+)\.js$/.exec(req.originalUrl);
         if (!m) {
-            return response.error(404);
+            return http.Response.error(404);
         }
-        let buf = http.read(req),
+        let buf = co.yield(req.buffer()),
             sum = md5(buf), hexsum = sum.toString('hex');
-        if (hexsum !== req.headers['content-md5']) { // client error
+        if (hexsum !== req.headers.get('content-md5')) { // client error
             return response.error(400, 'md5sum mismatch');
         }
         let fullname = `/${m[1]}@${hexsum}.js`;
         let tres = storage.put(req, fullname, buf, sum);
         if (tres.statusCode >= 300) { // not OK
-            return response.stream(tres).setStatus(tres.statusCode);
+            return new http.Response(tres, {
+                status: tres.statusCode
+            });
         }
         //console.log('upload success');
-        tres = storage.copy(fullname, req.url);
+        tres = storage.copy(fullname, req.originalUrl);
         if (tres.statusCode >= 300) { // not OK
-            return response.stream(tres).setStatus(tres.statusCode);
+            return new http.Response(tres, {
+                status: tres.statusCode
+            });
         }
         watcher.add('upload', Date.now() - uploadStart);
-        return response.ok();
+        return new http.Response();
     } else if (req.method === 'GET') {
         watcher.add('download');
         return storage.get(req);
     } else {
-        return response.error(401, 'method not implemented')
+        return http.Response.error(401, 'method not implemented')
     }
 });
 

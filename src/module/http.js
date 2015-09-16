@@ -446,7 +446,6 @@ export class Response extends Body {
      * @returns {Response}
      */
     static json(obj) {
-        console.log('json', obj);
         return new Response(JSON.stringify(obj), {
             headers: {'content-type': 'application/json'}
         })
@@ -544,7 +543,7 @@ export function listen(port, cb, host, backlog) {
             req.response = response;
 
             // init req object
-            req.originalUrl = req.url;
+            req.originalUrl = request.url;
             Object.defineProperties(req, reqGetters);
 
             co.run(resolver, req).then(function (resp) { // succ
@@ -660,19 +659,6 @@ function handleRequestOptions(options) {
 }
 
 /**
- * Read and return a `http.ServerResponse`'s body. Similar to `stream.read`, but it can handle gzipped response content.
- *
- * @param {node.http::http.ServerResponse} incoming a server response
- * @returns {Buffer} response body
- */
-export function read(incoming) {
-    if (incoming.headers['content-encoding'] === 'gzip') { // gzipped
-        incoming = zlib.gunzipTransform(incoming);
-    }
-    return stream_read(incoming)
-}
-
-/**
  * Build a http query string from a key-value map
  *
  * @example
@@ -715,7 +701,7 @@ export function parseQuery(query) {
 
 
 function parseUrl(req) {
-    let url = ourl.parse(req.url, true);
+    let url = ourl.parse(req.originalUrl, true);
     Object.defineProperties(req, {
         pathname: {
             writable: true,

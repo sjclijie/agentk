@@ -7,7 +7,6 @@
  */
 
 import * as http from 'http.js';
-import * as response from 'http_response.js';
 import * as channel from 'channel.js';
 
 /**
@@ -63,7 +62,7 @@ export function setupPeers(hosts, localhost, port) {
     peers = hosts;
     peerPort = port || 8012;
     http.listen(peerPort, function (req) {
-        return response.json(channel.query('watcher'));
+        return http.Response.json(channel.query('watcher'));
     }, localhost);
 }
 

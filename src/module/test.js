@@ -65,115 +65,30 @@ export class IntegrationTest extends Test {
 
     get(url, options) {
         options || (options = {});
-        options.url = url;
-        return this.request(options);
+        return this.request(url, options);
     }
 
     postForm(url, params, options) {
         options || (options = {});
-        options.url = url;
         options.method = 'POST';
         let headers = options.headers || (options.headers = {});
         headers['Content-Type'] = 'application/x-www-form-urlencoded';
         options.body = new Buffer(http.buildQuery(params));
-        return this.request(options);
+        return this.request(url, options);
     }
 
-    request(options) {
-        options.__proto__ = http_defaults;
-        let resp = this.handle.apply(options, [options]);
+    request(url, options) {
+        let parsed_url = ourl.parse(url, true);
+        let req = new http.Request(url, options);
+        req.originalUrl = options.url = parsed_url.path;
+        req.request = options;
+        req.pathname = parsed_url.pathname;
+        req.query = parsed_url.query;
+        req.search = parsed_url.search;
 
-        return co.promise(function (resolve) {
-            let result = {};
-            let socket = new ostream.Writable();
-            let buffers = [];
-
-            socket._write = function (chunk, encoding, callback) {
-                buffers.push(chunk);
-                callback();
-            };
-
-            let res = new ohttp.ServerResponse(options);
-            res._storeHeader = function (firstLine, headers) {
-                var m = /HTTP\/(1\.\d) (\d+) (.+)/.exec(firstLine);
-                result.version = m[1];
-                result.status = +m[2];
-                result.reason = m[3];
-                result.headers = headers;
-                res._headerSent = true;
-            };
-            res.assignSocket(socket);
-
-            res.once('finish', function () {
-                result.body = Buffer.concat(buffers);
-                resolve(result)
-            });
-
-            if (!resp) return res.end();
-
-            res.statusCode = resp.status;
-            for (let key of Object.keys(resp.headers)) {
-                res.setHeader(key, resp.headers[key])
-            }
-
-            resp.handle(options, res);
-        });
+        return this.handle.apply(req, [req]);
     }
 }
-
-const http_defaults = {
-    method: 'GET',
-    url: '/',
-    headers: {
-        'host': 'localhost'
-    }
-};
-
-Object.defineProperties(http_defaults, {
-    pathname: {
-        configurable: true,
-        get: function () {
-            parseUrl(this);
-            return this.pathname;
-        }
-    }, search: {
-        configurable: true,
-        get: function () {
-            parseUrl(this);
-            return this.search;
-        }
-    }, query: {
-        configurable: true,
-        get: function () {
-            parseUrl(this);
-            return this.query;
-        }
-    }, body: {
-        configurable: true,
-        get: function () {
-            let body = stream_read(this);
-            Object.defineProperty(this, 'body', {value: body});
-            return body;
-        }
-    }
-});
-
-function parseUrl(req) {
-    let url = ourl.parse(req.url, true);
-    Object.defineProperties(req, {
-        pathname: {
-            writable: true,
-            value: url.pathname
-        },
-        search: {
-            value: url.search
-        },
-        query: {
-            value: url.query
-        }
-    })
-}
-
 
 export function summary() {
     console.log('\x1b[32m%d/%d tests passed (%dms)\x1b[0m', passed, total, ms);
