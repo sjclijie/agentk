@@ -16,5 +16,5 @@ test = new IntegrationTest('http handle', getDay);
 test.test('get', function () {
     let response = test.get('/');
     assertEqual(response.status, 200, 'bad response status');
-    assertEqual('' + response.body, '' + new Date().getDay(), 'bad response content');
+    assertEqual(co.yield(response.text()), '' + new Date().getDay(), 'bad response content');
 });

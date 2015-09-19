@@ -308,18 +308,16 @@ function callService(name, data) {
     }
     let options = {
         method: 'GET',
-        path: '/' + name,
         headers: headers
-    };
+    }, url;
     if (win32) {
-        options.host = '127.0.0.1';
-        options.port = 32761;
+        url = 'http://127.0.0.1:32761/?' + name
     } else {
-        options.socketPath = listen_path;
+        url = 'unix://' + listen_path + '?' + name 
     }
-    let resp = http.request(options);
+    let resp = co.yield(http.fetch(url, options));
 
-    return {code: resp.statusCode, msg: '' + http.read(resp)}
+    return {code: resp.status, msg: co.yield(resp.text())}
 }
 
 function tryCallService(name, data) {

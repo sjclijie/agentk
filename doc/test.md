@@ -1,4 +1,4 @@
-<!-- @rev fe3dd5ee279e2beed94511ee3dd97f49 20ae7b -->
+<!-- @rev 6bf65574a4122805bff884f913e8a84f 20ae7b -->
 # test
 
 ----
@@ -100,7 +100,7 @@ function IntegrationTest::postForm(url, params, options)
 ### request()
 
 ```js
-function IntegrationTest::request(options) 
+function IntegrationTest::request(url, options) 
 ```
 
 

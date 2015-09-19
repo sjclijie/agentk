@@ -29,8 +29,7 @@ if (storage.name == 'aliyun_oss') {
 
     storage.key = JSON.parse(file.read(storage.keyfile).toString());
     storage.get = function (req) {
-        let tres = entry.get(storage, req.url, {});
-        return new http.Response(tres, {status: tres.statusCode});
+        return entry.get(storage, req.url, {});
     };
     storage.put = function (req, fullname, buf, sum) {
         return entry.put(storage, buf, fullname, {
@@ -47,7 +46,7 @@ if (storage.name == 'aliyun_oss') {
     storage.get = include('../src/module/static_file.js', __dirname)[moduleDefault]('.');
     storage.put = function (req, fullname, buf) {
         file.write(fullname.substr(1), buf);
-        return {statusCode: 200}
+        return {ok: true}
     };
     storage.copy = function (src, dest) {
         dest = dest.substr(1);
@@ -55,7 +54,7 @@ if (storage.name == 'aliyun_oss') {
             file.rm(dest);
         }
         file.symlink(src.substr(1), dest);
-        return {statusCode: 200}
+        return {ok: true}
     }
 }
 

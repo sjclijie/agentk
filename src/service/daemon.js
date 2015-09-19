@@ -1,5 +1,4 @@
 import * as http from "../module/http.js";
-import * as response from "../module/http_response.js";
 import * as file from '../module/file.js';
 import {fork} from '../module/child_process.js';
 import * as scheduler from 'scheduler.js';
@@ -89,11 +88,11 @@ resumeJobs();
 console.log('starting service...');
 server = http.listen(win32 ? 32761 : listen_path, function (req) {
     console.log(req.method, req.url);
-    let action = req.url.substr(1);
+    let action = req.url.substr(req.url.indexOf('?') + 1);
 
     let data;
-    if ('data' in req.headers) {
-        data = JSON.parse(req.headers.data);
+    if (req.headers.has('data')) {
+        data = JSON.parse(req.headers.get('data'));
     } else {
         data = null
     }
@@ -102,16 +101,16 @@ server = http.listen(win32 ? 32761 : listen_path, function (req) {
             let program = programs[data];
             if (program.action && action in program.action) {
                 // trigger action
-                return response.json(triggerAction(program, action));
+                return http.Response.json(triggerAction(program, action));
             }
         }
         if (!(action in actions)) {
-            return response.error(404, 'command not found: ' + action)
+            return http.Response.error(404, 'command not found: ' + action)
         }
-        return response.json(actions[action](data));
+        return http.Response.json(actions[action](data));
     } catch (e) {
         console.error(e.stack || e);
-        return response.error(500, e.message)
+        return http.Response.error(500, e.message)
     }
 });
 

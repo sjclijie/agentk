@@ -323,12 +323,12 @@ function stream_read(incoming) {
 test_body.test("streaming", function () {
     let stream = mkReadable([new Buffer('foo'), new Buffer('bar')]);
     let body = new Body(stream);
-    assertEqual(co.yield(body.stream()), stream);
+    assertEqual(body.stream, stream);
 
-    assertEqual(stream_read(body.stream()).toString(), 'foobar');
-    assertEqual(stream_read(body.stream()).toString(), 'foobar');
+    assertEqual(stream_read(body.stream).toString(), 'foobar');
+    assertEqual(stream_read(body.stream).toString(), 'foobar');
     body = new Body('foobar');
-    assertEqual(stream_read(body.stream()).toString(), 'foobar');
+    assertEqual(stream_read(body.stream).toString(), 'foobar');
 });
 
 // =================== END TEST BODY ================
