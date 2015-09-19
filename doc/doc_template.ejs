@@ -36,7 +36,7 @@
     <% methods.forEach(function(method) {%><li><a href="#<%- method.title %>"><%- method.prototype %></a><%
         if (method.comment.hasOwnProperty('constructor')) { %> <b>constructor</b><%
         } else if(method.static) { %><b>static</b><%} %></li><%})%>
-    <% if(_default) {%><li>module default: <a href="#<%- _default.name %>"><%- _default.type %> <%- _default.name %></a></li><% } %>
+    <% if(_default) {%><li>module default: <a href="#<%- _default.title %>"><%- _default.type %> <%- _default.name %></a></li><% } %>
 </ul>
 
 <dl id="definitions">
