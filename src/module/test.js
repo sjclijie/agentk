@@ -91,5 +91,5 @@ export class IntegrationTest extends Test {
 }
 
 export function summary() {
-    console.log('\x1b[32m%d/%d tests passed (%dms)\x1b[0m', passed, total, ms);
+    console.log('\x1b[32m%d/%d tests passed (%sms)\x1b[0m', passed, total, ms.toFixed(2));
 }

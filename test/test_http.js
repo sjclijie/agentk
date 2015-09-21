@@ -6,17 +6,18 @@ let test_headers = new Test("Headers");
 
 test_headers.test('constructor', function () {
     let headers = new Headers(), entries = headers[Object.getOwnPropertySymbols(headers)[0]];
-    assertEqual(entries.length, 0);
+    assert.deepEqual(entries, {});
 
-    assert_entries(null, 0);
-    assert_entries(true, 0);
-    assert_entries({}, 0);
-    assert_entries({a: 0}, 1);
-    assert_entries({a: 0, A: 0}, 2);
+    assert_entries(null, {});
+    assert_entries(true, {});
+    assert_entries({}, {});
+    assert_entries({a: 0}, {a: ['a', '0']});
+    assert_entries({A: 1}, {a: ['A', '1']});
+    assert_entries({a: 0, A: 1}, {a: ['a', '0', '1']});
 
-    function assert_entries(param, count) {
+    function assert_entries(param, val) {
         let headers = new Headers(param), entries = headers[Object.getOwnPropertySymbols(headers)[0]];
-        assertEqual(entries.length, count);
+        assert.deepEqual(entries, val);
     }
 });
 
@@ -37,11 +38,11 @@ test_headers.test('entries', function () {
         });
         assert.deepEqual(iterator.next(), {
             done: false,
-            value: ['b', '1']
+            value: ['a', '2']
         });
         assert.deepEqual(iterator.next(), {
             done: false,
-            value: ['a', '2']
+            value: ['b', '1']
         });
         assert.deepEqual(iterator.next(), {
             done: true,
@@ -64,11 +65,11 @@ test_headers.test('keys', function () {
     });
     assert.deepEqual(iterator.next(), {
         done: false,
-        value: 'b'
+        value: 'a'
     });
     assert.deepEqual(iterator.next(), {
         done: false,
-        value: 'a'
+        value: 'b'
     });
     assert.deepEqual(iterator.next(), {
         done: true,
@@ -90,11 +91,11 @@ test_headers.test('values', function () {
     });
     assert.deepEqual(iterator.next(), {
         done: false,
-        value: '1'
+        value: '2'
     });
     assert.deepEqual(iterator.next(), {
         done: false,
-        value: '2'
+        value: '1'
     });
     assert.deepEqual(iterator.next(), {
         done: true,
@@ -112,8 +113,8 @@ test_headers.test('forEach', function () {
 
     let expected = [
         ['a', '0'],
-        ['b', '1'],
-        ['a', '2']
+        ['a', '2'],
+        ['b', '1']
     ];
 
     headers.forEach(function (val, name, target) {
@@ -136,17 +137,17 @@ test_headers.test('append', function () {
     let entries = [];
 
     headers.forEach(push);
-    assert.deepEqual(entries, ['a: 0', 'b: 1', 'a: 2']);
+    assert.deepEqual(entries, ['a: 0', 'a: 2', 'b: 1']);
 
     entries.length = 0;
     headers.append('c', '3');
     headers.forEach(push);
-    assert.deepEqual(entries, ['a: 0', 'b: 1', 'a: 2', 'c: 3']);
+    assert.deepEqual(entries, ['a: 0', 'a: 2', 'b: 1', 'c: 3']);
 
     entries.length = 0;
     headers.append('a', '4');
     headers.forEach(push);
-    assert.deepEqual(entries, ['a: 0', 'b: 1', 'a: 2', 'c: 3', 'a: 4']);
+    assert.deepEqual(entries, ['a: 0', 'a: 2', 'a: 4', 'b: 1', 'c: 3']);
 
     function push(val, name) {
         entries.push(name + ': ' + val);
@@ -162,10 +163,10 @@ test_headers.test('delete', function () {
 
     let entries = [];
 
-    headers.forEach(push);
-    assert.deepEqual(entries, ['a: 0', 'b: 1', 'a: 2']);
-
-    entries.length = 0;
+    //headers.forEach(push);
+    //assert.deepEqual(entries, ['a: 0', 'a: 2', 'b: 1']);
+    //
+    //entries.length = 0;
     headers.delete('b');
     headers.forEach(push);
     assert.deepEqual(entries, ['a: 0', 'a: 2']);
@@ -191,17 +192,17 @@ test_headers.test('set', function () {
     let entries = [];
 
     headers.forEach(push);
-    assert.deepEqual(entries, ['a: 0', 'b: 1', 'a: 2']);
+    assert.deepEqual(entries, ['a: 0', 'a: 2', 'b: 1']);
 
     entries.length = 0;
     headers.set('c', '3');
     headers.forEach(push);
-    assert.deepEqual(entries, ['a: 0', 'b: 1', 'a: 2', 'c: 3']);
+    assert.deepEqual(entries, ['a: 0', 'a: 2', 'b: 1', 'c: 3']);
 
     entries.length = 0;
     headers.set('a', '4');
     headers.forEach(push);
-    assert.deepEqual(entries, ['b: 1', 'c: 3', 'a: 4']);
+    assert.deepEqual(entries, ['a: 4', 'b: 1', 'c: 3']);
 
     function push(val, name) {
         entries.push(name + ': ' + val);

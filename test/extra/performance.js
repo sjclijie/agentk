@@ -1,6 +1,9 @@
 import * as http from '../../src/module/http.js';
 
-let ok = new http.Response();
+let ok = new http.Response('foo bar');
+
+ok.headers.append('cache-control', 'no-cache');
+ok.headers.append('server', 'blahblah');
 
 let server = http.listen(0, function (req) {
     for (let i = 0; i < 5; i++) {
@@ -18,13 +21,16 @@ setTimeout(function () {
     let maxConn = (process.argv[4] | 0) || 100, running = 0;
     console.log('< or >: adjust conns; q: exit');
 
-    http.globalAgent.maxSockets = maxConn;
+    let agent = http.globalAgent;
+
+    agent.maxSockets = 4096;
 
     const options = {
         method: 'GET',
         host: '127.0.0.1',
         port: server.address().port,
-        path: '/'
+        path: '/',
+        agent: agent
     };
 
     let sec = 0;
@@ -65,10 +71,9 @@ setTimeout(function () {
             } else {
                 maxConn = 0;
             }
-            http.globalAgent.maxSockets = maxConn;
         } else if (data[0] === 46) { // ++
             maxConn += 10;
-            http.globalAgent.maxSockets = maxConn;
+            run();
         }
     });
 });
