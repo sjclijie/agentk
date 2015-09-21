@@ -529,47 +529,48 @@ function groupHeaders(obj) {
  * @returns {node.http::http.Server} returned after the `listening` event has been fired
  */
 export function listen(port, cb, host, backlog) {
+    let co_run = co.run;
     return co.promise(function (resolve, reject) {
-        ohttp.createServer(function (request, response) {
-            request.body = request;
-            let req = new Request('http://' + request.headers.host + request.url, request);
-
-            req.request = request;
-            req.response = response;
-
-            // init req object
-            req.originalUrl = request.url;
-            Object.defineProperties(req, reqGetters);
-
-            co.run(resolver, req).then(function (resp) { // succ
-                if (!resp) return res.end();
-                if (!(resp instanceof Response)) {
-                    throw new Error('illegal response object');
-                }
-
-                response.writeHead(resp.status, resp.statusText, groupHeaders(resp));
-
-                let tmp;
-                if (tmp = resp._buffer) {
-                    response.end(tmp);
-                } else if (tmp = resp._stream) {
-                    tmp.pipe(response);
-                } else {
-                    resp._payload.then(function (buffer) {
-                        response.end(buffer);
-                    })
-                }
-            }).then(null, function (err) { // on error
-                response.writeHead(500);
-                response.end(err.message);
-                console.error(err.stack);
-            })
-        }).listen(port, host, backlog, function () {
+        ohttp.createServer(handler).listen(port, host, backlog, function () {
             resolve(this)
         }).on('error', reject);
-
-
     });
+
+    function handler(request, response) {
+        request.body = request;
+        let req = new Request('http://' + request.headers.host + request.url, request);
+
+        req.request = request;
+        req.response = response;
+
+        // init req object
+        req.originalUrl = request.url;
+        Object.defineProperties(req, reqGetters);
+
+        co_run(resolver, req).then(function (resp) { // succ
+            if (!resp) return res.end();
+            if (!(resp instanceof Response)) {
+                throw new Error('illegal response object');
+            }
+
+            response.writeHead(resp.status, resp.statusText, groupHeaders(resp));
+
+            let tmp;
+            if (tmp = resp._buffer) {
+                response.end(tmp);
+            } else if (tmp = resp._stream) {
+                tmp.pipe(response);
+            } else {
+                resp._payload.then(function (buffer) {
+                    response.end(buffer);
+                })
+            }
+        }).then(null, function (err) { // on error
+            response.writeHead(500);
+            response.end(err.message);
+            console.error(err.stack);
+        })
+    }
 
     function resolver(req) {
         return cb.apply(req, [req]);

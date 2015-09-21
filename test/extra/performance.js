@@ -2,8 +2,8 @@ import * as http from '../../src/module/http.js';
 
 let ok = new http.Response('foo bar');
 
-ok.headers.append('cache-control', 'no-cache');
-ok.headers.append('server', 'blahblah');
+ok.headers.append('Cache-Control', 'no-cache');
+ok.headers.append('Server', 'blahblah');
 
 let server = http.listen(0, function (req) {
     for (let i = 0; i < 5; i++) {
