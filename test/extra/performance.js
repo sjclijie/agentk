@@ -1,11 +1,12 @@
 import * as http from '../../src/module/http.js';
-import * as response from '../../src/module/http_response.js'
+
+let ok = new http.Response();
 
 let server = http.listen(0, function (req) {
     for (let i = 0; i < 5; i++) {
         co.sleep(10);
     }
-    return response.ok();
+    return ok;
 }, '127.0.0.1');
 
 console.log('performance: server listening at ', server.address());
@@ -56,6 +57,7 @@ setTimeout(function () {
     process.stdin.setRawMode(true);
     process.stdin.on('data', function (data) {
         if (data[0] === 0x71) {
+            process.stdout.write('\n');
             process.exit(0)
         } else if (data[0] === 44) { // --
             if (maxConn > 10) {

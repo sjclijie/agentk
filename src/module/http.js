@@ -267,11 +267,9 @@ export class Body {
      * @returns {Promise} a promise that yields the request payload as a Buffer
      */
     buffer() {
-        console.log('getting buffer');
         let ret = this[body_payload];
         if (!ret) { // start stream reading
             let body = this[body_stream];
-            console.log('start reading stream');
             this[body_stream] = null;
             ret = this[body_payload] = new Promise(function (resolve, reject) {
                 let bufs = [];
@@ -287,9 +285,9 @@ export class Body {
 
     /**
      *
-     * @returns {Promise} a promise that yields the request payload as a readable stream
+     * @returns {node.stream::stream.Readable} a readable stream
      */
-    stream() {
+    get stream() {
         let body = this[body_stream];
 
         if (body) { // start stream reading
@@ -316,6 +314,19 @@ export class Request extends Body {
     /**
      * A `Request` is an representation of a client request that will be sent to a remote server, or a server request
      * that received from the remote client.
+     *
+     * @example
+     *     // a normal request
+     *     new http.Request('http://www.example.com/test?foo=bar')
+     *     // a post request
+     *     new http.Request('...', {
+     *       method: 'POST',
+     *       body: http.buildQuery({foo: 'bar'}),
+     *       headers: {'content-type': 'application/x-www-form-urlencoded'}
+     *     })
+     *     // request to a unix domain socket
+     *     new http.Request('unix:///foo/bar?test=foobar')
+     *     // the server path is '/foo/bar' and the request url is '/?test=foobar'
      *
      * @extends Body
      * @param {string} url a remote url
@@ -371,8 +382,8 @@ export class Response extends Body {
      *
      * Additional fields can be used to manuplate the response object, which are:
      *
-     *   - status `number`: status code of the response
-     *   - statusText `number`: status text of the response
+     *   - response.status `number`: status code of the response
+     *   - response.statusText `number`: status text of the response
      *
      * @extends Body
      * @param {string|Buffer|ArrayBuffer|node.stream::stream.Readable} [body]
@@ -554,7 +565,7 @@ export function listen(port, cb, host, backlog) {
 
                 response.statusCode = resp.status;
 
-                for (let entry of resp.headers[header_entries]) {
+                for (let entry of resp[request_headers][header_entries]) {
                     response.setHeader(entry[0], entry[1])
                 }
 
@@ -587,52 +598,51 @@ export function listen(port, cb, host, backlog) {
  */
 export let client_ua = `AgentK/${process.versions.agentk} NodeJS/${process.version.substr(1)}`;
 
+
 /**
- * Create a http request, the
- * @param {object} options See [request](https://nodejs.org/api/http.html#http_http_request_options_callback) on Node.JS documentation.
+ * Compose a http request.
+ * `fetch` has two prototypes:
+ * 
+ *   - function fetch(request:[Request](#class-Request))
+ *   - function fetch(url:string, options:object)
  *
- * Available options are:
- *
- *   - options.host `string` hostname to connect to
- *   - options.port `number` port number to connect to, default to `80`
- *   - options.socketPath `string` against host:port, use socketPath to create connection
- *   - options.method `string` request method, default to `"GET"`
- *   - options.path `string` request url pathname and query string, default to `"/"`
- *   - options.headers `object` request header names and values map
- *   - options.proxy `string|object` http proxy server, maybe string like: `"<user>:<password>@<host>:<port>"` or object with these keys
- *
- * @param {string|Buffer} body data to be sent to as payload, maybe null or undefined if there is no payload
- * @returns {node.http::http.ServerResponse} a response object that can be operated and read as a stream.
+ * Please refer to the [Request](#class-Request) constructor for the info of the arguments
+ * @param {string} url
+ * @param {object} options
+ * @retruns {Promise} a promise that yields a response on success
  */
-export function request(options, body) {
-    return co.promise(function (resolve, reject) {
-        handleRequestOptions(options);
-        if ('method' in options && options.method !== 'GET') { // requires body
-            if (typeof body === 'string') {
-                body = new Buffer(body);
-            }
-            options.headers['Content-Length'] = body ? '' + body.length : '0';
-        } else {
-            body = null;
+export function fetch(url, options) {
+    const req = typeof url === 'object' && url instanceof Request ? url : new Request(url, options);
+    let parsedUrl = ourl.parse(req[request_url]), headers = {};
+    if(parsedUrl.protocol === 'unix:') {
+        headers.host = 'localhost';
+        options = {
+            socketPath: parsedUrl.pathname,
+            path: '/' + (parsedUrl.search || ''),
         }
-        ohttp.request(options, resolve).on('error', reject).end(body);
-    });
-}
+    } else {
+        headers.host = parsedUrl.host;
+        options = {
+            host: parsedUrl.hostname,
+            port: parsedUrl.port || 80,
+            path: parsedUrl.path,
+        }
+    }
+    for(let entry of req[request_headers][header_entries]) {
+        headers[entry[0]] = entry[1]
+    }
+    options.method = req[request_method];
+    options.headers = headers;
 
-/**
- * Similar to [request](#request), but requires a `stream.Readable` object rather than a string/buffer as the request payload.
- *
- * @param {object} options similar to [request](#request)
- * @param {node.stream::stream.Readable} stream a readable stream
- * @returns {node.http::http.ServerResponse}
- */
-
-export function pipe(options, stream) {
-    return co.promise(function (resolve, reject) {
-        handleRequestOptions(options);
-
-        stream.pipe(ohttp.request(options, resolve).on('error', reject));
-    });
+    return new Promise(function (resolve, reject) {
+        req.stream.pipe(ohttp.request(options, function(tres) {
+            resolve(new Response(tres, {
+                status: tres.statusCode,
+                statusText: tres.statusMessage,
+                headers: tres.headers
+            }))
+        }).on('error', reject))
+    })
 }
 
 function handleRequestOptions(options) {

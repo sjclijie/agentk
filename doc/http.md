@@ -1,4 +1,4 @@
-<!-- @rev e04a7730585d8e4f1060a404705c1f50 20ae7b -->
+<!-- @rev 710ec46280dccc71ce982b9bc3f9a3c6 20ae7b -->
 # http
 
 ----
@@ -329,7 +329,7 @@ function Body::buffer()
 ### stream()
 
 ```js
-function Body::stream() 
+get Body::stream() 
 ```
 
 
@@ -337,7 +337,7 @@ function Body::stream()
 
 **Returns**
 
-> {Promise} a promise that yields the request payload as a readable stream
+> {node.stream::stream.Readable} a readable stream
      
 
 ------------------------------------------------------------------------
@@ -427,8 +427,8 @@ function Response(body, options)
 
  Additional fields can be used to manuplate the response object, which are:
 
-   - status `number`: status code of the response
-   - statusText `number`: status text of the response
+   - response.status `number`: status code of the response
+   - response.statusText `number`: status text of the response
 
 
 **Params**
@@ -603,81 +603,26 @@ function listen(port, cb, host, backlog)
  
 
 ------------------------------------------------------------------------
-### request()
+### fetch()
 
 ```js
-function request(options, body) 
+function fetch(url, options) 
 ```
 
 
- Create a http request, the
+ Compose a http request.
+ `fetch` has two prototypes:
+ 
+   - function fetch(request:[Request](#class-Request))
+   - function fetch(url:string, options:object)
+
+ Please refer to the [Request](#class-Request) constructor for the info of the arguments
 
 **Params**
 
+  - url `string`
   - options `object`
-    <br>See [request](https://nodejs.org/api/http.html#http_http_request_options_callback) on Node.JS documentation.
 
- Available options are:
-
-   - options.host `string` hostname to connect to
-   - options.port `number` port number to connect to, default to `80`
-   - options.socketPath `string` against host:port, use socketPath to create connection
-   - options.method `string` request method, default to `"GET"`
-   - options.path `string` request url pathname and query string, default to `"/"`
-   - options.headers `object` request header names and values map
-   - options.proxy `string|object` http proxy server, maybe string like: `"<user>:<password>@<host>:<port>"` or object with these keys
-
-  - body `string|Buffer`
-    <br>data to be sent to as payload, maybe null or undefined if there is no payload
-
-**Returns**
-
-> {node.http::http.ServerResponse} a response object that can be operated and read as a stream.
- 
-
-------------------------------------------------------------------------
-### pipe()
-
-```js
-function pipe(options, stream) 
-```
-
-
- Similar to [request](#request), but requires a `stream.Readable` object rather than a string/buffer as the request payload.
-
-
-**Params**
-
-  - options `object`
-    <br>similar to [request](#request)
-  - stream `node.stream::stream.Readable`
-    <br>a readable stream
-
-**Returns**
-
-> {node.http::http.ServerResponse}
- 
-
-------------------------------------------------------------------------
-### read()
-
-```js
-function read(incoming) 
-```
-
-
- Read and return a `http.ServerResponse`'s body. Similar to `stream.read`, but it can handle gzipped response content.
-
-
-**Params**
-
-  - incoming `node.http::http.ServerResponse`
-    <br>a server response
-
-**Returns**
-
-> {Buffer} response body
- 
 
 ------------------------------------------------------------------------
 ### buildQuery()

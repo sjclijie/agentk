@@ -48,12 +48,6 @@ Content-Length: 3
         return Response.json({result: answer});
     }</pre>
 
-<p>You should find out that <code>json</code> is not defined, we need to import it from module
-    <code>http_response</code>.
-    Add <code>json</code> into the import list of that module so it will look like:</p>
-
-<pre>import {redirect, json} from 'module/http_response.js';</pre>
-
 <script>
     document.getElementById('try').addEventListener('click', function () {
         var x = Math.random() * 100 | 0, y = Math.random() * 100 | 0, answer = x + y;

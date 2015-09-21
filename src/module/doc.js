@@ -275,7 +275,8 @@ export default function (outDir, format) {
                     }
                     module._default = {
                         type: 'function',
-                        name: hasDefault.id && hasDefault.id.name
+                        title: 'fun-' + hasDefault.id.name,
+                        name: hasDefault.id.name
                     };
                 }
             } else if (hasDefault.type === Syntax.ClassDeclaration) {
@@ -287,20 +288,22 @@ export default function (outDir, format) {
                     }
                     module._default = {
                         type: 'class',
-                        name: hasDefault.id && hasDefault.id.name
+                        title: 'class-' + hasDefault.id.name,
+                        name: hasDefault.id.name
                     };
                 }
             } else if (hasDefault.type === Syntax.VariableDeclarator) {
                 module._default = {
                     type: 'variable',
-                    kind: hasDefault.kind
+                    title: hasDefault.id.name,
+                    name:  hasDefault.id.name
                 }
             } else if (hasDefault.type === Syntax.Literal) { // expression
                 //console.log(name, 'has default', hasDefault);
                 module._default = {
                     type: 'literal',
-                    valueType: '{' + typeof hasDefault.value + '}',
-                    raw: hasDefault.raw
+                    title: '#',
+                    name: hasDefault.raw
                 }
             }
         }
