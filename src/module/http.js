@@ -12,11 +12,8 @@ const ohttp = require('http'),
     ofs = require('fs'),
     oquerystring = require('querystring');
 
-
-const header_entries = Symbol('entries');
-
 function* headersIterator(headers, cb) {
-    let entries = headers[header_entries];
+    let entries = headers._entries;
     for (let key in entries) {
         for (let arr = entries[key], i = 1, L = arr.length; i < L; i++) {
             yield cb(arr[i], key);
@@ -34,7 +31,7 @@ export class Headers {
      * @param {object} [headers] initial name-value map of headers
      */
     constructor(headers) {
-        this[header_entries] = Object.create(null);
+        this._entries = Object.create(null);
 
         if (headers && typeof headers === 'object') {
             for (let name in headers) {
@@ -53,10 +50,10 @@ export class Headers {
         name = '' + name;
         value = '' + value;
         let key = name.toLowerCase();
-        if (key in this[header_entries]) {
-            this[header_entries][key].push(value);
+        if (key in this._entries) {
+            this._entries[key].push(value);
         } else {
-            this[header_entries][key] = [name, value];
+            this._entries[key] = [name, value];
         }
     }
 
@@ -68,7 +65,7 @@ export class Headers {
      */
     set(name, value) {
         name = '' + name;
-        this[header_entries][name.toLowerCase()] = [name, '' + value];
+        this._entries[name.toLowerCase()] = [name, '' + value];
     }
 
     /**
@@ -78,8 +75,8 @@ export class Headers {
      */
     ["delete"] (name) {
         let key = ('' + name).toLowerCase();
-        if (key in this[header_entries]) {
-            delete this[header_entries][key]
+        if (key in this._entries) {
+            delete this._entries[key]
         }
     }
 
@@ -90,7 +87,7 @@ export class Headers {
      * @param {function} cb
      */
     forEach(cb) {
-        let entries = this[header_entries];
+        let entries = this._entries;
         for (let key in entries) {
             let arr = entries[key];
             for (let i = 1, L = arr.length; i < L; i++) {
@@ -109,7 +106,7 @@ export class Headers {
      */
     get(name) {
         let key = ('' + name).toLowerCase();
-        return key in this[header_entries] ? this[header_entries][key][1] : null;
+        return key in this._entries ? this._entries[key][1] : null;
     }
 
     /**
@@ -120,7 +117,7 @@ export class Headers {
      */
     getAll(name) {
         let key = ('' + name).toLowerCase();
-        return key in this[header_entries] ? this[header_entries][key].slice(1) : [];
+        return key in this._entries ? this._entries[key].slice(1) : [];
     }
 
     /**
@@ -131,7 +128,7 @@ export class Headers {
      */
     has(name) {
         let key = ('' + name).toLowerCase();
-        return key in this[header_entries];
+        return key in this._entries;
     }
 
     /**
@@ -205,9 +202,9 @@ export class Body {
                 throw new Error('body accepts only string, Buffer, ArrayBuffer or stream.Readable');
             }
         }
-        this[body_stream] = stream;
-        this[body_buffer] = buf;
-        this[body_payload] = buf && Promise.resolve(buf);
+        this._stream = stream;
+        this._buffer = buf;
+        this._payload = buf && Promise.resolve(buf);
 
     }
 
@@ -246,16 +243,16 @@ export class Body {
      * @returns {Promise} a promise that yields the request payload as a Buffer
      */
     buffer() {
-        let ret = this[body_payload];
+        let ret = this._payload;
         if (!ret) { // start stream reading
-            let body = this, stream = this[body_stream];
-            this[body_stream] = null;
-            ret = this[body_payload] = new Promise(function (resolve, reject) {
+            let body = this, stream = this._stream;
+            this._stream = null;
+            ret = this._payload = new Promise(function (resolve, reject) {
                 let bufs = [];
                 stream.on('data', function (buf) {
                     bufs.push(buf)
                 }).once('end', function () {
-                    resolve(body[body_buffer] = Buffer.concat(bufs))
+                    resolve(body._buffer = Buffer.concat(bufs))
                 }).once('error', reject)
             });
         }
@@ -267,17 +264,16 @@ export class Body {
      * @returns {node.stream::stream.Readable} a readable stream
      */
     get stream() {
-        let body = this[body_stream];
+        let body = this._stream;
 
         if (body) { // start stream reading
             this.buffer()
         } else {
-            let promise = this[body_payload];
             body = new stream_Readable();
             body._read = function () {
                 body._read = Boolean;
             };
-            this[body_payload].then(function (buf) {
+            this._payload.then(function (buf) {
                 body.push(buf);
                 body.push(null);
             })
@@ -323,11 +319,9 @@ export class Request extends Body {
         if (options && typeof options !== 'object') options = null;
         super(options && options.body);
 
-        this[request_url] = url;
-
-
-        this[request_method] = options && 'method' in options ? '' + options['method'] : 'GET';
-        this[request_headers] = options && 'headers' in options && typeof options.headers === 'object' ?
+        this._url = url;
+        this._method = options && 'method' in options ? '' + options['method'] : 'GET';
+        this._headers = options && 'headers' in options && typeof options.headers === 'object' ?
             options.headers instanceof Headers ? options.headers : new Headers(options.headers) : new Headers();
     }
 
@@ -336,7 +330,7 @@ export class Request extends Body {
      * @returns {string} request method, e.g., `"GET"` `"POST"`
      */
     get method() {
-        return this[request_method]
+        return this._method
     }
 
     /**
@@ -344,7 +338,7 @@ export class Request extends Body {
      * @returns {string} request uri, like `"http://www.example.com/test?foo=bar"`
      */
     get url() {
-        return this[request_url]
+        return this._url
     }
 
     /**
@@ -352,7 +346,7 @@ export class Request extends Body {
      * @returns {Headers} request headers
      */
     get headers() {
-        return this[request_headers]
+        return this._headers
     }
 }
 
@@ -381,7 +375,7 @@ export class Response extends Body {
 
         let status = this.status = options && 'status' in options ? options.status | 0 : 200;
         this.statusText = options && 'statusText' in options ? '' + options.statusText : ohttp.STATUS_CODES[status] || '';
-        this[request_headers] = options && 'headers' in options && typeof options.headers === 'object' ?
+        this._headers = options && 'headers' in options && typeof options.headers === 'object' ?
             options.headers instanceof Headers ? options.headers : new Headers(options.headers) : new Headers();
     }
 
@@ -397,7 +391,7 @@ export class Response extends Body {
      * @returns {Headers} response headers
      */
     get headers() {
-        return this[request_headers]
+        return this._headers
     }
 
 
@@ -416,7 +410,7 @@ export class Response extends Body {
             }
         }
 
-        this.headers.append('set-cookie', val);
+        this.headers.append('Set-Cookie', val);
     }
 
     /**
@@ -495,6 +489,15 @@ const reqGetters = {
     }
 };
 
+function groupHeaders(obj) {
+    const headers = Object.create(null),
+        entries = obj._headers._entries;
+    for (let key in entries) {
+        let arr = entries[key];
+        headers[arr[0]] = arr.length === 2 ? arr[1] : arr.slice(1);
+    }
+    return headers;
+}
 
 /**
  * Create a new http server, bind it to a port or socket file. A callback is supplied which accepts a
@@ -547,12 +550,12 @@ export function listen(port, cb, host, backlog) {
                 response.writeHead(resp.status, resp.statusText, groupHeaders(resp));
 
                 let tmp;
-                if (tmp = resp[body_buffer]) {
+                if (tmp = resp._buffer) {
                     response.end(tmp);
-                } else if (tmp = resp[body_stream]) {
+                } else if (tmp = resp._stream) {
                     tmp.pipe(response);
                 } else {
-                    resp[body_payload].then(function (buffer) {
+                    resp._payload.then(function (buffer) {
                         response.end(buffer);
                     })
                 }
@@ -595,7 +598,7 @@ export let client_ua = `AgentK/${process.versions.agentk} NodeJS/${process.versi
  */
 export function fetch(url, options) {
     const req = typeof url === 'object' && url instanceof Request ? url : new Request(url, options);
-    let parsedUrl = ourl.parse(req[request_url]), headers = {};
+    let parsedUrl = ourl.parse(req._url), headers = {};
     if (parsedUrl.protocol === 'unix:') {
         headers.host = 'localhost';
         options = {
@@ -610,7 +613,7 @@ export function fetch(url, options) {
             path: parsedUrl.path
         }
     }
-    options.method = req[request_method];
+    options.method = req._method;
     options.headers = groupHeaders(req);
 
     return new Promise(function (resolve, reject) {
@@ -624,15 +627,6 @@ export function fetch(url, options) {
     })
 }
 
-function groupHeaders(obj) {
-    const headers = Object.create(null),
-        entries = obj[request_headers][header_entries];
-    for (let key in entries) {
-        let arr = entries[key];
-        headers[arr[0]] = arr.length === 2 ? arr[1] : arr.slice(1);
-    }
-    return headers;
-}
 
 function handleRequestOptions(options) {
     const headers = options.headers || (options.headers = {});

@@ -78,7 +78,7 @@ export function render(name, locals, mimeType) {
     }
     return new Response(co.sync(engine, filename, locals), {
         headers: {
-            'content-type': mimeType || 'text/html'
+            'Content-Type': mimeType || 'text/html'
         }
     });
 }

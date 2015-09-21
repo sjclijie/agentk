@@ -5,7 +5,7 @@ const assert = require('assert'), assertEqual = assert.strictEqual;
 let test_headers = new Test("Headers");
 
 test_headers.test('constructor', function () {
-    let headers = new Headers(), entries = headers[Object.getOwnPropertySymbols(headers)[0]];
+    let headers = new Headers(), entries = headers._entries;
     assert.deepEqual(entries, {});
 
     assert_entries(null, {});
@@ -16,7 +16,7 @@ test_headers.test('constructor', function () {
     assert_entries({a: 0, A: 1}, {a: ['a', '0', '1']});
 
     function assert_entries(param, val) {
-        let headers = new Headers(param), entries = headers[Object.getOwnPropertySymbols(headers)[0]];
+        let headers = new Headers(param), entries = headers._entries;
         assert.deepEqual(entries, val);
     }
 });
