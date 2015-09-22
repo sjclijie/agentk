@@ -1,8 +1,5 @@
 import * as http from '../../src/module/http.js';
-console.log()
-
 if (process.argv[2] === 'load') { // child
-
     setTimeout(function () {
         "use strict";
         const http = require('http');
@@ -75,7 +72,7 @@ if (process.argv[2] === 'load') { // child
 
     let server = http.listen(0, function (req) {
         for (let i = 0; i < 5; i++) {
-            co.sleep(10);
+            co.sleep(1);
         }
         return ok;
     }, '127.0.0.1', 1024);
