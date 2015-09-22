@@ -174,10 +174,7 @@ export class Headers {
     }
 }
 
-const stream_Readable = require('stream').Readable,
-    body_payload = Symbol('payload'),
-    body_buffer = Symbol('buffer'),
-    body_stream = Symbol('stream');
+const stream_Readable = require('stream').Readable;
 
 export class Body {
     /**
@@ -282,10 +279,6 @@ export class Body {
         return body;
     }
 }
-
-const request_method = Symbol('method'),
-    request_url = Symbol('url'),
-    request_headers = Symbol('headers');
 
 export class Request extends Body {
     /**
