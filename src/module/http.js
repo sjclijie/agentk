@@ -210,9 +210,7 @@ export class Body {
      * @returns {Promise} a promise that yields the request payload as a string
      */
     text() {
-        return this.buffer().then(function (buf) {
-            return buf.toString()
-        })
+        return this.buffer().then(buf => buf.toString())
     }
 
     /**
@@ -220,9 +218,7 @@ export class Body {
      * @returns {Promise} a promise that yields the request payload as a JSON object
      */
     json() {
-        return this.buffer().then(function (buf) {
-            return JSON.parse(buf.toString())
-        })
+        return this.buffer().then(buf => JSON.parse(buf.toString()))
     }
 
     /**
@@ -230,9 +226,7 @@ export class Body {
      * @returns {ArrayBuffer} a promise that yields the request payload as an ArrayBuffer
      */
     arrayBuffer() {
-        return this.buffer().then(function (buf) {
-            return new Uint8Array(buf).buffer
-        })
+        return this.buffer().then(buf => new Uint8Array(buf).buffer)
     }
 
     /**

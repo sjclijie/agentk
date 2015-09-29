@@ -203,9 +203,7 @@ function createReplacement(source) {
         },
         concat: function () {
             if (!replaces.length) return source;
-            replaces.sort(function (a, b) {
-                return a[0] - b[0];
-            });
+            replaces.sort((a, b) => a[0] - b[0]);
 
             let result = '', currentPos = 0;
             for (let repl of replaces) {
@@ -663,8 +661,10 @@ function handleScope(body, locals, replace, insert) {
             }
         } else if (expr.type === Syntax.RestElement) {
             locals[expr.argument.name] = VARIABLE_TYPE;
+        } else if (expr.type === Syntax.MemberExpression) { // [a.b] = xxx
+            handleExpr(expr);
         } else {
-            throw expr;
+            throw new Error('unhandled destruct element type: ' + expr.type);
         }
     }
 

@@ -1,6 +1,7 @@
-"use strict";
+//// arrow functions
+console.log([1, 2, 3, 4].map(x => x * x));
 
-
+//// Testing classes
 export class Test {
     constructor() {
         super();

@@ -45,78 +45,123 @@ export const mimeTypes = {
  *   - no_cache:`boolean` disable file cache, default to false
  *   - expires:`number` duration before expiration in ms, default to 0
  *   - cached:`number` file modification check iteration in ms, default to 3s
- *   - gzip:`boolean` enable gzip, default to false
+ *   - gzip:`boolean` enable gzip, default to true
+ *   - gzip_min_len:`number` mininum length of file to be gzipped, default to 1K
  *
  * @returns {function} router handle
  */
 export default function staticFile(directory, option) {
+    const NOT_MODIFIED = Response.error(304),
+        NOT_FOUND = Response.error(404);
+    const GZIP = /\bgzip\b/;
+
     directory = path.resolve(directory);
 
-    const useCache = !option || !option.no_cache;
-    const cached = useCache && {}; // path->{content:buffer,etag:string,lm:string,recheck:number,headers:object}
-    const expires = (option && option.expires) | 0;
-    const gzip = !!(option && option.gzip);
-    const recheckInterval = (option ? option.cached | 0 : 3000) || 3000, cc = 'max-age=' + (expires / 1000 | 0);
+    let useCache = true,
+        expires = 0,
+        recheckInterval = 3000,
+        useGzip = true,
+        gzipMinLen = 1024,
+        cc = 'max-age=0';
+    if (option) {
+        useCache = 'no_cache' in option ? !option.no_cache : useCache;
+        expires = 'expires' in option ? option.expires | 0 : expires;
+        recheckInterval = 'cached' in option ? option.cached | 0 : recheckInterval;
+        useGzip = 'gzip' in option ? !!option.gzip : useGzip;
+        gzipMinLen = useGzip && 'gzip_min_len' in option ? option.gzip_min_len | 0 : gzipMinLen;
+        cc = useCache ? 'max-age=' + (expires / 1000 | 0) : 'no-cache';
+    }
+
+    const cache = useCache ? function () {
+        const files = {};
+
+        return {
+            match: function (req) {
+                const headers = req.headers;
+                if (req.filename in files && headers.get('cache-control') !== 'no-cache') { // uses cache
+                    let cached = files[filename];
+                    if (cached.recheck > Date.now()) { // cache is fine
+                        if (headers.get('if-none-match') === cached.etag ||
+                            headers.get('if-modified-since') === cached.lm) {
+                            return NOT_MODIFIED
+                        }
+                        return req.acceptsGzip ? cached.gzipped_response : cached.response;
+                    }
+                }
+            },
+            add: function (req, content, options, mtime) {
+                let entry = files[req.filename] = {
+                    etag: options.headers.ETag,
+                    lm: options.headers['Last-Modified'] = mtime.toGMTString(),
+                    recheck: +mtime + recheckInterval
+                };
+
+                options.headers.Expires = new Date(Date.now() + expires).toGMTString();
+
+                entry.response = new Response(content, options);
+
+                //'Expires': new Date(Date.now() + expires).toGMTString(),
+                //    'ETag': etag,
+                //    'Last-Modified': mtime_str,
+
+                if (useGzip) {
+                    if (content.length >= gzipMinLen) {
+                        options.headers['Content-Encoding'] = 'gzip';
+                        entry.gzipped_response = new Response(zlib.gzip(content), options);
+                    } else {
+                        entry.gzipped_response = entry.response;
+                    }
+                }
+                return req.acceptsGzip ? entry.gzipped_response : entry.response;
+            }
+        }
+    }() : {
+        match: function () {
+        },
+        add: function (req, content, options) {
+            if (req.acceptsGzip && content.length > gzipMinLen) {
+                options.headers['Content-Encoding'] = 'gzip';
+                content = zlib.gzip(content);
+            }
+            return new Response(content, options)
+        }
+    };
 
 
     return function (req) {
-        const filename = path.resolve(directory + req.pathname),
-            headers = req.headers;
+        let filename = req.filename = path.resolve(directory + req.pathname);
+        req.acceptsGzip = useGzip && GZIP.test(req.headers.get('accept-encoding'));
 
-        const useGzip = gzip && 'accept-encoding' in headers && headers.get('accept-encoding').indexOf('gzip') !== -1;
+        let response = cache.match(req);
+        if (response) return response;
 
-        console.log('cache:', filename, cached[filename], headers.get('if-none-match'));
-        let cache;
-        if (useCache
-            && filename in cached
-            && headers.get('cache-control') !== 'no-cache'
-            && (cache = cached[filename]).recheck > Date.now()) { // found cache
-            if (headers.get('if-none-match') === cache.etag || headers.get('if-modified-since') === cache.lm) {
-                return Response.error(304);
-            }
-            if (useGzip) {
-                return cache.gzipped_response;
-            } else {
-                return cache.response;
-            }
+        // cache not matched
+        let stats;
+        try {
+            stats = stat(filename);
+        } catch (e) {
+            return NOT_FOUND;
         }
-        // do not use cache
-        const stats = stat(filename),
-            mtime = stats.mtime,
-            mtime_ms = +mtime,
+        const mtime = stats.mtime,
             mtime_str = mtime.toGMTString(),
-            etag = mtime_ms.toString(36) + '-' + stats.size.toString(36);
-        if (headers.get('if-modified-since') === mtime_str) { // not changed, won't read
-            return Response.error(304);
-        }
-        const content = read(filename),
-            options = {
-                headers: {
-                    'Cache-Control': cc,
-                    'Expires': new Date(Date.now() + expires).toGMTString(),
-                    'ETag': etag,
-                    'Last-Modified': mtime_str,
-                    'Content-Type': mimeTypes[path.extname(filename).substr(1)] || 'application/octet-stream'
-                }
-            };
-        cache = {
-            etag: etag,
-            lm: mtime_str,
-            recheck: mtime_ms + recheckInterval,
-            response: new Response(content, options)
-        };
-        if (useCache) {
-            cached[filename] = cache;
-        }
-        if (gzip) {
-            options.headers['Content-Encoding'] = 'gzip';
-            cache.gzipped_response = new Response(zlib.gzip(content), options);
+            etag = (+mtime).toString(36) + '-' + stats.size.toString(36);
 
-            if (useGzip) {
-                return cache.gzipped_response;
-            }
+        if (req.headers.get('if-modified-since') === mtime_str ||
+            req.headers.get('if-none-match') === etag) { // not changed, won't read
+            return NOT_MODIFIED
         }
-        return cache.response;
+
+        // will read and cache
+        const content = read(filename), options = {
+            headers: {
+                'ETag': etag,
+                'Cache-Control': cc,
+                'Content-Type': mimeTypes[path.extname(filename).substr(1)] || 'application/octet-stream'
+            }
+        };
+
+        return cache.add(req, content, options, mtime);
+
     };
 }
 
