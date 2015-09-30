@@ -14,8 +14,8 @@ const emptyHandler = {
  *
  * @example
  *
- *     import Router from 'router.js';
- *     import {middleware} from 'legacy.js';
+ *     import Router from 'router';
+ *     import {middleware} from 'legacy';
  *     let cookieParser = require('cookie-parser')()
  *     let route = new Router();
  *     route.prefix('/user/', middleware(function (req, res, next) {

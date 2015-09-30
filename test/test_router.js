@@ -1,4 +1,4 @@
-import Router from '../src/module/router.js';
+import Router from '../src/module/router';
 
 const assert = require('assert'), assertEqual = assert.strictEqual;
 

@@ -1,8 +1,8 @@
-import * as http from "../module/http.js";
-import * as file from '../module/file.js';
-import {fork} from '../module/child_process.js';
-import * as scheduler from 'scheduler.js';
-import * as channel from '../module/channel.js';
+import * as http from "../module/http";
+import * as file from '../module/file';
+import {fork} from '../module/child_process';
+import * as scheduler from 'scheduler';
+import * as channel from '../module/channel';
 
 const path = require('path');
 

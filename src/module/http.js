@@ -4,8 +4,8 @@
  * @author kyrios
  */
 
-import * as zlib from 'zlib.js';
-import {read as stream_read} from 'stream.js'
+import * as zlib from 'zlib';
+import {read as stream_read} from 'stream'
 
 const ohttp = require('http'),
     ourl = require('url'),

@@ -47,6 +47,9 @@ function include(name, __dirname) {
 
         if (name in definedModules) return definedModules[name];
     }
+    if (!/\.(\w+)$/.test(name)) {
+        name += '.js';
+    }
 
     if (fs.existsSync(name)) {
         try {
@@ -503,7 +506,7 @@ function handleScope(body, locals, replace, insert) {
                             range: [stmt.range[0], stmt.key.range[0]]
                         }, receiver + '[');
                         //insert(stmt.range[0] - 1, receiver);
-                        insert(stmt.value.range[0], '] = function');
+                        insert(stmt.value.range[0], ' = function');
                     }
                     insert(stmt.range[1], ';');
                 }

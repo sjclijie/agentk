@@ -1,5 +1,5 @@
-import {Request} from '../src/module/http.js';
-import staticFile from '../src/module/static_file.js';
+import {Request} from '../src/module/http';
+import staticFile from '../src/module/static_file';
 
 const assert = require('assert'), assertEqual = assert.strictEqual;
 let test = new Test('static file');

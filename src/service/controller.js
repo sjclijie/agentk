@@ -1,6 +1,6 @@
-import * as http from '../module/http.js';
-import * as file from '../module/file.js';
-import * as child_process from '../module/child_process.js';
+import * as http from '../module/http';
+import * as file from '../module/file';
+import * as child_process from '../module/child_process';
 
 const path = require('path');
 

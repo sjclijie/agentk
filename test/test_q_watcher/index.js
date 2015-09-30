@@ -1,4 +1,4 @@
-import * as q_watcher from '../../src/module/q_watcher.js';
+import * as q_watcher from '../../src/module/q_watcher';
 
 q_watcher.prefix = 't.agentk.q_watcher';
 

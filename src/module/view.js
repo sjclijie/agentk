@@ -1,5 +1,5 @@
-import {Response} from 'http.js';
-import * as file from 'file.js';
+import {Response} from 'http';
+import * as file from 'file';
 
 const opath = require('path');
 

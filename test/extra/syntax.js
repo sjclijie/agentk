@@ -3,12 +3,6 @@ var assert = require('assert');
 //// arrow functions
 assert.deepEqual([1, 2, 3, 4].map(x => x * x), [1, 4, 9, 16]);
 
-//// export all
-export * from '../module/math.js';
-assert.strictEqual(module.abs(-1234), 1234);
-assert.strictEqual(module[moduleDefault], 'math');
-
-
 //// object properties
 let obj = {
     assert, test() {
@@ -78,5 +72,3 @@ a.foo = 0;
 
 Test.bar();
 assert.strictEqual(Test.baz(), "baz");
-export {a as b};
-export {abs} from '../module/math.js';

@@ -6,7 +6,7 @@
  *
  * @example
  *
- *     import * as channel from '../src/module/channel.js';
+ *     import * as channel from '../src/module/channel';
  *
  *     channel.registerProvider('get_pid', function () {
  *         return process.pid

@@ -3,8 +3,8 @@
  * @title static file request handler
  */
 
-import {Response} from 'http.js';
-import * as zlib from 'zlib.js';
+import {Response} from 'http';
+import * as zlib from 'zlib';
 
 const path = require('path'), fs = require('fs');
 
@@ -33,8 +33,8 @@ export const mimeTypes = {
  *
  * @example
  *
- *     import Router from 'router.js';
- *     import staticFile from 'static_file.js';
+ *     import Router from 'router';
+ *     import staticFile from 'static_file';
  *     let route = new Router();
  *     route.prefix('/static/', staticFile('static'))
  *

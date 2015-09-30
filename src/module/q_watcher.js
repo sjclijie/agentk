@@ -6,8 +6,8 @@
  * @title Qunar Watcher module
  */
 
-import * as http from 'http.js';
-import * as channel from 'channel.js';
+import * as http from 'http';
+import * as channel from 'channel';
 
 /**
  * metric prefix of the log entry, see the [wiki](http://wiki.corp.qunar.com/pages/viewpage.action?pageId=74958076#%E6%95%B0%E6%8D%AE%E6%94%B6%E9%9B%86-Watcher%E6%8C%87%E6%A0%87%E5%91%BD%E5%90%8DOpsWiki%3AWatcher%E6%8C%87%E6%A0%87%E5%91%BD%E5%90%8D)

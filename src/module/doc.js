@@ -4,8 +4,8 @@
  * @title AgentK documentation generator
  */
 
-import * as file from 'file.js';
-import {md5} from 'crypto.js';
+import * as file from 'file';
+import {md5} from 'crypto';
 
 const esprima = require('../esprima.js'),
     Syntax = esprima.Syntax,

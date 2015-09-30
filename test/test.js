@@ -1,5 +1,5 @@
-import * as math from 'module/math.js';
-import getDay from 'module/day.js';
+import * as math from 'module/math';
+import getDay from 'module/day';
 
 const assert = require('assert'), assertEqual = assert.strictEqual;
 

@@ -1,6 +1,6 @@
-import * as http from '../src/module/http.js';
-import * as crypto from '../src/module/crypto.js';
-import * as file from '../src/module/file.js';
+import * as http from '../src/module/http';
+import * as crypto from '../src/module/crypto';
+import * as file from '../src/module/file';
 
 const mimeTypes = {
     'htm': 'text/html', 'html': 'text/html',

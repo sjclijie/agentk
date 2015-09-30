@@ -1,4 +1,4 @@
-import * as http from '../../src/module/http.js';
+import * as http from '../../src/module/http';
 if (process.argv[2] === 'load') { // child
     setTimeout(function () {
         "use strict";

@@ -1,4 +1,4 @@
-import * as http from 'http.js';
+import * as http from 'http';
 
 let passed = 0, total = 0, ms = 0;
 

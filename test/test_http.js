@@ -1,4 +1,4 @@
-import {Headers, Body} from '../src/module/http.js';
+import {Headers, Body} from '../src/module/http';
 
 
 const assert = require('assert'), assertEqual = assert.strictEqual;

@@ -1,5 +1,5 @@
-import route from '../src/route.js';
-import {read} from '../src/module/file.js';
+import route from '../src/route';
+import {read} from '../src/module/file';
 
 let it = new IntegrationTest('route', route);
 const assert = require('assert'),

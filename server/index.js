@@ -18,10 +18,10 @@
  * @title module server
  */
 
-import * as http from '../src/module/http.js';
-import * as file from '../src/module/file.js';
-import {md5} from '../src/module/crypto.js';
-import * as watcher from '../src/module/q_watcher.js';
+import * as http from '../src/module/http';
+import * as file from '../src/module/file';
+import {md5} from '../src/module/crypto';
+import * as watcher from '../src/module/q_watcher';
 
 const storage = manifest.config.storage;
 if (storage.name == 'aliyun_oss') {

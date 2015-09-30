@@ -1,8 +1,8 @@
 "use strict";
 
-import * as http from '../src/module/http.js';
-import {read, exists} from '../src/module/file.js';
-import {md5} from '../src/module/crypto.js';
+import * as http from '../src/module/http';
+import {read, exists} from '../src/module/file';
+import {md5} from '../src/module/crypto';
 
 export default function (args) {
     let host = process.env.MODULE_SERVER_HOST;
