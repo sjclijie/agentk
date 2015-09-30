@@ -101,32 +101,30 @@ function sendAll() {
     co.run(function () {
         let allResults = channel.query('watcher');
         if (peers) {
-            allResults = Array.prototype.concat.apply(allResults, co.yield(Promise.all(peers.map(function (peer) {
-                return new Promise(function (resolve) {
-                    ohttp.request({
-                        method: 'GET',
-                        path: '/',
-                        host: peer,
-                        port: peerPort,
-                        headers: {
-                            'Connection': 'close'
-                        }
-                    }, function (tres) {
-                        let str = '';
-                        tres.on('data', function (buf) {
-                            str += buf;
-                        }).on('end', function () {
-                            resolve(JSON.parse(str));
-                        }).on('error', function (err) {
-                            console.error(err.stack);
-                            resolve(null);
-                        });
-                    }).on('error', function (err) { // cannot contact peer
+            allResults = Array.prototype.concat.apply(allResults, co.yield(Promise.all(peers.map(peer => new Promise(function (resolve) {
+                ohttp.request({
+                    method: 'GET',
+                    path: '/',
+                    host: peer,
+                    port: peerPort,
+                    headers: {
+                        'Connection': 'close'
+                    }
+                }, function (tres) {
+                    let str = '';
+                    tres.on('data', function (buf) {
+                        str += buf;
+                    }).on('end', function () {
+                        resolve(JSON.parse(str));
+                    }).on('error', function (err) {
                         console.error(err.stack);
                         resolve(null);
-                    }).end();
-                });
-            }))));
+                    });
+                }).on('error', function (err) { // cannot contact peer
+                    console.error(err.stack);
+                    resolve(null);
+                }).end();
+            })))));
         }
 
         //console.log('all results', allResults);

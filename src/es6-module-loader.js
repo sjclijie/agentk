@@ -17,14 +17,19 @@ try {
 } catch (e) {
 }
 
-let handleTemplate = false;
+let handleTemplate = false,
+    handleClass = false;
 
 try {
     (0, eval)('``');
 } catch (e) {
     handleTemplate = true;
 }
-
+try {
+    (0, eval)('(class{})');
+} catch (e) {
+    handleClass = true;
+}
 const System = global.System || (global.System = {});
 
 const loadProgress = Symbol('loadProgress'),
@@ -450,22 +455,25 @@ function handleScope(body, locals, replace, insert) {
                 }
                 break;
             case Syntax.ClassDeclaration:
-            {
-                let body = stmt.body.body;
-                let className = body.className = stmt.id ? stmt.id.name : 'constructor';
-                body.forEach(handleStatement);
-                replace({
-                    range: [stmt.range[0], stmt.body.range[0] + 1]
-                }, (stmt.id ? 'let ' + className + ' = ' : '') + 'function (super_proto) {' +
-                    (body.has_constructor ? 'let ' + className + ';' : 'function ' + className + '() {}') +
-                    'const proto = {__proto__: super_proto};');
-                replace({
-                    range: [stmt.body.range[1] - 1, stmt.range[1]]
-                }, className + '.prototype = proto; return ' + className + '}(' + (stmt.superClass ? stmt.superClass.name : 'Object') + '.prototype);');
-            }
+                if (handleClass) {
+                    let body = stmt.body.body;
+                    let className = body.className = stmt.id ? stmt.id.name : 'constructor';
+                    body.forEach(handleStatement);
+                    replace({
+                        range: [stmt.range[0], stmt.body.range[0] + 1]
+                    }, (stmt.id ? 'let ' + className + ' = ' : '') + 'function (super_proto) {' +
+                        (body.has_constructor ? 'let ' + className + ';' : 'function ' + className + '() {}') +
+                        'const proto = {__proto__: super_proto};');
+                    replace({
+                        range: [stmt.body.range[1] - 1, stmt.range[1]]
+                    }, className + '.prototype = proto; return ' + className + '}(' + (stmt.superClass ? stmt.superClass.name : 'Object') + '.prototype);');
+                } else {
+                    stmt.body.body.forEach(handleStatement);
+                }
                 break;
             case Syntax.MethodDefinition:
-                if (stmt.kind === 'constructor') {
+                if (!handleClass) { // do nothing
+                } else if (stmt.kind === 'constructor') {
                     replace(stmt.key, 'proto.constructor = ' + arguments[2].className + ' = function ' + arguments[2].className);
                     insert(stmt.range[1], ';');
                     arguments[2].has_constructor = true;
@@ -491,8 +499,11 @@ function handleScope(body, locals, replace, insert) {
                             range: [stmt.range[0], stmt.key.range[1]]
                         }, receiver + '.' + stmt.key.name + ' = function');
                     } else {
-                        insert(stmt.range[0] - 1, receiver);
-                        insert(stmt.value.range[0], ' = function');
+                        replace({
+                            range: [stmt.range[0], stmt.key.range[0]]
+                        }, receiver + '[');
+                        //insert(stmt.range[0] - 1, receiver);
+                        insert(stmt.value.range[0], '] = function');
                     }
                     insert(stmt.range[1], ';');
                 }
@@ -580,7 +591,11 @@ function handleScope(body, locals, replace, insert) {
                 break;
             case Syntax.ObjectExpression:
                 for (let prop of expr.properties) {
-                    if (prop.computed) {
+                    if (prop.shorthand) {
+                        insert(prop.range[1], ':' + prop.value.name)
+                    } else if (prop.method) {
+                        insert(prop.key.range[1], ': function')
+                    } else if (prop.computed) {
                         handleExpr(prop.key);
                     }
                     handleExpr(prop.value);

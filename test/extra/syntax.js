@@ -1,5 +1,23 @@
+var assert = require('assert');
+
 //// arrow functions
-console.log([1, 2, 3, 4].map(x => x * x));
+assert.deepEqual([1, 2, 3, 4].map(x => x * x), [1, 4, 9, 16]);
+
+//// export all
+export * from '../module/math.js';
+assert.strictEqual(module.abs(-1234), 1234);
+assert.strictEqual(module[moduleDefault], 'math');
+
+
+//// object properties
+let obj = {
+    assert, test() {
+        return 1234
+    }
+};
+
+assert.strictEqual(obj.assert, assert);
+assert.strictEqual(obj.test(), 1234);
 
 //// Testing classes
 export class Test {
@@ -29,11 +47,16 @@ export class Test {
         console.log('bar called with', this);
     }
 
+    static ["baz"]() {
+        return "baz"
+    }
+
 
     [Symbol.iterator]() {
 
     }
 }
+
 
 export default class MyTest extends Test {
     constructor(a) {
@@ -54,3 +77,6 @@ a.foo = 0;
 
 
 Test.bar();
+assert.strictEqual(Test.baz(), "baz");
+export {a as b};
+export {abs} from '../module/math.js';
