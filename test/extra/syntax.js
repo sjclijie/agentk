@@ -13,6 +13,15 @@ let obj = {
 assert.strictEqual(obj.assert, assert);
 assert.strictEqual(obj.test(), 1234);
 
+//// Rest arguments
+function test(a, b, ...c) {
+    return c
+}
+
+assert.deepEqual(test(), []);
+assert.deepEqual(test(1, 2, 3), [3]);
+assert.deepEqual(((a, b, ...c) => c)(1, 2, 3), [3]);
+
 //// Testing classes
 export class Test {
     constructor() {
@@ -46,6 +55,7 @@ export class Test {
     }
 
 
+
     [Symbol.iterator]() {
 
     }
@@ -62,6 +72,10 @@ export default class MyTest extends Test {
         super.test();
         super.hello('foobar');
     }
+
+    get xxx() {
+        return super.XXX
+    }
 }
 
 let a = new MyTest('abc');
@@ -69,6 +83,9 @@ a.foobar();
 void a.foo;
 a.foo = 0;
 
+Test.prototype.XXX = 123;
+assert.strictEqual(a.xxx, 123);
 
 Test.bar();
 assert.strictEqual(Test.baz(), "baz");
+

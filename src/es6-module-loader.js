@@ -18,18 +18,15 @@ try {
 }
 
 let handleTemplate = false,
-    handleClass = false;
+    handleClass = false,
+    handleShorthand = false,
+    handleRest = false;
 
-try {
-    (0, eval)('``');
-} catch (e) {
-    handleTemplate = true;
-}
-try {
-    (0, eval)('(class{})');
-} catch (e) {
-    handleClass = true;
-}
+try {(0, eval)('``');} catch (e) {handleTemplate = true;}
+try {(0, eval)('(class{})');} catch (e) {handleClass = true;}
+try {(0, eval)('({NaN})');} catch (e) {handleShorthand = true;}
+try {(0, eval)('(function(...a){})');} catch (e) {handleRest = true;}
+
 const System = global.System || (global.System = {});
 
 const loadProgress = Symbol('loadProgress'),
@@ -145,7 +142,7 @@ System.module = function (source, option) {
     } else {
         result = compile(source, option);
     }
-    //console.log(result);
+    console.log(result);
     let ctor = vm.runInThisContext(result, option);
     // console.log(option, result, ctor);
 
@@ -595,9 +592,9 @@ function handleScope(body, locals, replace, insert) {
             case Syntax.ObjectExpression:
                 for (let prop of expr.properties) {
                     if (prop.shorthand) {
-                        insert(prop.range[1], ':' + prop.value.name)
+                        handleShorthand && insert(prop.range[1], ':' + prop.value.name)
                     } else if (prop.method) {
-                        insert(prop.key.range[1], ': function')
+                        handleShorthand && insert(prop.key.range[1], ': function')
                     } else if (prop.computed) {
                         handleExpr(prop.key);
                     }
@@ -727,8 +724,30 @@ function handleScope(body, locals, replace, insert) {
             scope = locals;
         }
         scope = {__proto__: scope};
-        for (let param of expr.params) {
-            scope[param.name] = VARIABLE_TYPE;
+        let params = expr.params, paramLen = params.length;
+        if(paramLen) {
+            for (let param of params) {
+                scope[param.name] = VARIABLE_TYPE;
+            }
+            if(handleRest) {
+                let lastParam = params[paramLen - 1];
+                if(lastParam.type === Syntax.RestElement) {
+                    console.log(lastParam);
+                    if(paramLen === 1) {
+                        replace(lastParam, '')
+                    } else {
+                        replace({
+                            range: [params[paramLen - 2].range[1], lastParam.range[1]]
+                        }, '')
+                    }
+                    if(expr.body.type === Syntax.BlockStatement) {
+                        insert(expr.body.range[0] + 1, 'var ' + lastParam.argument.name + ' = Array.prototype.slice.call(arguments, ' + (paramLen - 1) + ');');
+                    } else {
+                        insert(expr.body.range[0], '{var ' + lastParam.argument.name + ' = Array.prototype.slice.call(arguments, ' + (paramLen - 1) + '); return (');
+                        insert(expr.body.range[1], ')}');
+                    }
+                }
+            }
         }
         if (expr.body.type === Syntax.BlockStatement) {
             handleScope(expr.body, scope, replace, insert);
