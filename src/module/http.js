@@ -550,7 +550,7 @@ export function listen(port, cb, host, backlog) {
         Object.defineProperties(req, reqGetters);
 
         co_run(resolver, req).then(function (resp) { // succ
-            if (!resp) return res.end();
+            if (!resp) return response.end();
             if (!(resp instanceof Response)) {
                 throw new Error('illegal response object');
             }
