@@ -142,7 +142,7 @@ System.module = function (source, option) {
     } else {
         result = compile(source, option);
     }
-    console.log(result);
+    //console.log(result);
     let ctor = vm.runInThisContext(result, option);
     // console.log(option, result, ctor);
 
