@@ -473,6 +473,20 @@ const reqGetters = {
             parseUrl(this);
             return this.query;
         }
+    }, cookies: {
+        configurable: true,
+        get: function () {
+            let cookie = this.headers.get('cookie'),
+                cookies = {};
+            if (cookie) {
+                let reg = /(\w+)=(.*?)(?:; |$)/g, m;
+                while (m = reg.exec(cookie)) {
+                    cookies[m[1]] = decodeURIComponent(m[2]);
+                }
+            }
+            Object.defineProperty(this, 'cookies', {value: cookies});
+            return cookies;
+        }
     }
 };
 
@@ -498,6 +512,7 @@ function groupHeaders(obj) {
  *   - req.pathname `string` request's pathname, could be overwritten by `Router.prefix` method
  *   - req.search `string` search string, e.g. `?foo=bar`
  *   - req.query `object` key-value map of the query string
+ *   - req.cookies `object` key-value map of the request cookies
  *
  * @example
  *     http.listen(8080, function(req) {
@@ -679,7 +694,6 @@ export function buildQuery(obj) {
 export function parseQuery(query) {
     return oquerystring.parse(query);
 }
-
 
 function parseUrl(req) {
     let url = ourl.parse(req.originalUrl, true);

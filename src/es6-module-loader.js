@@ -22,10 +22,26 @@ let handleTemplate = false,
     handleShorthand = false,
     handleRest = false;
 
-try {(0, eval)('``');} catch (e) {handleTemplate = true;}
-try {(0, eval)('(class{})');} catch (e) {handleClass = true;}
-try {(0, eval)('({NaN})');} catch (e) {handleShorthand = true;}
-try {(0, eval)('(function(...a){})');} catch (e) {handleRest = true;}
+try {
+    (0, eval)('``');
+} catch (e) {
+    handleTemplate = true;
+}
+try {
+    (0, eval)('(class{})');
+} catch (e) {
+    handleClass = true;
+}
+try {
+    (0, eval)('({NaN})');
+} catch (e) {
+    handleShorthand = true;
+}
+try {
+    (0, eval)('(function(...a){})');
+} catch (e) {
+    handleRest = true;
+}
 
 const System = global.System || (global.System = {});
 
@@ -39,13 +55,14 @@ const loadProgress = Symbol('loadProgress'),
  */
 function include(name, __dirname) {
     if (name in definedModules) return definedModules[name];
+
+    if (!/\.(\w+)$/.test(name)) {
+        name += '.js';
+    }
     if (__dirname) {
         name = path.resolve(__dirname, name);
 
         if (name in definedModules) return definedModules[name];
-    }
-    if (!/\.(\w+)$/.test(name)) {
-        name += '.js';
     }
 
     if (fs.existsSync(name)) {
@@ -725,22 +742,22 @@ function handleScope(body, locals, replace, insert) {
         }
         scope = {__proto__: scope};
         let params = expr.params, paramLen = params.length;
-        if(paramLen) {
+        if (paramLen) {
             for (let param of params) {
                 scope[param.name] = VARIABLE_TYPE;
             }
-            if(handleRest) {
+            if (handleRest) {
                 let lastParam = params[paramLen - 1];
-                if(lastParam.type === Syntax.RestElement) {
+                if (lastParam.type === Syntax.RestElement) {
                     console.log(lastParam);
-                    if(paramLen === 1) {
+                    if (paramLen === 1) {
                         replace(lastParam, '')
                     } else {
                         replace({
                             range: [params[paramLen - 2].range[1], lastParam.range[1]]
                         }, '')
                     }
-                    if(expr.body.type === Syntax.BlockStatement) {
+                    if (expr.body.type === Syntax.BlockStatement) {
                         insert(expr.body.range[0] + 1, 'var ' + lastParam.argument.name + ' = Array.prototype.slice.call(arguments, ' + (paramLen - 1) + ');');
                     } else {
                         insert(expr.body.range[0], '{var ' + lastParam.argument.name + ' = Array.prototype.slice.call(arguments, ' + (paramLen - 1) + '); return (');
