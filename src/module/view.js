@@ -44,13 +44,20 @@ export let module_loader = function (name) {
 };
 
 /**
+ * Default mime type
+ *
+ * @type {string}
+ */
+export let defaultMimeType = 'text/html';
+
+/**
  * render a template file into response content, returns a `HttpResponse`.
  * User should specify content type if needed.
  *
  * @param {string} name template name, with or without extension
  * @param {object} locals local bindings
- * @param {string} mimeType custom mimeType, default to 'text/html'
- * @returns {HttpResponse}
+ * @param {string} [mimeType] custom mimeType, default to 'text/html'
+ * @returns {http::Response}
  */
 export function render(name, locals, mimeType) {
     let ext = opath.extname(name),
@@ -78,7 +85,7 @@ export function render(name, locals, mimeType) {
     }
     return new Response(co.sync(engine, filename, locals), {
         headers: {
-            'Content-Type': mimeType || 'text/html'
+            'Content-Type': mimeType || defaultMimeType
         }
     });
 }
