@@ -335,6 +335,99 @@ export class Request extends Body {
     get headers() {
         return this._headers
     }
+
+    //noinspection InfiniteRecursionJS
+    /**
+     * @returns {String} request scheme, like `"http:"`
+     */
+    get scheme() {
+        parseUrl(this);
+        return this.scheme;
+    }
+
+    //noinspection InfiniteRecursionJS
+    /**
+     * @returns {String} request host, like `"www.example.com:80"`
+     */
+    get host() {
+        parseUrl(this);
+        return this.host;
+    }
+
+    //noinspection InfiniteRecursionJS
+    /**
+     * @returns {String} request hostname, like `"www.example.com"`
+     */
+    get hostname() {
+        parseUrl(this);
+        return this.host;
+    }
+
+    //noinspection InfiniteRecursionJS
+    /**
+     * @returns {String} request port, like `"80"`
+     */
+    get port() {
+        parseUrl(this);
+        return this.port;
+    }
+
+    //noinspection InfiniteRecursionJS
+    /**
+     * @returns {String} request pathname, like `"/test"`
+     */
+    get pathname() {
+        parseUrl(this);
+        return this.pathname
+    }
+
+    //noinspection InfiniteRecursionJS
+    /**
+     *
+     * @param {String} pathname
+     */
+    set pathname(pathname) {
+        Object.defineProperty(this, 'pathname', {
+            writable: true,
+            value: pathname
+        })
+    }
+
+    //noinspection InfiniteRecursionJS
+    /**
+     * @returns {String} request search string, like `"?foo=bar"`
+     */
+    get search() {
+        parseUrl(this);
+        return this.search
+    }
+
+    //noinspection InfiniteRecursionJS
+    /**
+     * @returns {object} request query key-value map, like `{foo:"bar"}`
+     */
+    get query() {
+        parseUrl(this);
+        return this.query
+    }
+
+    //noinspection InfiniteRecursionJS
+    /**
+     * @returns {object} request cookies
+     */
+    get cookies() {
+        let cookie = this._headers.get('cookie'),
+            cookies = {};
+        if (cookie) {
+            let reg = /(\w+)=(.*?)(?:; |$)/g, m;
+            while (m = reg.exec(cookie)) {
+                cookies[m[1]] = decodeURIComponent(m[2]);
+            }
+        }
+        Object.defineProperty(this, 'cookies', {value: cookies});
+        return cookies;
+    }
+
 }
 
 export class Response extends Body {
@@ -453,43 +546,6 @@ export class Response extends Body {
  */
 export const agent = new ohttp.Agent();
 
-
-const reqGetters = {
-    pathname: {
-        configurable: true,
-        get: function () {
-            parseUrl(this);
-            return this.pathname;
-        }
-    }, search: {
-        configurable: true,
-        get: function () {
-            parseUrl(this);
-            return this.search;
-        }
-    }, query: {
-        configurable: true,
-        get: function () {
-            parseUrl(this);
-            return this.query;
-        }
-    }, cookies: {
-        configurable: true,
-        get: function () {
-            let cookie = this.headers.get('cookie'),
-                cookies = {};
-            if (cookie) {
-                let reg = /(\w+)=(.*?)(?:; |$)/g, m;
-                while (m = reg.exec(cookie)) {
-                    cookies[m[1]] = decodeURIComponent(m[2]);
-                }
-            }
-            Object.defineProperty(this, 'cookies', {value: cookies});
-            return cookies;
-        }
-    }
-};
-
 function groupHeaders(obj) {
     const headers = Object.create(null),
         entries = obj._headers._entries;
@@ -509,10 +565,6 @@ function groupHeaders(obj) {
  *   - req.request [`http.IncomingMessage`](https://nodejs.org/api/http.html#http_http_incomingmessage) original request object
  *   - req.response [`http.ServerResponse`](https://nodejs.org/api/http.html#http_class_http_serverresponse) original response object
  *   - req.originalUrl `string` request's original url, should not be overwritten
- *   - req.pathname `string` request's pathname, could be overwritten by `Router.prefix` method
- *   - req.search `string` search string, e.g. `?foo=bar`
- *   - req.query `object` key-value map of the query string
- *   - req.cookies `object` key-value map of the request cookies
  *
  * @example
  *     http.listen(8080, function(req) {
@@ -547,10 +599,13 @@ export function listen(port, cb, host, backlog) {
 
         // init req object
         req.originalUrl = request.url;
-        Object.defineProperties(req, reqGetters);
 
         co_run(resolver, req).then(function (resp) { // succ
-            if (!resp) return response.end();
+            if (!resp) {
+                response.writeHead(404);
+                response.end();
+                return
+            }
             if (!(resp instanceof Response)) {
                 throw new Error('illegal response object');
             }
@@ -698,14 +753,20 @@ export function parseQuery(query) {
 function parseUrl(req) {
     let url = ourl.parse(req.originalUrl, true);
     Object.defineProperties(req, {
-        pathname: {
+        scheme: {
+            value: url.protocol
+        }, host: {
+            value: url.host
+        }, hostname: {
+            value: url.hostname
+        }, port: {
+            value: url.port
+        }, pathname: {
             writable: true,
             value: url.pathname
-        },
-        search: {
+        }, search: {
             value: url.search
-        },
-        query: {
+        }, query: {
             value: url.query
         }
     })

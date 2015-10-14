@@ -117,7 +117,7 @@ test_headers.test('forEach', function () {
         ['b', '1']
     ];
 
-    headers.forEach(function (val, name, target) {
+    headers.forEach((val, name, target) => {
         let part = expected.shift();
         assertEqual(arguments.length, 3);
         assertEqual(val, part[1]);

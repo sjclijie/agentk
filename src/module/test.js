@@ -82,9 +82,6 @@ export class IntegrationTest extends Test {
         let req = new http.Request(url, options);
         req.originalUrl = options.url = parsed_url.path;
         req.request = options;
-        req.pathname = parsed_url.pathname;
-        req.query = parsed_url.query;
-        req.search = parsed_url.search;
 
         return this.handle.apply(req, [req]);
     }

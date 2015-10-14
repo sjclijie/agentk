@@ -4,11 +4,6 @@
  * @title Legacy support module
  */
 
-const emptyHandler = {
-    handle: Boolean
-};
-
-
 /**
  * Wrap an connect/express style middleware into AgentK route handler
  *
@@ -34,27 +29,10 @@ const emptyHandler = {
 export function middleware(cb) {
     return function (req) {
         return co.promise(function (resolve, reject) {
-            let res = req.response;
-            initResponse(res, resolve);
-            cb(req, res, function (err) {
+            cb(req.request, req.response, function (err) {
                 if (err) reject(err);
                 else resolve();
             })
         })
-    }
-}
-
-function initResponse(res, resolve) {
-    if (res.hasOwnProperty('_resolvers')) {
-        res._resolvers.push(resolve);
-    } else {
-        const resolvers = res._resolvers = [resolve];
-        const $end = res.end;
-        res.end = function () {
-            $end.apply(res, arguments);
-            for (let i = 0, L = resolvers.length; i < L; i++) {
-                resolvers[i](emptyHandler);
-            }
-        }
     }
 }

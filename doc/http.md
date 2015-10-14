@@ -1,4 +1,4 @@
-<!-- @rev 710ec46280dccc71ce982b9bc3f9a3c6 20ae7b -->
+<!-- @rev d610eec88aef3bb3aef619fdd3338d2d 20ae7b -->
 # http
 
 ----
@@ -415,6 +415,133 @@ get Request::headers()
      
 
 ------------------------------------------------------------------------
+### scheme()
+
+```js
+get Request::scheme() 
+```
+
+
+
+**Returns**
+
+> {String} request scheme, like `"http:"`
+     
+
+------------------------------------------------------------------------
+### host()
+
+```js
+get Request::host() 
+```
+
+
+
+**Returns**
+
+> {String} request host, like `"www.example.com:80"`
+     
+
+------------------------------------------------------------------------
+### hostname()
+
+```js
+get Request::hostname() 
+```
+
+
+
+**Returns**
+
+> {String} request hostname, like `"www.example.com"`
+     
+
+------------------------------------------------------------------------
+### port()
+
+```js
+get Request::port() 
+```
+
+
+
+**Returns**
+
+> {String} request port, like `"80"`
+     
+
+------------------------------------------------------------------------
+### pathname()
+
+```js
+get Request::pathname() 
+```
+
+
+
+**Returns**
+
+> {String} request pathname, like `"/test"`
+     
+
+------------------------------------------------------------------------
+### pathname()
+
+```js
+set Request::pathname(pathname) 
+```
+
+
+
+
+**Params**
+
+  - pathname `String`
+
+
+------------------------------------------------------------------------
+### search()
+
+```js
+get Request::search() 
+```
+
+
+
+**Returns**
+
+> {String} request search string, like `"?foo=bar"`
+     
+
+------------------------------------------------------------------------
+### query()
+
+```js
+get Request::query() 
+```
+
+
+
+**Returns**
+
+> {object} request query key-value map, like `{foo:"bar"}`
+     
+
+------------------------------------------------------------------------
+### cookies()
+
+```js
+get Request::cookies() 
+```
+
+
+
+**Returns**
+
+> {object} request cookies
+     
+
+------------------------------------------------------------------------
 ### Response()
 
 ```js
@@ -581,9 +708,6 @@ function listen(port, cb, host, backlog)
    - req.request [`http.IncomingMessage`](https://nodejs.org/api/http.html#http_http_incomingmessage) original request object
    - req.response [`http.ServerResponse`](https://nodejs.org/api/http.html#http_class_http_serverresponse) original response object
    - req.originalUrl `string` request's original url, should not be overwritten
-   - req.pathname `string` request's pathname, could be overwritten by `Router.prefix` method
-   - req.search `string` search string, e.g. `?foo=bar`
-   - req.query `object` key-value map of the query string
 
 
 **Params**
@@ -612,7 +736,7 @@ function fetch(url, options)
 
  Compose a http request.
  `fetch` has two prototypes:
- 
+
    - function fetch(request:[Request](#class-Request))
    - function fetch(url:string, options:object)
 

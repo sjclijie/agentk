@@ -101,30 +101,11 @@ function sendAll() {
     co.run(function () {
         let allResults = channel.query('watcher');
         if (peers) {
-            allResults = Array.prototype.concat.apply(allResults, co.yield(Promise.all(peers.map(peer => new Promise(function (resolve) {
-                ohttp.request({
-                    method: 'GET',
-                    path: '/',
-                    host: peer,
-                    port: peerPort,
-                    headers: {
-                        'Connection': 'close'
-                    }
-                }, function (tres) {
-                    let str = '';
-                    tres.on('data', function (buf) {
-                        str += buf;
-                    }).on('end', function () {
-                        resolve(JSON.parse(str));
-                    }).on('error', function (err) {
-                        console.error(err.stack);
-                        resolve(null);
-                    });
-                }).on('error', function (err) { // cannot contact peer
-                    console.error(err.stack);
-                    resolve(null);
-                }).end();
-            })))));
+            let results = co.yield(peers.map(peer => http.fetch(`http://${peer}:${peerPort}/`).then(
+                    response => response.json(),
+                    err => null
+            )));
+            allResults = Array.prototype.concat.apply(allResults, results);
         }
 
         //console.log('all results', allResults);

@@ -119,8 +119,8 @@ methods.forEach(function (method) {var comment = method.comment; %>
         </dl>
         <% } %>
         <% if(comment.returns) { var m = /^(?:\{(.+)\}\s*)?(.*)/.exec(comment.returns)%>
-        <h4>Returns</h4>
-        <p style="margin-left: 1em"><% if(m[1]) {%><code><%- parseTypename(m[1])%></code><%}%><%- m[2]%></p>
+        <h4>Returns<% if(m[1]) {%><code><%- parseTypename(m[1])%></code><%}%></h4>
+        <%- parseMarkup(m[2])%>
         <%}%>
     </dd>
 <%})%>

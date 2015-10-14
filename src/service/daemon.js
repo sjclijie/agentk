@@ -14,10 +14,10 @@ if (file.exists(listen_path)) file.rm(listen_path);
 const programs = {};
 
 const actions = {
-    alive: function () {
+    alive() {
         return true
     },
-    exit: function () {
+    exit() {
         server.close();
         if (!win32) try {
             file.rm(listen_path)
@@ -27,13 +27,13 @@ const actions = {
         setTimeout(process.exit, 200);
         return true
     },
-    start: function (dir) {
+    start(dir) {
         console.log('start', dir);
         if (dir in programs) throw new Error(`program '${dir}' already started`);
         return startProgram(dir)
     },
-    status: function (dirs) {
-        return (dirs || Object.keys(programs)).map(function (dir) {
+    status(dirs) {
+        return (dirs || Object.keys(programs)).map(dir => {
             let program = getProgram(dir);
             return {
                 path: dir,
@@ -46,7 +46,7 @@ const actions = {
             }
         })
     },
-    stop: function (dir) {
+    stop(dir) {
         let program = getProgram(dir);
         program.stopped = true;
         delete programs[dir];
@@ -64,7 +64,7 @@ const actions = {
 
         return true;
     },
-    restart: function (dir) {
+    restart(dir) {
         let program = getProgram(dir);
 
         for (let worker of program.workers) {
@@ -77,7 +77,7 @@ const actions = {
         }
         return true
     },
-    reload: function (dir) {
+    reload(dir) {
         // TODO reload support
         return actions.restart(dir)
     }
@@ -132,7 +132,7 @@ function resumeJobs() {
             console.log('resuming ' + program.dir);
             try {
                 startProgram(program.dir);
-            } catch(e) {
+            } catch (e) {
                 console.error('program %s resume failed: %s', program.dir, e.message);
             }
         }
@@ -148,7 +148,7 @@ function getProgram(dir) {
 }
 
 function updateLog() {
-    let arr = Object.keys(programs).map(function (dir) {
+    let arr = Object.keys(programs).map(dir => {
         let program = programs[dir];
         return {
             dir: dir,
@@ -160,7 +160,7 @@ function updateLog() {
 }
 
 function triggerAction(program, action) {
-    program.workers.forEach(function (worker) {
+    program.workers.forEach(worker => {
         worker.send({action: 'trigger', cmd: action})
     });
     return true;
@@ -211,9 +211,9 @@ function startProgram(dir) {
     let program = programs[dir] = {
         stdout: option.stdout || null,
         stderr: option.stderr || null,
-        workers: workers,
+        workers,
         startup: Date.now(),
-        restarted: restarted,
+        restarted,
         reloaded: 0,
         lastReload: 0,
         lastRestart: 0,
