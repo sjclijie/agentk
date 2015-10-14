@@ -1,4 +1,4 @@
-import * as gbk from '../src/module/gbk.js';
+import * as gbk from '../src/module/gbk';
 
 const assert = require('assert'), assertEqual = assert.strictEqual;
 let test = new Test("gbk");

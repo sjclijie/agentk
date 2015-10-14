@@ -3,8 +3,8 @@
  *
  */
 
-import {listen} from 'module/http.js';
-import route from 'route.js';
+import {listen} from 'module/http';
+import route from 'route';
 
 let server = listen(manifest.config.port, route);
 

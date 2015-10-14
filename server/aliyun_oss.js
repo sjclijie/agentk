@@ -1,6 +1,6 @@
-import * as http from '../src/module/http.js';
-import * as crypto from '../src/module/crypto.js';
-import * as file from '../src/module/file.js';
+import * as http from '../src/module/http';
+import * as crypto from '../src/module/crypto';
+import * as file from '../src/module/file';
 
 const mimeTypes = {
     'htm': 'text/html', 'html': 'text/html',
@@ -40,12 +40,11 @@ export function request(conf, method, object, body, headers) {
         let signedStr = `${method}\n${md5}\n${mimeType}\n${date}\n${signedHeaders}/${conf.bucket}${object}`;
         newHeaders.Authorization = "OSS " + conf.key.ak + ":" + crypto.hmac_sha1(conf.key.secret, signedStr, 'base64');
     }
-    return http.request({
+    return co.yield('http://' + conf.host + object, http.fetch({
         method: method,
-        host: conf.host,
-        path: object,
-        headers: newHeaders
-    }, body);
+        headers: newHeaders,
+        body: body,
+    }));
 }
 
 export function put(conf, buf, object, headers) {

@@ -1,6 +1,6 @@
-import * as http from '../module/http.js';
-import * as file from '../module/file.js';
-import * as child_process from '../module/child_process.js';
+import * as http from '../module/http';
+import * as file from '../module/file';
+import * as child_process from '../module/child_process';
 
 const path = require('path');
 
@@ -168,12 +168,12 @@ export function description() {
 
   ak service start
   ak service stop
-  ak service systemd_install [username]
-  ak service systemd_uninst  [username]
-  ak service upstart_install [username]
-  ak service upstart_uninst  [username]
-  ak service sysv_install    [username]
-  ak service sysv_uninst     [username]
+  ak service systemd_install [--user=<username>]
+  ak service systemd_uninst  [--user=<username>]
+  ak service upstart_install [--user=<username>]
+  ak service upstart_uninst  [--user=<username>]
+  ak service sysv_install    [--user=<username>]
+  ak service sysv_uninst     [--user=<username>]
 
 \x1b[36mDESCRIPTION\x1b[0m
 
@@ -186,8 +186,8 @@ export function description() {
     All running programs will be killed, and will be respawned when the service
     starts again
 
-\x1b[32;1m● \x1b[32mak service systemd_install [username]\x1b[0m: installs daemon service into operating
-    system's systemd scripts.
+\x1b[32;1m● \x1b[32mak service systemd_install\x1b[0m: installs daemon service into operating system's
+    systemd scripts.
     Systemd is a high performance service manager. You can run
         \x1b[36msudo systemctl --version\x1b[0m to see whether your system supports systemd.
     The daemon service will be automatically started when the computer finishes
@@ -196,32 +196,32 @@ export function description() {
     To make the installation to take effect immediately, run
         \x1b[36msudo systemctl start ak_[username].service\x1b[0m
 
-\x1b[32;1m● \x1b[32mak service systemd_uninst [username]\x1b[0m: removes the systemd service installation
+\x1b[32;1m● \x1b[32mak service systemd_uninst\x1b[0m: removes the systemd service installation
     \x1b[33mPLEASE DO\x1b[0m stop the service before it is uninstalled, run
         \x1b[36msudo systemctl status ak_[username].service\x1b[0m to check whether the service
     is running or stopped, and run
         \x1b[36msudo systemctl stop ak_[username].service\x1b[0m to stop the service.
 
-\x1b[32;1m● \x1b[32mak service upstart_install [username]\x1b[0m: like \x1b[36msystemd_install\x1b[0m, but uses upstart
-    to control the service.
+\x1b[32;1m● \x1b[32mak service upstart_install\x1b[0m: like \x1b[36msystemd_install\x1b[0m, but uses upstart to control
+    the service.
     Upstart is a event-driven service manager. You can run
         \x1b[36msudo initctl version\x1b[0m to see whether your system supports upstart.
     To make the installation to take effect immediately, run
         \x1b[36msudo initctl start ak_[username]\x1b[0m
 
-\x1b[32;1m● \x1b[32mak service upstart_uninst [username]\x1b[0m: removes the upstart service installation
+\x1b[32;1m● \x1b[32mak service upstart_uninst\x1b[0m: removes the upstart service installation
     \x1b[33mPLEASE DO\x1b[0m stop the service before it is uninstalled, run
         \x1b[36msudo initctl status ak_[username]\x1b[0m to check whether the service
     is running or stopped, and run
         \x1b[36msudo initctl stop ak_[username]\x1b[0m to stop the service.
 
-\x1b[32;1m● \x1b[32mak service sysv_install [username]\x1b[0m: like \x1b[36msystemd_install\x1b[0m, but uses sysvinit
-    to spawn and guard the daemon service. The sysvinit service manager is out
-    of date, if you don't know which to choose, please contact your system admin
+\x1b[32;1m● \x1b[32mak service sysv_install\x1b[0m: like \x1b[36msystemd_install\x1b[0m, but uses sysvinit to spawn and
+    guard the daemon service. The sysvinit service manager is out of date, if
+    you don't know which to choose, please contact your system admin
     To make the installation to take effect immediately, run
         \x1b[36msudo init q\x1b[0m
 
-\x1b[32;1m● \x1b[32mak service sysv_uninst [username]\x1b[0m: removes the sysvinit service installation.
+\x1b[32;1m● \x1b[32mak service sysv_uninst\x1b[0m: removes the sysvinit service installation.
     Run \x1b[36msudo init q\x1b[0m to make the uninstallation take effect.`);
 }
 
@@ -308,18 +308,16 @@ function callService(name, data) {
     }
     let options = {
         method: 'GET',
-        path: '/' + name,
         headers: headers
-    };
+    }, url;
     if (win32) {
-        options.host = '127.0.0.1';
-        options.port = 32761;
+        url = 'http://127.0.0.1:32761/?' + name
     } else {
-        options.socketPath = listen_path;
+        url = 'unix://' + listen_path + '?' + name 
     }
-    let resp = http.request(options);
+    let resp = co.yield(http.fetch(url, options));
 
-    return {code: resp.statusCode, msg: '' + http.read(resp)}
+    return {code: resp.status, msg: co.yield(resp.text())}
 }
 
 function tryCallService(name, data) {

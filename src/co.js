@@ -7,6 +7,10 @@ exports.Fiber = Fiber;
 exports.yield = function (result) {
     if (result instanceof Promise)
         return Fiber.yield(result);
+    if (result instanceof Array && result.length && result[0] instanceof Promise) {
+        return Fiber.yield(Promise.all(result))
+    }
+
     return result;
 };
 

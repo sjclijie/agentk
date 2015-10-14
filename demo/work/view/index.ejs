@@ -36,7 +36,7 @@
     line:</p>
 
 <pre>route.prefix('/static/', function (req) {
-    return response.file('static' + req.pathname);
+    return Response.file('static' + req.pathname);
 });
 </pre>
 

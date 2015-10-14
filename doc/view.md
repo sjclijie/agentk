@@ -1,4 +1,4 @@
-<!-- @rev ad65f7565e886c1e9fc32674b31ab503 20ae7b -->
+<!-- @rev 7ab77c489a7a8c3e961bf4bcacfc700c 20ae7b -->
 # view
 
 ----
@@ -54,6 +54,18 @@
 
 
 
+### defaultMimeType
+
+ Default mime type
+
+#### type
+{string}
+ 
+
+#### value
+`'text/html'`
+
+
 
 ## Methods
 
@@ -75,10 +87,10 @@ function render(name, locals, mimeType)
     <br>template name, with or without extension
   - locals `object`
     <br>local bindings
-  - mimeType `string`
+  - mimeType(optional) `string`
     <br>custom mimeType, default to 'text/html'
 
 **Returns**
 
-> {HttpResponse}
+> {http::Response}
  

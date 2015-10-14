@@ -1,5 +1,5 @@
-import * as response from '../../src/module/http_response.js';
+import {Response} from '../../src/module/http';
 
 export default function () {
-    return response.data('' + new Date().getDay())
+    return new Response('' + new Date().getDay())
 }

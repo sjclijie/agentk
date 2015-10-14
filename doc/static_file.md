@@ -1,4 +1,4 @@
-<!-- @rev e05aa578544c1071457f2651ffd78865 20ae7b -->
+<!-- @rev ac817f13cb29fbf46d34241286ad2942 20ae7b -->
 # static_file
 
 static file request handler
@@ -44,7 +44,8 @@ function staticFile(directory, option)
    - no_cache:`boolean` disable file cache, default to false
    - expires:`number` duration before expiration in ms, default to 0
    - cached:`number` file modification check iteration in ms, default to 3s
-   - gzip:`boolean` enable gzip, default to false
+   - gzip:`boolean` enable gzip, default to true
+   - gzip_min_len:`number` mininum length of file to be gzipped, default to 1K
 
 
 **Returns**

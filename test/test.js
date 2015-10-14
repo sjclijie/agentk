@@ -1,5 +1,5 @@
-import * as math from 'module/math.js';
-import getDay from 'module/day.js';
+import * as math from 'module/math';
+import getDay from 'module/day';
 
 const assert = require('assert'), assertEqual = assert.strictEqual;
 
@@ -16,5 +16,5 @@ test = new IntegrationTest('http handle', getDay);
 test.test('get', function () {
     let response = test.get('/');
     assertEqual(response.status, 200, 'bad response status');
-    assertEqual('' + response.body, '' + new Date().getDay(), 'bad response content');
+    assertEqual(co.yield(response.text()), '' + new Date().getDay(), 'bad response content');
 });

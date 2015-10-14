@@ -1,4 +1,4 @@
-import * as stream from '../src/module/stream.js';
+import * as stream from '../src/module/stream';
 
 const assert = require('assert'), assertEqual = assert.strictEqual;
 let test = new Test("stream");

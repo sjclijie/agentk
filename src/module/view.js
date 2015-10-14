@@ -1,5 +1,5 @@
-import * as response from 'http_response.js';
-import * as file from 'file.js';
+import {Response} from 'http';
+import * as file from 'file';
 
 const opath = require('path');
 
@@ -43,21 +43,12 @@ export let module_loader = function (name) {
     return require(name).__express
 };
 
-Object.defineProperty(engines, 'ejs', {
-    configurable: true,
-    get: function () {
-        let ejs;
-        try {
-            ejs = module_loader('ejs');
-        } catch (e) {
-            ejs = require('ejs').__express;
-        }
-        Object.defineProperty(this, 'ejs', {
-            value: ejs
-        });
-        return ejs;
-    }
-});
+/**
+ * Default mime type
+ *
+ * @type {string}
+ */
+export let defaultMimeType = 'text/html';
 
 /**
  * render a template file into response content, returns a `HttpResponse`.
@@ -65,8 +56,8 @@ Object.defineProperty(engines, 'ejs', {
  *
  * @param {string} name template name, with or without extension
  * @param {object} locals local bindings
- * @param {string} mimeType custom mimeType, default to 'text/html'
- * @returns {HttpResponse}
+ * @param {string} [mimeType] custom mimeType, default to 'text/html'
+ * @returns {http::Response}
  */
 export function render(name, locals, mimeType) {
     let ext = opath.extname(name),
@@ -92,6 +83,10 @@ export function render(name, locals, mimeType) {
     if (!file.exists(filename)) {
         throw new Error("template file not found: " + name);
     }
-    return response.data(co.sync(engine, filename, locals)).setHeader('Content-Type', mimeType || 'text/html');
+    return new Response(co.sync(engine, filename, locals), {
+        headers: {
+            'Content-Type': mimeType || defaultMimeType
+        }
+    });
 }
 

@@ -5,17 +5,20 @@ let fs = require('fs'),
     cp = require('child_process');
 
 if (fs.readdirSync('.').length) {
-    console.error('directory not empty, exiting...');
+    console.error('[FAIL] directory not empty, exiting...');
+    process.exit(1);
 }
 
 let dir = path.join(__dirname, '../demo');
 cp.execSync('cp -R ' + dir + '/* .', {
     stdio: 'inherit'
 });
-console.log('file copied');
+
+console.log('\n[OK] The project has been generated.');
+
 let dependencies = JSON.parse(fs.readFileSync('package.json', 'utf8')).dependencies;
 if (dependencies) {
-    console.log('This project requires some other packages, run `npm install .` to install the dependencies');
+    console.log(' * run `npm install .` to install the dependencies');
 }
-
-console.log('\nProject has been generated, run `ak run` and visit http://localhost:' + JSON.parse(fs.readFileSync('manifest.json')).config.port);
+console.log(' * run `ak run` and visit http://localhost:' + JSON.parse(fs.readFileSync('manifest.json')).config.port);
+console.log(' * run `ak test` to test the project');

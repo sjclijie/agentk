@@ -33,8 +33,10 @@
 <ul>
     <% consts.forEach(function(obj) {%><li>constant <a href="#<%- obj.name %>"><%- obj.name %></a><% if(obj.comment.type) { %>:<code><%- parseTypename(obj.comment.type) %></code><% } %></li><%})%>
     <% variables.forEach(function(obj) {%><li>variable <a href="#<%- obj.name %>"><%- obj.name %></a><% if(obj.comment.type) { %>:<code><%- parseTypename(obj.comment.type) %></code><% } %></li><%})%>
-    <% methods.forEach(function(method) {%><li><a href="#<%- method.name %>"><%- method.prototype %></a></li><%})%>
-    <% if(_default) {%><li>module default: <a href="#<%- _default.name %>"><%- _default.type %> <%- _default.name %></a></li><% } %>
+    <% methods.forEach(function(method) {%><li><a href="#<%- method.title %>"><%- method.prototype %></a><%
+        if (method.comment.hasOwnProperty('constructor')) { %> <b>constructor</b><%
+        } else if(method.static) { %><b>static</b><%} %></li><%})%>
+    <% if(_default) {%><li>module default: <a href="#<%- _default.title %>"><%- _default.type %> <%- _default.name %></a></li><% } %>
 </ul>
 
 <dl id="definitions">
@@ -80,16 +82,22 @@ variables.forEach(function(obj) {var comment = obj.comment; %>
     </dd>
 <% });
 methods.forEach(function (method) {var comment = method.comment; %>
-    <dt id="<%- method.name %>">
-        <div><%- method.name %>()</div>
-        <sub><%- comment.hasOwnProperty('constructor') ? 'class' : 'method'%></sub>
+    <dt id="<%- method.title %>">
+        <div><%- method.name %>()</div><sub><%- comment.hasOwnProperty('constructor') ? 'class'
+                    : comment.hasOwnProperty('getter') ? 'getter'
+                    : comment.hasOwnProperty('setter') ? 'setter'
+                    : method.static ? 'static method' : 'method' %></sub>
     </dt>
     <dd>
         <p class="proto"><%- method.prototype %>
-
         <% if(comment.description) {%><p class="desc">
             <%- parseMarkup(comment.description)%>
         </p><% } %>
+
+        <% if(comment.extends) { %>
+        <h4>Parent Class</h4>
+        <p><%- parseTypename(comment.extends.trim()) %></p>
+        <% }%>
 
         <% if(comment.example) { %>
         <h4>Example</h4>
@@ -99,7 +107,11 @@ methods.forEach(function (method) {var comment = method.comment; %>
         <% if(comment.param) {%>
         <h4>Parameters</h4>
         <dl>
-            <% comment.param.forEach(function(param){var m = /^(?:\{(.+)\}\s*)?(\[\w+\]|\w+)\s*([\s\S]*)/.exec(param); %>
+            <% comment.param.forEach(function(param){var m = /^(?:\{(.+)\}\s*)?(\[\w+\]|\w+)\s*([\s\S]*)/.exec(param);
+            if(!m) {
+                console.warn(method.name + ': bad param format: ', param);
+                return;
+            } %>
             <dt><%- m[2][0] === '[' ? '<sub>optional</sub>' + m[2].substr(1, m[2].length - 2)  : m[2] %><% if(m[1]) {%> <code><%- parseTypename(m[1])%></code><%}%></dt>
             <%if(m[3]) {%>
             <dd><%- parseMarkup(m[3])%></dd><%}
@@ -107,8 +119,8 @@ methods.forEach(function (method) {var comment = method.comment; %>
         </dl>
         <% } %>
         <% if(comment.returns) { var m = /^(?:\{(.+)\}\s*)?(.*)/.exec(comment.returns)%>
-        <h4>Returns</h4>
-        <p style="margin-left: 1em"><% if(m[1]) {%><code><%- parseTypename(m[1])%></code><%}%><%- m[2]%></p>
+        <h4>Returns<% if(m[1]) {%><code><%- parseTypename(m[1])%></code><%}%></h4>
+        <%- parseMarkup(m[2])%>
         <%}%>
     </dd>
 <%})%>

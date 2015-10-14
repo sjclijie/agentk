@@ -10,6 +10,11 @@ if (process.version < min_version) {
     throw new Error(exec + " runs on Node.js " + min_version + " or higher, please upgrade your installation and try again.");
 }
 
+if (process.env.SU) {
+    process.setuid(process.env.SU);
+    delete process.env.SU
+}
+
 const cp = require('child_process'),
     fs = require('fs'),
     path = require('path');
@@ -35,7 +40,19 @@ let colors = {
     'W': '7;1'
 };
 
-let cmd = process.argv[2];
+const args = process.argv.slice(2);
+
+const properties = process.properties = {};
+for (let i = args.length; i--;) {
+    let m = /^--([\w.\-]+)(?:=(.*))?/.exec(args[i]);
+    if (m) {
+        properties[m[1]] = m[2] || true;
+        args.splice(i, 1);
+    }
+}
+
+
+let cmd;
 
 
 function xtermEscape(str) {
@@ -63,13 +80,7 @@ function callService(cmd, options) {
 
 
 function commander(dir) {
-    if (dir === '--all') {
-        if (cmd === 'start') {
-            console.error(exec + ' start --all is not supported');
-            process.exit(-1);
-        }
-        cmd += 'All';
-    } else if (dir !== undefined) {
+    if (dir !== undefined) {
         if (!require('fs').statSync(dir).isDirectory()) {
             console.error(exec + ' ' + cmd + ' requires directory name as parameter');
             process.exit(-1);
@@ -86,7 +97,7 @@ let commands = {
         maxArgs: 1,
         "desc": "display usage of commands",
         func: function (subcmd) {
-            let cmd = process.argv[2];
+            let cmd = args[0];
             if (cmd === 'help' && arguments.length && subcmd in commands) { // help <cmd>
                 let command = commands[subcmd];
                 console.log(xtermEscape("$#Gk<usage>: $#Ck<" + exec + "> " + subcmd + " " + (command.args || "") + "\n"));
@@ -146,95 +157,64 @@ let commands = {
         "args": "[<program directory>]",
         "desc": "run the program located in the directory (or current directory, if none specified), guarded by the " +
         "service. If something bad happened, the program will be restarted. Outputs will be written to log files",
-        func: commander
+        func: commander,
+        completion: function () {
+            return process.env.COMP_POINT
+        }
     },
     "stop": {
         help: "stop program",
-        "args": "[<program directory> | $#Ck<--all>]",
+        "args": "[<program directory>]",
         maxArgs: 1,
-        "desc": "stop one or all programs started. All listening socket ports will be released",
+        "desc": "stop the program",
         func: commander,
         completion: completeRunningJobs
     },
     "restart": {
         help: "restart program",
-        "args": "[<program directory> | $#Ck<--all>]",
+        "args": "[<program directory>]",
         maxArgs: 1,
-        "desc": "restart one or all programs started. The old child process will be detached and killed soon after " +
+        "desc": "restart the program. The old child process will be detached and killed soon after " +
         "several seconds, and new child will be spawned immediately. Listening socket ports will not be released",
         func: commander,
         completion: completeRunningJobs
     },
     "reload": {
         help: "reload program",
-        "args": "[<program directory> | $#Ck<--all>]",
+        "args": "[<program directory>]",
         maxArgs: 1,
-        "desc": "reload one or all programs started. The old child process received a signal and will decide to exit or " +
-        "do something else",
+        "desc": "reload the program. The behavior of reload is same as restart, but you can specify a trigger named reload to do user-specific behavior.",
         func: commander,
         completion: completeRunningJobs
     },
     "status": {
         help: "show program status",
+        "args": "[<program directory>]",
         maxArgs: 1,
-        desc: "display the status of running programs",
+        desc: "display the status of one or all running programs",
         func: commander,
         completion: completeRunningJobs
     },
     "doc": {
         help: "generate documentation",
-        args: "[<program directory>] [..options]",
-        "desc": "generate documentation for all module files in <program directory>/src/module. \n\n\x1b[36mOPTIONS\x1b[0m\n\n" +
-        "  \x1b[32mprogram directory\x1b[0m: root directory of a program, default to current directory. the generator will try to find module files in \x1b[32m<program directory>\x1b[0m/src/module/\n" +
-        "  \x1b[32m--format <html|md>\x1b[0m: output format of generated files, defaults to md\n" +
-        "  \x1b[32m--out <directory>\x1b[0m: output directory for generated files, defaults to \x1b[32m<program directory>\x1b[0m/doc/",
-        func: function () {
-            let target, outDir, format;
-            for (let i = 0, L = arguments.length; i < L;) {
-                let arg = arguments[i++];
-                if (arg === '--out' || arg === '--format') {
-                    if (i === L) break;
-                    if (arg === '--out') {
-                        if (outDir) throw 'out directory already set';
-                        outDir = path.resolve(arguments[i++]);
-                    } else if (arg === '--format') {
-                        if (format) throw 'format already set';
-                        format = arguments[i++];
-                        if (format !== 'html' && format !== 'md') {
-                            throw 'unsupported format'
-                        }
-                    }
-                } else {
-                    if (target) throw 'program directory already set';
-                    target = path.resolve(arg);
-                }
-            }
-            if (target) {
-                process.chdir(target);
-            }
-            if (!outDir) {
-                outDir = path.resolve('doc');
-            }
-            if (!format) {
-                format = 'md';
-            }
+        args: "[<output directory>] [--format=<html|md>]",
+        "desc": "generate documentation for all module files in src/module. \n\n\x1b[36mOPTIONS\x1b[0m\n\n" +
+        "  \x1b[32moutput directory\x1b[0m: output directory for generated files, defaults to \x1b[36m./doc/\n" +
+        "  \x1b[32m--format=<html|md>\x1b[0m: output format of generated files, defaults to md",
+        func: function (outDir) {
+            outDir = path.resolve(outDir || 'doc');
             let co = require('../src/co.js'),
                 load = require('../index.js').load;
             co.run(function () {
                 let module = co.yield(load(path.join(__dirname, '../src/module/doc.js')));
-                module[Symbol.for('default')](outDir, format);
+                module[Symbol.for('default')](outDir, properties.format || 'md');
             }).done();
         },
         completion: function () {
             let lastArg = arguments[arguments.length - 1];
-            if (arguments[arguments.length - 2] === '--format') {
-                let buf = completion('', lastArg, 'html');
-                buf = completion(buf, lastArg, 'md');
-                return buf;
-            }
             if (!lastArg) return;
-            let buf = completion('', lastArg, '--out');
-            buf = completion(buf, lastArg, '--format');
+            let buf = completion('', lastArg, '--format=html');
+            buf = completion(buf, lastArg, '--format=md');
             return buf;
         }
     },
@@ -320,31 +300,17 @@ let commands = {
                 callService('service ' + arg0, arg1);
             }
         },
-        completion: function (arg0, arg1) {
-            if (arguments.length === 1) {
+        completion: function () {
+            let lastArg = arguments[arguments.length - 1];
+            if (lastArg.substr(0, 7) === '--user=') {
+                return completeUsername(lastArg, '--user=');
+            }
+            if (args.length === 5) {
                 let output = '';
                 for (let arg of commands.service.args.split('|')) {
-                    output = completion(output, arg0, arg);
+                    output = completion(output, lastArg, arg);
                 }
                 return output;
-            } else if (arg0 === 'upstart_install' || arg0 === 'sysv_install') { // two arguments
-                return completeUsername(arg1);
-            } else if (arg0 === 'upstart_uninst') {
-                let buf = '';
-                for (let file of fs.readdirSync('/etc/init')) {
-                    let m = /^ak_(.+)\.conf$/.exec(file);
-                    if (m) {
-                        buf = completion(buf, arg1, m[1]);
-                    }
-                }
-                return buf;
-            } else if (arg0 === 'sysv_uninst') {
-                let buf = '';
-                let inittab = fs.readFileSync('/etc/inittab', 'binary'), r = /^k\w:2345:respawn:\/bin\/sh \S+ "([^"]+)"/gm, m;
-                while (m = r.exec(inittab)) {
-                    buf = completion(buf, arg1, m[1]);
-                }
-                return buf;
             }
         }
     },
@@ -374,19 +340,20 @@ let commands = {
             }
 
             let ret;
-            if (arguments.length === 3) {
-                ret = commands.help.completion(arg2, true);
-            } else if (arguments.length > 3) {
+            let args = process.argv.slice(6);
+            if (args.length === 0) {
+                ret = commands.help.completion(arg2 || '', true);
+            } else {
                 if (arg2 in commands) {
                     let command = commands[arg2];
-                    if (!command.completion || 'maxArgs' in command && arguments.length > command.maxArgs + 3) {
+                    if (!command.completion || 'maxArgs' in command && args.length > command.maxArgs) {
                         return;
                     }
-                    ret = commands[arg2].completion.apply(null, [].slice.call(arguments, 3));
+                    ret = commands[arg2].completion.apply(null, args);
                 } else {
                     let config = readConfig();
                     if ('trigger.' + arg2 in config) {
-                        ret = completeRunningJobs(arguments[3]);
+                        ret = completeRunningJobs(args[0]);
                     }
                 }
             }
@@ -459,16 +426,11 @@ let commands = {
             let defaults = {start: 1, stop: 1, restart: 1, reload: 1, status: 1};
 
             let username = 'root', scripts = '', keys = '';
-            for (let i = 2, L = arguments.length; i < L; i++) {
-                var m = /^--(user|alias\.\w+)=(.*)/.exec(arguments[i]);
-                if (!m) {
-                    console.warn('unrecognized argument %d: %s', i, arguments[i]);
-                    continue;
-                }
-                if (m[1] === 'user') {
-                    username = m[2]
-                } else { // alias.xxx
-                    let aliased = m[1].substr(6), action = m[2];
+            for (let key of Object.keys(properties)) {
+                if (key === 'user') {
+                    username = properties.user;
+                } else if (key.substr(0, 6) === 'alias.') {
+                    let aliased = key.substr(6), action = properties[key];
                     if (aliased === action) {
                         defaults[aliased] = 1;
                     } else {
@@ -479,9 +441,9 @@ let commands = {
                 }
             }
 
-            let cmd = '  ' + addslashes(process.execPath) + ' --harmony ' + addslashes(__filename) + ' $1 ' + addslashes(dir);
+            let cmd = '  HOME="' + process.env.HOME + '" ' + addslashes(process.execPath) + ' --harmony ' + addslashes(__filename) + ' $1 ' + addslashes(dir);
             if (username !== 'root') {
-                cmd = 'su ' + username + ' << EOF\n' + cmd + '\nEOF'
+                cmd = 'SU=' + username + ' ' + cmd
             }
 
             let defaultKeys = Object.keys(defaults).join('|');
@@ -504,8 +466,10 @@ esac\n');
             fs.chmodSync(outFile, '755');
             console.log('rc script file created.\nUsage: \x1b[36m' + outFile + '\x1b[0m {' + keys + '}');
         }, completion: function (a, b, c) {
-            if (arguments.length === 3) {
-                return completeUsername(c);
+            let lastArg = arguments[arguments.length - 1];
+            if (!lastArg) return;
+            if (lastArg.substr(0, 7) === '--user=') {
+                return completeUsername(lastArg, '--user=');
             }
         }
     },
@@ -548,9 +512,9 @@ esac\n');
     }
 };
 
-if (!cmd) {
+if (!args.length) {
     cmd = 'help';
-} else if (!(cmd in commands)) {
+} else if (!((cmd = args[0]) in commands)) {
     let config = readConfig();
     if ('alias.' + cmd in config) {
         cmd = config['alias.' + cmd];
@@ -558,13 +522,13 @@ if (!cmd) {
             cmd = 'help';
         }
     } else if ('trigger.' + cmd in config) { // trigger
-        commander(process.argv[3]);
-        cmd = false;
+        commander(args[1]);
+        cmd = null;
     } else {
         cmd = 'help';
     }
 }
-cmd && commands[cmd].func.apply(null, process.argv.slice(3));
+cmd && commands[cmd].func.apply(null, args.slice(1));
 
 function readConfig() {
     let configFile = path.join(process.env.HOME, '.agentk/config.json');
@@ -577,7 +541,7 @@ function readConfig() {
 }
 
 function showHelp() {
-    process.argv[2] = 'help';
+    args[0] = 'help';
     commands.help.func(cmd);
 }
 
@@ -625,11 +589,12 @@ function completion(buf, arg0) {
     return buf
 }
 
-function completeUsername(arg1) {
+function completeUsername(arg1, prefix) {
+    prefix = prefix || '';
     let buf = '';
     for (let line of fs.readFileSync('/etc/passwd', 'binary').split('\n')) {
         if (!line || line.substr(line.length - 8) === '/nologin' || line.substr(line.length - 6) === '/false') continue;
-        buf = completion(buf, arg1, line.substr(0, line.indexOf(':')))
+        buf = completion(buf, arg1, prefix + line.substr(0, line.indexOf(':')))
     }
     return buf;
 }
