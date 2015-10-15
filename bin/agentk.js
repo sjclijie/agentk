@@ -138,7 +138,7 @@ let commands = {
     },
     "run": {
         help: "run program without crash respawn",
-        "args": "[<program directory> | <main module>]",
+        "args": "[<program directory> | <main module>] [--watch]",
         "desc": "run the program located in the directory (or current directory, if none specified) directly in current " +
         "terminal, outputs will be printed into stdout/stderr.\nHit Ctrl-c to terminate execution",
         func: function (dir) {
@@ -148,7 +148,11 @@ let commands = {
             if (dir.substr(dir.length - 3) === '.js') {
                 require('../index.js').load(path.resolve(dir)).done();
             } else {
-                require('../index.js').run(dir);
+                if (properties.watch) {
+                    require('../src/watcher').run(dir)
+                } else {
+                    require('../index.js').run(dir);
+                }
             }
         }
     },
