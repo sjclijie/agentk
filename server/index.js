@@ -21,7 +21,6 @@
 import * as http from '../src/module/http';
 import * as file from '../src/module/file';
 import {md5} from '../src/module/crypto';
-import * as watcher from '../src/module/q_watcher';
 
 const storage = manifest.config.storage;
 if (storage.name == 'aliyun_oss') {
@@ -86,10 +85,8 @@ let server = http.listen(manifest.config.port, function (req) {
                 status: tres.statusCode
             });
         }
-        watcher.add('upload', Date.now() - uploadStart);
         return new http.Response();
     } else if (req.method === 'GET') {
-        watcher.add('download');
         return storage.get(req);
     } else {
         return http.Response.error(401, 'method not implemented')
