@@ -83,10 +83,35 @@ export function render(name, locals, mimeType) {
     if (!file.exists(filename)) {
         throw new Error("template file not found: " + name);
     }
-    return new Response(co.sync(engine, filename, locals), {
+    return new Response(engine.sync ? engine(filename, locals) : co.sync(engine, filename, locals), {
         headers: {
             'Content-Type': mimeType || defaultMimeType
         }
     });
 }
 
+import fs_cache from 'fs_cache';
+
+/**
+ * @example
+ *
+ *     import * as view from 'module/view';
+ *
+ *     view.engines.handlebars = view.engine(require('handlebars').compile)
+ *
+ * @param {function} [compiler]
+ * @param {object} [options]
+ */
+export function engine(compiler, options) {
+    options || (options = {});
+
+    options.handler = buffer => compiler(buffer + '');
+    const reader = fs_cache(options);
+
+    function engine(filename, obj) {
+        return reader(filename).content(obj);
+    }
+
+    engine.sync = true;
+    return engine;
+}

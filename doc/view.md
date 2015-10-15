@@ -1,4 +1,4 @@
-<!-- @rev 7ab77c489a7a8c3e961bf4bcacfc700c 20ae7b -->
+<!-- @rev 7313e3f5808e3791d6e785399f09557e 20ae7b -->
 # view
 
 ----
@@ -94,3 +94,18 @@ function render(name, locals, mimeType)
 
 > {http::Response}
  
+
+------------------------------------------------------------------------
+### engine()
+
+```js
+function engine(compiler, options) 
+```
+
+
+
+**Params**
+
+  - compiler(optional) `function`
+  - options(optional) `object`
+

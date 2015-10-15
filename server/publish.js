@@ -38,7 +38,7 @@ export default function (args) {
         if (res.ok) {
             console.log('publish ' + name + ': OK');
         } else {
-            console.log('publish ' + name + ': error ' + res.status + ' ' + tres.statusText);
+            console.log('publish ' + name + ': error ' + res.status + ' ' + res.statusText);
             res.stream.pipe(process.stdout);
             break;
         }
