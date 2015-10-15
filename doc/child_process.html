@@ -11,16 +11,16 @@
     <li><a href="crypto.html">crypto</a></li>
     <li><a href="doc.html" title="AgentK documentation generator">doc</a></li>
     <li><a href="file.html">file</a></li>
+    <li><a href="fs_cache.html" title="file system cache handler">fs_cache</a></li>
     <li><a href="gbk.html">gbk</a></li>
     <li><a href="http.html">http</a></li>
-    <li><a href="http_response.html" title="Wrapper class for http response, and basic methods to construct a response.">http_response</a></li>
     <li><a href="legacy.html" title="Legacy support module">legacy</a></li>
-    <li><a href="q_watcher.html" title="Qunar Watcher module">q_watcher</a></li>
     <li><a href="router.html">router</a></li>
     <li><a href="static_file.html" title="static file request handler">static_file</a></li>
     <li><a href="stream.html" title="utils for stream consumption">stream</a></li>
     <li><a href="test.html">test</a></li>
     <li><a href="view.html">view</a></li>
+    <li><a href="xml.html">xml</a></li>
     <li><a href="zlib.html">zlib</a></li>
     
 </ul>
@@ -44,23 +44,23 @@
 <ul>
     
     
-    <li><a href="#fork">function fork(module, options) </a></li><li><a href="#exec">function exec(cmd, options) </a></li>
+    <li><a href="#fun-fork">function fork(module, options) </a></li><li><a href="#fun-exec">function exec(cmd, options) </a></li>
     
 </ul>
 
 <dl id="definitions">
 
-    <dt id="fork">
-        <div>fork()</div>
-        <sub>method</sub>
+    <dt id="fun-fork">
+        <div>fork()</div><sub>method</sub>
     </dt>
     <dd>
         <p class="proto">function fork(module, options) 
-
         <p class="desc">
             <p> Creates a new Node.JS process and runs the specific node module. See: <a href="https://nodejs.org/api/child_process.html#child_process_child_process_fork_modulepath_args_options">child_process.fork</a>
  for more information about process creation.</p>
         </p>
+
+        
 
         
 
@@ -79,21 +79,21 @@
         </dl>
         
         
-        <h4>Returns</h4>
-        <p style="margin-left: 1em"><code><a href="https://nodejs.org/api/child_process.html#child_process_class_childprocess">ChildProcess</a></code></p>
+        <h4>Returns<code><a href="https://nodejs.org/api/child_process.html#child_process_class_childprocess">ChildProcess</a></code></h4>
+        
         
     </dd>
 
-    <dt id="exec">
-        <div>exec()</div>
-        <sub>method</sub>
+    <dt id="fun-exec">
+        <div>exec()</div><sub>method</sub>
     </dt>
     <dd>
         <p class="proto">function exec(cmd, options) 
-
         <p class="desc">
             <p> Runs a shell command and returns its output, throws if command failed</p>
         </p>
+
+        
 
         
 
@@ -112,8 +112,8 @@
         </dl>
         
         
-        <h4>Returns</h4>
-        <p style="margin-left: 1em"><code>Array</code>`[stdout, stderr]`</p>
+        <h4>Returns<code>Array</code></h4>
+        <p><code>[stdout, stderr]</code></p>
         
     </dd>
 

@@ -1,7 +1,7 @@
 <!doctype html>
 <html>
 <head>
-    <title>static_file -- AgentK Documentation Generator</title>
+    <title>fs_cache -- AgentK Documentation Generator</title>
     <link rel="stylesheet" href="doc.css"/>
 </head>
 <body class="frames">
@@ -11,12 +11,12 @@
     <li><a href="crypto.html">crypto</a></li>
     <li><a href="doc.html" title="AgentK documentation generator">doc</a></li>
     <li><a href="file.html">file</a></li>
-    <li><a href="fs_cache.html" title="file system cache handler">fs_cache</a></li>
+    <li>fs_cache</li>
     <li><a href="gbk.html">gbk</a></li>
     <li><a href="http.html">http</a></li>
     <li><a href="legacy.html" title="Legacy support module">legacy</a></li>
     <li><a href="router.html">router</a></li>
-    <li>static_file</li>
+    <li><a href="static_file.html" title="static file request handler">static_file</a></li>
     <li><a href="stream.html" title="utils for stream consumption">stream</a></li>
     <li><a href="test.html">test</a></li>
     <li><a href="view.html">view</a></li>
@@ -25,9 +25,9 @@
     
 </ul>
 <div class="content">
-<h1>static_file</h1>
+<h1>fs_cache</h1>
 
-<p>static file request handler
+<p>file system cache handler
  </p>
 
 
@@ -42,33 +42,19 @@
 
 
 <ul>
-    <li>constant <a href="#mimeTypes">mimeTypes</a>:<code>object</code></li>
     
-    <li><a href="#fun-staticFile">function staticFile(directory, option) </a></li>
-    <li>module default: <a href="#fun-staticFile">function staticFile</a></li>
+    
+    <li><a href="#fun-fs_cache">function fs_cache(option) </a></li>
+    <li>module default: <a href="#fun-fs_cache">function fs_cache</a></li>
 </ul>
 
 <dl id="definitions">
 
-    <dt id="mimeTypes">
-    <div>mimeTypes</div>
-    <sub>constant</sub>
+    <dt id="fun-fs_cache">
+        <div>fs_cache()</div><sub>method</sub>
     </dt>
     <dd>
-        <p class="proto">mimeTypes:<code>object</code>
-
-        <p class="desc">
-            <p> filename extension to mime type map</p>
-        </p>
-
-        
-    </dd>
-
-    <dt id="fun-staticFile">
-        <div>staticFile()</div><sub>method</sub>
-    </dt>
-    <dd>
-        <p class="proto">function staticFile(directory, option) 
+        <p class="proto">function fs_cache(option) 
         <p class="desc">
             
         </p>
@@ -78,9 +64,9 @@
         
         <h4>Example</h4>
         <pre> import Router from &#39;router&#39;;
- import staticFile from &#39;static_file&#39;;
- let route = new Router();
- route.prefix(&#39;/static/&#39;, staticFile(&#39;static&#39;))
+ import fs_cache from &#39;fs_cache&#39;;
+ let reader = fs_cache(&#39;static&#39;);
+ let content = reader(&#39;js/index.js&#39;);
 </pre>
         
 
@@ -95,12 +81,12 @@
             
             <dd><p>optional arguments:</p>
 
-<ul><li>no_cache:<code>boolean</code> disable file cache, default to false</li><li>expires:<code>number</code> duration before expiration in ms, default to 0</li><li>cached:<code>number</code> file modification check iteration in ms, default to 3s</li><li>gzip:<code>boolean</code> enable gzip, default to true</li><li>gzip<em>min</em>len:<code>number</code> mininum length of file to be gzipped, default to 1K</li></ul></dd>
+<ul><li>cached:<code>number</code> file modification check iteration in ms, default to 3s</li><li>handler:<code>string</code> file content handler</li></ul></dd>
         </dl>
         
         
         <h4>Returns<code>function</code></h4>
-        <p>router handle</p>
+        <p>reader</p>
         
     </dd>
 

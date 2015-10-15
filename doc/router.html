@@ -11,16 +11,16 @@
     <li><a href="crypto.html">crypto</a></li>
     <li><a href="doc.html" title="AgentK documentation generator">doc</a></li>
     <li><a href="file.html">file</a></li>
+    <li><a href="fs_cache.html" title="file system cache handler">fs_cache</a></li>
     <li><a href="gbk.html">gbk</a></li>
     <li><a href="http.html">http</a></li>
-    <li><a href="http_response.html" title="Wrapper class for http response, and basic methods to construct a response.">http_response</a></li>
     <li><a href="legacy.html" title="Legacy support module">legacy</a></li>
-    <li><a href="q_watcher.html" title="Qunar Watcher module">q_watcher</a></li>
     <li>router</li>
     <li><a href="static_file.html" title="static file request handler">static_file</a></li>
     <li><a href="stream.html" title="utils for stream consumption">stream</a></li>
     <li><a href="test.html">test</a></li>
     <li><a href="view.html">view</a></li>
+    <li><a href="xml.html">xml</a></li>
     <li><a href="zlib.html">zlib</a></li>
     
 </ul>
@@ -33,19 +33,17 @@
 <ul>
     
     
-    <li><a href="#Router">function Router(cb) </a></li>
-    <li>module default: <a href="#Router">function Router</a></li>
+    <li><a href="#class-Router">function Router(cb) </a> <b>constructor</b></li><li><a href="#fun-Router-add">function Router::add(handle) </a></li><li><a href="#fun-Router-all">function Router::all(cb) </a></li><li><a href="#fun-Router-exact">function Router::exact(url, cb) </a></li><li><a href="#fun-Router-prefix">function Router::prefix(prefix, cb) </a></li><li><a href="#fun-Router-match">function Router::match(pattern, cb) </a></li><li><a href="#fun-Router-catcher">function Router::catcher(cb) </a></li><li><a href="#fun-Router-apply">function Router::apply(req, args) </a></li><li><a href="#fun-Router-complete">function Router::complete(cb) </a></li>
+    <li>module default: <a href="#class-Router">class Router</a></li>
 </ul>
 
 <dl id="definitions">
 
-    <dt id="Router">
-        <div>Router()</div>
-        <sub>class</sub>
+    <dt id="class-Router">
+        <div>Router()</div><sub>class</sub>
     </dt>
     <dd>
         <p class="proto">function Router(cb) 
-
         <p class="desc">
             
         </p>
@@ -53,17 +51,139 @@
         
 
         
+
+        
         <h4>Parameters</h4>
         <dl>
             
-            <dt><sub>optional</sub>cb <code>function|<a href="#Router">Router</a></code></dt>
+            <dt><sub>optional</sub>cb <code>function|<a href="#class-Router">Router</a></code></dt>
             
             <dd><p>handler first called before all rules</p></dd>
         </dl>
         
         
-        <h4>Returns</h4>
-        <p style="margin-left: 1em"><code><a href="#Router">Router</a></code></p>
+        <h4>Returns<code><a href="#class-Router">Router</a></code></h4>
+        
+        
+    </dd>
+
+    <dt id="fun-Router-add">
+        <div>add()</div><sub>method</sub>
+    </dt>
+    <dd>
+        <p class="proto">function Router::add(handle) 
+        
+
+        
+
+        
+
+        
+        
+    </dd>
+
+    <dt id="fun-Router-all">
+        <div>all()</div><sub>method</sub>
+    </dt>
+    <dd>
+        <p class="proto">function Router::all(cb) 
+        
+
+        
+
+        
+
+        
+        
+    </dd>
+
+    <dt id="fun-Router-exact">
+        <div>exact()</div><sub>method</sub>
+    </dt>
+    <dd>
+        <p class="proto">function Router::exact(url, cb) 
+        
+
+        
+
+        
+
+        
+        
+    </dd>
+
+    <dt id="fun-Router-prefix">
+        <div>prefix()</div><sub>method</sub>
+    </dt>
+    <dd>
+        <p class="proto">function Router::prefix(prefix, cb) 
+        
+
+        
+
+        
+
+        
+        
+    </dd>
+
+    <dt id="fun-Router-match">
+        <div>match()</div><sub>method</sub>
+    </dt>
+    <dd>
+        <p class="proto">function Router::match(pattern, cb) 
+        
+
+        
+
+        
+
+        
+        
+    </dd>
+
+    <dt id="fun-Router-catcher">
+        <div>catcher()</div><sub>method</sub>
+    </dt>
+    <dd>
+        <p class="proto">function Router::catcher(cb) 
+        
+
+        
+
+        
+
+        
+        
+    </dd>
+
+    <dt id="fun-Router-apply">
+        <div>apply()</div><sub>method</sub>
+    </dt>
+    <dd>
+        <p class="proto">function Router::apply(req, args) 
+        
+
+        
+
+        
+
+        
+        
+    </dd>
+
+    <dt id="fun-Router-complete">
+        <div>complete()</div><sub>method</sub>
+    </dt>
+    <dd>
+        <p class="proto">function Router::complete(cb) 
+        
+
+        
+
+        
+
+        
         
     </dd>
 

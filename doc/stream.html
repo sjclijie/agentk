@@ -11,16 +11,16 @@
     <li><a href="crypto.html">crypto</a></li>
     <li><a href="doc.html" title="AgentK documentation generator">doc</a></li>
     <li><a href="file.html">file</a></li>
+    <li><a href="fs_cache.html" title="file system cache handler">fs_cache</a></li>
     <li><a href="gbk.html">gbk</a></li>
     <li><a href="http.html">http</a></li>
-    <li><a href="http_response.html" title="Wrapper class for http response, and basic methods to construct a response.">http_response</a></li>
     <li><a href="legacy.html" title="Legacy support module">legacy</a></li>
-    <li><a href="q_watcher.html" title="Qunar Watcher module">q_watcher</a></li>
     <li><a href="router.html">router</a></li>
     <li><a href="static_file.html" title="static file request handler">static_file</a></li>
     <li>stream</li>
     <li><a href="test.html">test</a></li>
     <li><a href="view.html">view</a></li>
+    <li><a href="xml.html">xml</a></li>
     <li><a href="zlib.html">zlib</a></li>
     
 </ul>
@@ -44,22 +44,22 @@
 <ul>
     
     
-    <li><a href="#read">function read(incoming) </a></li><li><a href="#iterator">function iterator(incoming) </a></li>
+    <li><a href="#fun-read">function read(incoming) </a></li><li><a href="#fun-iterator">function iterator(incoming) </a></li>
     
 </ul>
 
 <dl id="definitions">
 
-    <dt id="read">
-        <div>read()</div>
-        <sub>method</sub>
+    <dt id="fun-read">
+        <div>read()</div><sub>method</sub>
     </dt>
     <dd>
         <p class="proto">function read(incoming) 
-
         <p class="desc">
             <p> Read stream&#39;s contents</p>
         </p>
+
+        
 
         
         <h4>Example</h4>
@@ -78,21 +78,21 @@
         </dl>
         
         
-        <h4>Returns</h4>
-        <p style="margin-left: 1em"><code><a href="https://nodejs.org/api/buffer.html#buffer_class_buffer">Buffer</a></code>contents read</p>
+        <h4>Returns<code><a href="https://nodejs.org/api/buffer.html#buffer_class_buffer">Buffer</a></code></h4>
+        <p>contents read</p>
         
     </dd>
 
-    <dt id="iterator">
-        <div>iterator()</div>
-        <sub>method</sub>
+    <dt id="fun-iterator">
+        <div>iterator()</div><sub>method</sub>
     </dt>
     <dd>
         <p class="proto">function iterator(incoming) 
-
         <p class="desc">
             <p> Create an iterator which yields when stream has contents available</p>
         </p>
+
+        
 
         
         <h4>Example</h4>
@@ -112,8 +112,8 @@
         </dl>
         
         
-        <h4>Returns</h4>
-        <p style="margin-left: 1em"><code><a href="#Iterator">Iterator</a></code>iterator which can be used in for...of</p>
+        <h4>Returns<code><a href="#class-Iterator">Iterator</a></code></h4>
+        <p>iterator which can be used in for...of</p>
         
     </dd>
 

@@ -11,16 +11,16 @@
     <li><a href="crypto.html">crypto</a></li>
     <li><a href="doc.html" title="AgentK documentation generator">doc</a></li>
     <li><a href="file.html">file</a></li>
+    <li><a href="fs_cache.html" title="file system cache handler">fs_cache</a></li>
     <li><a href="gbk.html">gbk</a></li>
     <li><a href="http.html">http</a></li>
-    <li><a href="http_response.html" title="Wrapper class for http response, and basic methods to construct a response.">http_response</a></li>
     <li><a href="legacy.html" title="Legacy support module">legacy</a></li>
-    <li><a href="q_watcher.html" title="Qunar Watcher module">q_watcher</a></li>
     <li><a href="router.html">router</a></li>
     <li><a href="static_file.html" title="static file request handler">static_file</a></li>
     <li><a href="stream.html" title="utils for stream consumption">stream</a></li>
     <li><a href="test.html">test</a></li>
     <li><a href="view.html">view</a></li>
+    <li><a href="xml.html">xml</a></li>
     <li>zlib</li>
     
 </ul>
@@ -33,22 +33,22 @@
 <ul>
     
     
-    <li><a href="#gzip">function gzip(buffer) </a></li><li><a href="#gzipTransform">function gzipTransform(stream) </a></li><li><a href="#gunzipTransform">function gunzipTransform(stream) </a></li>
+    <li><a href="#fun-gzip">function gzip(buffer) </a></li><li><a href="#fun-gzipTransform">function gzipTransform(stream) </a></li><li><a href="#fun-gunzipTransform">function gunzipTransform(stream) </a></li>
     
 </ul>
 
 <dl id="definitions">
 
-    <dt id="gzip">
-        <div>gzip()</div>
-        <sub>method</sub>
+    <dt id="fun-gzip">
+        <div>gzip()</div><sub>method</sub>
     </dt>
     <dd>
         <p class="proto">function gzip(buffer) 
-
         <p class="desc">
             <p> convert a buffer into a gzipped buffer</p>
         </p>
+
+        
 
         
 
@@ -61,18 +61,16 @@
         </dl>
         
         
-        <h4>Returns</h4>
-        <p style="margin-left: 1em"><code><a href="https://nodejs.org/api/buffer.html#buffer_class_buffer">Buffer</a></code></p>
+        <h4>Returns<code><a href="https://nodejs.org/api/buffer.html#buffer_class_buffer">Buffer</a></code></h4>
+        
         
     </dd>
 
-    <dt id="gzipTransform">
-        <div>gzipTransform()</div>
-        <sub>method</sub>
+    <dt id="fun-gzipTransform">
+        <div>gzipTransform()</div><sub>method</sub>
     </dt>
     <dd>
         <p class="proto">function gzipTransform(stream) 
-
         <p class="desc">
             <p> transforms a stream into a gzipped stream</p>
         </p>
@@ -80,6 +78,8 @@
         
 
         
+
+        
         <h4>Parameters</h4>
         <dl>
             
@@ -88,18 +88,16 @@
         </dl>
         
         
-        <h4>Returns</h4>
-        <p style="margin-left: 1em"><code><a href="https://nodejs.org/api/stream.html#stream_class_stream_readable">stream.Readable</a></code></p>
+        <h4>Returns<code><a href="https://nodejs.org/api/stream.html#stream_class_stream_readable">stream.Readable</a></code></h4>
+        
         
     </dd>
 
-    <dt id="gunzipTransform">
-        <div>gunzipTransform()</div>
-        <sub>method</sub>
+    <dt id="fun-gunzipTransform">
+        <div>gunzipTransform()</div><sub>method</sub>
     </dt>
     <dd>
         <p class="proto">function gunzipTransform(stream) 
-
         <p class="desc">
             <p> transforms a gzipped stream into an unzipped stream</p>
         </p>
@@ -107,6 +105,8 @@
         
 
         
+
+        
         <h4>Parameters</h4>
         <dl>
             
@@ -115,8 +115,8 @@
         </dl>
         
         
-        <h4>Returns</h4>
-        <p style="margin-left: 1em"><code><a href="https://nodejs.org/api/stream.html#stream_class_stream_readable">stream.Readable</a></code></p>
+        <h4>Returns<code><a href="https://nodejs.org/api/stream.html#stream_class_stream_readable">stream.Readable</a></code></h4>
+        
         
     </dd>
 

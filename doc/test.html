@@ -11,16 +11,16 @@
     <li><a href="crypto.html">crypto</a></li>
     <li><a href="doc.html" title="AgentK documentation generator">doc</a></li>
     <li><a href="file.html">file</a></li>
+    <li><a href="fs_cache.html" title="file system cache handler">fs_cache</a></li>
     <li><a href="gbk.html">gbk</a></li>
     <li><a href="http.html">http</a></li>
-    <li><a href="http_response.html" title="Wrapper class for http response, and basic methods to construct a response.">http_response</a></li>
     <li><a href="legacy.html" title="Legacy support module">legacy</a></li>
-    <li><a href="q_watcher.html" title="Qunar Watcher module">q_watcher</a></li>
     <li><a href="router.html">router</a></li>
     <li><a href="static_file.html" title="static file request handler">static_file</a></li>
     <li><a href="stream.html" title="utils for stream consumption">stream</a></li>
     <li>test</li>
     <li><a href="view.html">view</a></li>
+    <li><a href="xml.html">xml</a></li>
     <li><a href="zlib.html">zlib</a></li>
     
 </ul>
@@ -33,22 +33,22 @@
 <ul>
     
     
-    <li><a href="#run">function run(file) </a></li><li><a href="#Test">function Test(name) </a></li><li><a href="#IntegrationTest">function IntegrationTest(name, handle) </a></li><li><a href="#summary">function summary() </a></li>
+    <li><a href="#fun-run">function run(file) </a></li><li><a href="#class-Test">function Test(name) </a> <b>constructor</b></li><li><a href="#fun-Test-test">function Test::test(title, cb) </a></li><li><a href="#class-IntegrationTest">function IntegrationTest(name, handle) </a> <b>constructor</b></li><li><a href="#fun-IntegrationTest-get">function IntegrationTest::get(url, options) </a></li><li><a href="#fun-IntegrationTest-postForm">function IntegrationTest::postForm(url, params, options) </a></li><li><a href="#fun-IntegrationTest-request">function IntegrationTest::request(url, options) </a></li><li><a href="#fun-summary">function summary() </a></li>
     
 </ul>
 
 <dl id="definitions">
 
-    <dt id="run">
-        <div>run()</div>
-        <sub>method</sub>
+    <dt id="fun-run">
+        <div>run()</div><sub>method</sub>
     </dt>
     <dd>
         <p class="proto">function run(file) 
-
         <p class="desc">
             <p> Run a test script</p>
         </p>
+
+        
 
         
 
@@ -65,13 +65,11 @@
         
     </dd>
 
-    <dt id="Test">
-        <div>Test()</div>
-        <sub>method</sub>
+    <dt id="class-Test">
+        <div>Test()</div><sub>class</sub>
     </dt>
     <dd>
         <p class="proto">function Test(name) 
-
         <p class="desc">
             <p> Unit test</p>
         </p>
@@ -79,29 +77,46 @@
         
 
         
+
+        
         <h4>Parameters</h4>
         <dl>
             
-            <dt>name <code><a href="#name">name</a></code></dt>
+            <dt>name <code><a href="#class-name">name</a></code></dt>
             
         </dl>
         
         
-        <h4>Returns</h4>
-        <p style="margin-left: 1em"><code><a href="#Test">Test</a></code></p>
+        <h4>Returns<code><a href="#class-Test">Test</a></code></h4>
+        
         
     </dd>
 
-    <dt id="IntegrationTest">
-        <div>IntegrationTest()</div>
-        <sub>method</sub>
+    <dt id="fun-Test-test">
+        <div>test()</div><sub>method</sub>
+    </dt>
+    <dd>
+        <p class="proto">function Test::test(title, cb) 
+        
+
+        
+
+        
+
+        
+        
+    </dd>
+
+    <dt id="class-IntegrationTest">
+        <div>IntegrationTest()</div><sub>class</sub>
     </dt>
     <dd>
         <p class="proto">function IntegrationTest(name, handle) 
-
         <p class="desc">
             <p> Integration test on a router handle that accepts a http request and returns a http response</p>
         </p>
+
+        
 
         
 
@@ -111,22 +126,67 @@
             
             <dt>name <code>string</code></dt>
             
-            <dt>handle <code>function|<a href="router.html#Router">router::Router</a></code></dt>
+            <dt>handle <code>function|<a href="router.html#class-Router">router::Router</a></code></dt>
             
         </dl>
         
         
-        <h4>Returns</h4>
-        <p style="margin-left: 1em"><code><a href="#IntegrationTest">IntegrationTest</a></code></p>
+        <h4>Returns<code><a href="#class-IntegrationTest">IntegrationTest</a></code></h4>
+        
         
     </dd>
 
-    <dt id="summary">
-        <div>summary()</div>
-        <sub>method</sub>
+    <dt id="fun-IntegrationTest-get">
+        <div>get()</div><sub>method</sub>
+    </dt>
+    <dd>
+        <p class="proto">function IntegrationTest::get(url, options) 
+        
+
+        
+
+        
+
+        
+        
+    </dd>
+
+    <dt id="fun-IntegrationTest-postForm">
+        <div>postForm()</div><sub>method</sub>
+    </dt>
+    <dd>
+        <p class="proto">function IntegrationTest::postForm(url, params, options) 
+        
+
+        
+
+        
+
+        
+        
+    </dd>
+
+    <dt id="fun-IntegrationTest-request">
+        <div>request()</div><sub>method</sub>
+    </dt>
+    <dd>
+        <p class="proto">function IntegrationTest::request(url, options) 
+        
+
+        
+
+        
+
+        
+        
+    </dd>
+
+    <dt id="fun-summary">
+        <div>summary()</div><sub>method</sub>
     </dt>
     <dd>
         <p class="proto">function summary() 
+        
 
         
 

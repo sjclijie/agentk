@@ -11,16 +11,16 @@
     <li><a href="crypto.html">crypto</a></li>
     <li><a href="doc.html" title="AgentK documentation generator">doc</a></li>
     <li>file</li>
+    <li><a href="fs_cache.html" title="file system cache handler">fs_cache</a></li>
     <li><a href="gbk.html">gbk</a></li>
     <li><a href="http.html">http</a></li>
-    <li><a href="http_response.html" title="Wrapper class for http response, and basic methods to construct a response.">http_response</a></li>
     <li><a href="legacy.html" title="Legacy support module">legacy</a></li>
-    <li><a href="q_watcher.html" title="Qunar Watcher module">q_watcher</a></li>
     <li><a href="router.html">router</a></li>
     <li><a href="static_file.html" title="static file request handler">static_file</a></li>
     <li><a href="stream.html" title="utils for stream consumption">stream</a></li>
     <li><a href="test.html">test</a></li>
     <li><a href="view.html">view</a></li>
+    <li><a href="xml.html">xml</a></li>
     <li><a href="zlib.html">zlib</a></li>
     
 </ul>
@@ -33,19 +33,17 @@
 <ul>
     
     
-    <li><a href="#read">function read(file) </a></li><li><a href="#write">function write(file, content) </a></li><li><a href="#rm">function rm(file) </a></li><li><a href="#symlink">function symlink(src, dst) </a></li><li><a href="#exists">function exists(file) </a></li><li><a href="#mkdir">function mkdir(file) </a></li><li><a href="#readdir">function readdir(file) </a></li><li><a href="#isFile">function isFile(file) </a></li><li><a href="#isDirectory">function isDirectory(file) </a></li><li><a href="#mkdirp">function mkdirp(file) </a></li><li><a href="#mkParentDir">function mkParentDir(file) </a></li><li><a href="#open">function open(path, flags) </a></li><li><a href="#close">function close(fd) </a></li>
+    <li><a href="#fun-read">function read(file) </a></li><li><a href="#fun-write">function write(file, content) </a></li><li><a href="#fun-rm">function rm(file) </a></li><li><a href="#fun-symlink">function symlink(src, dst) </a></li><li><a href="#fun-exists">function exists(file) </a></li><li><a href="#fun-mkdir">function mkdir(file) </a></li><li><a href="#fun-readdir">function readdir(file) </a></li><li><a href="#fun-isFile">function isFile(file) </a></li><li><a href="#fun-isDirectory">function isDirectory(file) </a></li><li><a href="#fun-mkdirp">function mkdirp(file) </a></li><li><a href="#fun-mkParentDir">function mkParentDir(file) </a></li><li><a href="#fun-open">function open(path, flags) </a></li><li><a href="#fun-close">function close(fd) </a></li>
     
 </ul>
 
 <dl id="definitions">
 
-    <dt id="read">
-        <div>read()</div>
-        <sub>method</sub>
+    <dt id="fun-read">
+        <div>read()</div><sub>method</sub>
     </dt>
     <dd>
         <p class="proto">function read(file) 
-
         <p class="desc">
             <p> reads file&#39;s content, returns a buffer containing its content. throws if any exception occurs</p>
         </p>
@@ -53,25 +51,27 @@
         
 
         
+
+        
         <h4>Parameters</h4>
         <dl>
             
-            <dt>file <code><a href="#String">String</a></code></dt>
+            <dt>file <code>String</code></dt>
             
         </dl>
         
         
-        <h4>Returns</h4>
-        <p style="margin-left: 1em"><code><a href="https://nodejs.org/api/buffer.html#buffer_class_buffer">Buffer</a></code></p>
+        <h4>Returns<code><a href="https://nodejs.org/api/buffer.html#buffer_class_buffer">Buffer</a></code></h4>
+        
         
     </dd>
 
-    <dt id="write">
-        <div>write()</div>
-        <sub>method</sub>
+    <dt id="fun-write">
+        <div>write()</div><sub>method</sub>
     </dt>
     <dd>
         <p class="proto">function write(file, content) 
+        
 
         
 
@@ -81,12 +81,12 @@
         
     </dd>
 
-    <dt id="rm">
-        <div>rm()</div>
-        <sub>method</sub>
+    <dt id="fun-rm">
+        <div>rm()</div><sub>method</sub>
     </dt>
     <dd>
         <p class="proto">function rm(file) 
+        
 
         
 
@@ -96,12 +96,12 @@
         
     </dd>
 
-    <dt id="symlink">
-        <div>symlink()</div>
-        <sub>method</sub>
+    <dt id="fun-symlink">
+        <div>symlink()</div><sub>method</sub>
     </dt>
     <dd>
         <p class="proto">function symlink(src, dst) 
+        
 
         
 
@@ -111,12 +111,12 @@
         
     </dd>
 
-    <dt id="exists">
-        <div>exists()</div>
-        <sub>method</sub>
+    <dt id="fun-exists">
+        <div>exists()</div><sub>method</sub>
     </dt>
     <dd>
         <p class="proto">function exists(file) 
+        
 
         
 
@@ -126,12 +126,12 @@
         
     </dd>
 
-    <dt id="mkdir">
-        <div>mkdir()</div>
-        <sub>method</sub>
+    <dt id="fun-mkdir">
+        <div>mkdir()</div><sub>method</sub>
     </dt>
     <dd>
         <p class="proto">function mkdir(file) 
+        
 
         
 
@@ -141,12 +141,12 @@
         
     </dd>
 
-    <dt id="readdir">
-        <div>readdir()</div>
-        <sub>method</sub>
+    <dt id="fun-readdir">
+        <div>readdir()</div><sub>method</sub>
     </dt>
     <dd>
         <p class="proto">function readdir(file) 
+        
 
         
 
@@ -156,12 +156,12 @@
         
     </dd>
 
-    <dt id="isFile">
-        <div>isFile()</div>
-        <sub>method</sub>
+    <dt id="fun-isFile">
+        <div>isFile()</div><sub>method</sub>
     </dt>
     <dd>
         <p class="proto">function isFile(file) 
+        
 
         
 
@@ -171,12 +171,12 @@
         
     </dd>
 
-    <dt id="isDirectory">
-        <div>isDirectory()</div>
-        <sub>method</sub>
+    <dt id="fun-isDirectory">
+        <div>isDirectory()</div><sub>method</sub>
     </dt>
     <dd>
         <p class="proto">function isDirectory(file) 
+        
 
         
 
@@ -186,12 +186,12 @@
         
     </dd>
 
-    <dt id="mkdirp">
-        <div>mkdirp()</div>
-        <sub>method</sub>
+    <dt id="fun-mkdirp">
+        <div>mkdirp()</div><sub>method</sub>
     </dt>
     <dd>
         <p class="proto">function mkdirp(file) 
+        
 
         
 
@@ -201,12 +201,12 @@
         
     </dd>
 
-    <dt id="mkParentDir">
-        <div>mkParentDir()</div>
-        <sub>method</sub>
+    <dt id="fun-mkParentDir">
+        <div>mkParentDir()</div><sub>method</sub>
     </dt>
     <dd>
         <p class="proto">function mkParentDir(file) 
+        
 
         
 
@@ -216,12 +216,12 @@
         
     </dd>
 
-    <dt id="open">
-        <div>open()</div>
-        <sub>method</sub>
+    <dt id="fun-open">
+        <div>open()</div><sub>method</sub>
     </dt>
     <dd>
         <p class="proto">function open(path, flags) 
+        
 
         
 
@@ -231,12 +231,12 @@
         
     </dd>
 
-    <dt id="close">
-        <div>close()</div>
-        <sub>method</sub>
+    <dt id="fun-close">
+        <div>close()</div><sub>method</sub>
     </dt>
     <dd>
         <p class="proto">function close(fd) 
+        
 
         
 

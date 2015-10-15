@@ -11,16 +11,16 @@
     <li>crypto</li>
     <li><a href="doc.html" title="AgentK documentation generator">doc</a></li>
     <li><a href="file.html">file</a></li>
+    <li><a href="fs_cache.html" title="file system cache handler">fs_cache</a></li>
     <li><a href="gbk.html">gbk</a></li>
     <li><a href="http.html">http</a></li>
-    <li><a href="http_response.html" title="Wrapper class for http response, and basic methods to construct a response.">http_response</a></li>
     <li><a href="legacy.html" title="Legacy support module">legacy</a></li>
-    <li><a href="q_watcher.html" title="Qunar Watcher module">q_watcher</a></li>
     <li><a href="router.html">router</a></li>
     <li><a href="static_file.html" title="static file request handler">static_file</a></li>
     <li><a href="stream.html" title="utils for stream consumption">stream</a></li>
     <li><a href="test.html">test</a></li>
     <li><a href="view.html">view</a></li>
+    <li><a href="xml.html">xml</a></li>
     <li><a href="zlib.html">zlib</a></li>
     
 </ul>
@@ -33,18 +33,18 @@
 <ul>
     
     
-    <li><a href="#md5">function md5(buf, format) </a></li><li><a href="#sha1">function sha1(buf, format) </a></li><li><a href="#hmac_sha1">function hmac_sha1(secret, buf, format) </a></li>
+    <li><a href="#fun-md5">function md5(buf, format) </a></li><li><a href="#fun-sha1">function sha1(buf, format) </a></li><li><a href="#fun-hmac_sha1">function hmac_sha1(secret, buf, format) </a></li><li><a href="#fun-cipher">function cipher(method, secret, input, padding) </a></li><li><a href="#fun-cipheriv">function cipheriv(method, key, iv, input, padding) </a></li><li><a href="#fun-decipher">function decipher(method, secret, input, padding) </a></li><li><a href="#fun-decipheriv">function decipheriv(method, key, iv, input, padding) </a></li>
     
 </ul>
 
 <dl id="definitions">
 
-    <dt id="md5">
-        <div>md5()</div>
-        <sub>method</sub>
+    <dt id="fun-md5">
+        <div>md5()</div><sub>method</sub>
     </dt>
     <dd>
         <p class="proto">function md5(buf, format) 
+        
 
         
 
@@ -54,12 +54,12 @@
         
     </dd>
 
-    <dt id="sha1">
-        <div>sha1()</div>
-        <sub>method</sub>
+    <dt id="fun-sha1">
+        <div>sha1()</div><sub>method</sub>
     </dt>
     <dd>
         <p class="proto">function sha1(buf, format) 
+        
 
         
 
@@ -69,17 +69,171 @@
         
     </dd>
 
-    <dt id="hmac_sha1">
-        <div>hmac_sha1()</div>
-        <sub>method</sub>
+    <dt id="fun-hmac_sha1">
+        <div>hmac_sha1()</div><sub>method</sub>
     </dt>
     <dd>
         <p class="proto">function hmac_sha1(secret, buf, format) 
+        
+
+        
+
+        
+
+        
+        
+    </dd>
+
+    <dt id="fun-cipher">
+        <div>cipher()</div><sub>method</sub>
+    </dt>
+    <dd>
+        <p class="proto">function cipher(method, secret, input, padding) 
+        <p class="desc">
+            
+        </p>
 
         
 
         
 
+        
+        <h4>Parameters</h4>
+        <dl>
+            
+            <dt>method <code>string</code></dt>
+            
+            <dd><p>see <code>require(&#39;crypto&#39;).getCiphers()</code></p></dd>
+            <dt>secret <code>string|<a href="#class-buffer">buffer</a></code></dt>
+            
+            <dd><p>secret key</p></dd>
+            <dt>input <code>string|<a href="https://nodejs.org/api/buffer.html#buffer_class_buffer">Buffer</a></code></dt>
+            
+            <dd><p>plain text</p></dd>
+            <dt><sub>optional</sub>padding <code>boolean</code></dt>
+            
+            <dd><p>whether auto padding is used, defaults to false</p></dd>
+        </dl>
+        
+        
+        <h4>Returns<code><a href="https://nodejs.org/api/buffer.html#buffer_class_buffer">Buffer</a></code></h4>
+        
+        
+    </dd>
+
+    <dt id="fun-cipheriv">
+        <div>cipheriv()</div><sub>method</sub>
+    </dt>
+    <dd>
+        <p class="proto">function cipheriv(method, key, iv, input, padding) 
+        <p class="desc">
+            
+        </p>
+
+        
+
+        
+
+        
+        <h4>Parameters</h4>
+        <dl>
+            
+            <dt>method <code>string</code></dt>
+            
+            <dd><p>see <code>require(&#39;crypto&#39;).getCiphers()</code></p></dd>
+            <dt>key <code>string</code></dt>
+            
+            <dd><p>secret key</p></dd>
+            <dt>iv <code>string</code></dt>
+            
+            <dd><p>initial vector</p></dd>
+            <dt>input <code>string|<a href="https://nodejs.org/api/buffer.html#buffer_class_buffer">Buffer</a></code></dt>
+            
+            <dd><p>plain text</p></dd>
+            <dt><sub>optional</sub>padding <code>boolean</code></dt>
+            
+            <dd><p>whether auto padding is used, defaults to false</p></dd>
+        </dl>
+        
+        
+        <h4>Returns<code><a href="https://nodejs.org/api/buffer.html#buffer_class_buffer">Buffer</a></code></h4>
+        
+        
+    </dd>
+
+    <dt id="fun-decipher">
+        <div>decipher()</div><sub>method</sub>
+    </dt>
+    <dd>
+        <p class="proto">function decipher(method, secret, input, padding) 
+        <p class="desc">
+            
+        </p>
+
+        
+
+        
+
+        
+        <h4>Parameters</h4>
+        <dl>
+            
+            <dt>method <code>string</code></dt>
+            
+            <dd><p>see <code>require(&#39;crypto&#39;).getCiphers()</code></p></dd>
+            <dt>secret <code>string|<a href="#class-buffer">buffer</a></code></dt>
+            
+            <dd><p>secret key</p></dd>
+            <dt>input <code>string|<a href="https://nodejs.org/api/buffer.html#buffer_class_buffer">Buffer</a></code></dt>
+            
+            <dd><p>cipher text</p></dd>
+            <dt><sub>optional</sub>padding <code>boolean</code></dt>
+            
+            <dd><p>whether auto padding is used, defaults to false</p></dd>
+        </dl>
+        
+        
+        <h4>Returns<code><a href="https://nodejs.org/api/buffer.html#buffer_class_buffer">Buffer</a></code></h4>
+        
+        
+    </dd>
+
+    <dt id="fun-decipheriv">
+        <div>decipheriv()</div><sub>method</sub>
+    </dt>
+    <dd>
+        <p class="proto">function decipheriv(method, key, iv, input, padding) 
+        <p class="desc">
+            
+        </p>
+
+        
+
+        
+
+        
+        <h4>Parameters</h4>
+        <dl>
+            
+            <dt>method <code>string</code></dt>
+            
+            <dd><p>see <code>require(&#39;crypto&#39;).getCiphers()</code></p></dd>
+            <dt>key <code>string</code></dt>
+            
+            <dd><p>secret key</p></dd>
+            <dt>iv <code>string</code></dt>
+            
+            <dd><p>initial vector</p></dd>
+            <dt>input <code>string|<a href="https://nodejs.org/api/buffer.html#buffer_class_buffer">Buffer</a></code></dt>
+            
+            <dd><p>cipher text</p></dd>
+            <dt><sub>optional</sub>padding <code>boolean</code></dt>
+            
+            <dd><p>whether auto padding is used, defaults to false</p></dd>
+        </dl>
+        
+        
+        <h4>Returns<code><a href="https://nodejs.org/api/buffer.html#buffer_class_buffer">Buffer</a></code></h4>
         
         
     </dd>

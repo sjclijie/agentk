@@ -11,16 +11,16 @@
     <li><a href="crypto.html">crypto</a></li>
     <li><a href="doc.html" title="AgentK documentation generator">doc</a></li>
     <li><a href="file.html">file</a></li>
+    <li><a href="fs_cache.html" title="file system cache handler">fs_cache</a></li>
     <li><a href="gbk.html">gbk</a></li>
     <li><a href="http.html">http</a></li>
-    <li><a href="http_response.html" title="Wrapper class for http response, and basic methods to construct a response.">http_response</a></li>
     <li><a href="legacy.html" title="Legacy support module">legacy</a></li>
-    <li><a href="q_watcher.html" title="Qunar Watcher module">q_watcher</a></li>
     <li><a href="router.html">router</a></li>
     <li><a href="static_file.html" title="static file request handler">static_file</a></li>
     <li><a href="stream.html" title="utils for stream consumption">stream</a></li>
     <li><a href="test.html">test</a></li>
     <li>view</li>
+    <li><a href="xml.html">xml</a></li>
     <li><a href="zlib.html">zlib</a></li>
     
 </ul>
@@ -32,8 +32,8 @@
 
 <ul>
     <li>constant <a href="#engines">engines</a>:<code>object</code></li>
-    <li>variable <a href="#path">path</a>:<code>string</code></li><li>variable <a href="#view_engine">view_engine</a>:<code>string</code></li><li>variable <a href="#module_loader">module_loader</a>:<code>function</code></li>
-    <li><a href="#render">function render(name, locals, mimeType) </a></li>
+    <li>variable <a href="#path">path</a>:<code>string</code></li><li>variable <a href="#view_engine">view_engine</a>:<code>string</code></li><li>variable <a href="#module_loader">module_loader</a>:<code>function</code></li><li>variable <a href="#defaultMimeType">defaultMimeType</a>:<code>string</code></li>
+    <li><a href="#fun-render">function render(name, locals, mimeType) </a></li><li><a href="#fun-engine">function engine(compiler, options) </a></li>
     
 </ul>
 
@@ -108,17 +108,32 @@
         
     </dd>
 
-    <dt id="render">
-        <div>render()</div>
-        <sub>method</sub>
+    <dt id="defaultMimeType">
+        <div>defaultMimeType</div>
+        <sub>variable</sub>
+    </dt>
+    <dd>
+        <p class="proto">defaultMimeType:<code>string</code> = <code>'text/html'</code>
+    
+
+        <p class="desc">
+            <p> Default mime type</p>
+        </p>
+
+        
+    </dd>
+
+    <dt id="fun-render">
+        <div>render()</div><sub>method</sub>
     </dt>
     <dd>
         <p class="proto">function render(name, locals, mimeType) 
-
         <p class="desc">
             <p> render a template file into response content, returns a <code>HttpResponse</code>.
  User should specify content type if needed.</p>
         </p>
+
+        
 
         
 
@@ -132,14 +147,43 @@
             <dt>locals <code>object</code></dt>
             
             <dd><p>local bindings</p></dd>
-            <dt>mimeType <code>string</code></dt>
+            <dt><sub>optional</sub>mimeType <code>string</code></dt>
             
             <dd><p>custom mimeType, default to &#39;text/html&#39;</p></dd>
         </dl>
         
         
-        <h4>Returns</h4>
-        <p style="margin-left: 1em"><code><a href="#HttpResponse">HttpResponse</a></code></p>
+        <h4>Returns<code><a href="http.html#class-Response">http::Response</a></code></h4>
+        
+        
+    </dd>
+
+    <dt id="fun-engine">
+        <div>engine()</div><sub>method</sub>
+    </dt>
+    <dd>
+        <p class="proto">function engine(compiler, options) 
+        
+
+        
+
+        
+        <h4>Example</h4>
+        <pre> import * as view from &#39;module/view&#39;;
+ view.engines.handlebars = view.engine(require(&#39;handlebars&#39;).compile)
+</pre>
+        
+
+        
+        <h4>Parameters</h4>
+        <dl>
+            
+            <dt><sub>optional</sub>compiler <code>function</code></dt>
+            
+            <dt><sub>optional</sub>options <code>object</code></dt>
+            
+        </dl>
+        
         
     </dd>
 

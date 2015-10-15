@@ -11,16 +11,16 @@
     <li><a href="crypto.html">crypto</a></li>
     <li><a href="doc.html" title="AgentK documentation generator">doc</a></li>
     <li><a href="file.html">file</a></li>
+    <li><a href="fs_cache.html" title="file system cache handler">fs_cache</a></li>
     <li><a href="gbk.html">gbk</a></li>
     <li><a href="http.html">http</a></li>
-    <li><a href="http_response.html" title="Wrapper class for http response, and basic methods to construct a response.">http_response</a></li>
     <li><a href="legacy.html" title="Legacy support module">legacy</a></li>
-    <li><a href="q_watcher.html" title="Qunar Watcher module">q_watcher</a></li>
     <li><a href="router.html">router</a></li>
     <li><a href="static_file.html" title="static file request handler">static_file</a></li>
     <li><a href="stream.html" title="utils for stream consumption">stream</a></li>
     <li><a href="test.html">test</a></li>
     <li><a href="view.html">view</a></li>
+    <li><a href="xml.html">xml</a></li>
     <li><a href="zlib.html">zlib</a></li>
     
 </ul>
@@ -40,7 +40,7 @@
 
 
 <h4>Example</h4>
-<pre> import * as channel from &#39;../src/module/channel.js&#39;;
+<pre> import * as channel from &#39;../src/module/channel&#39;;
  channel.registerProvider(&#39;get_pid&#39;, function () {
      return process.pid
  });
@@ -62,25 +62,25 @@
 <ul>
     
     
-    <li><a href="#registerProvider">function registerProvider(ch, cb, direct) </a></li><li><a href="#registerListener">function registerListener(ch, cb) </a></li><li><a href="#query">function query(ch) </a></li><li><a href="#dispatch">function dispatch(ch, data) </a></li><li><a href="#onWorker">function onWorker(worker) </a></li>
+    <li><a href="#fun-registerProvider">function registerProvider(ch, cb, direct) </a></li><li><a href="#fun-registerListener">function registerListener(ch, cb) </a></li><li><a href="#fun-query">function query(ch) </a></li><li><a href="#fun-dispatch">function dispatch(ch, data) </a></li><li><a href="#fun-onWorker">function onWorker(worker) </a></li>
     
 </ul>
 
 <dl id="definitions">
 
-    <dt id="registerProvider">
-        <div>registerProvider()</div>
-        <sub>method</sub>
+    <dt id="fun-registerProvider">
+        <div>registerProvider()</div><sub>method</sub>
     </dt>
     <dd>
         <p class="proto">function registerProvider(ch, cb, direct) 
-
         <p class="desc">
             <p> register a provider for <a href="#query">query</a>. when called by one child, all pairs will be queried and the result
  is returned as an array.</p>
 
 <p> <code>cb</code> is called inside coroutine if <code>direct</code> is set to false</p>
         </p>
+
+        
 
         
 
@@ -103,18 +103,18 @@
         
     </dd>
 
-    <dt id="registerListener">
-        <div>registerListener()</div>
-        <sub>method</sub>
+    <dt id="fun-registerListener">
+        <div>registerListener()</div><sub>method</sub>
     </dt>
     <dd>
         <p class="proto">function registerListener(ch, cb) 
-
         <p class="desc">
             <p> register a listener to dispatch</p>
 
 <p> <code>cb</code> is called outside coroutine</p>
         </p>
+
+        
 
         
 
@@ -134,16 +134,16 @@
         
     </dd>
 
-    <dt id="query">
-        <div>query()</div>
-        <sub>method</sub>
+    <dt id="fun-query">
+        <div>query()</div><sub>method</sub>
     </dt>
     <dd>
         <p class="proto">function query(ch) 
-
         <p class="desc">
             <p> query all processes, get the data by the provider registered, and return them as an array</p>
         </p>
+
+        
 
         
 
@@ -157,21 +157,21 @@
         </dl>
         
         
-        <h4>Returns</h4>
-        <p style="margin-left: 1em"><code>Array</code>all results of the pairs that registered a provider for this channel</p>
+        <h4>Returns<code>Array</code></h4>
+        <p>all results of the pairs that registered a provider for this channel</p>
         
     </dd>
 
-    <dt id="dispatch">
-        <div>dispatch()</div>
-        <sub>method</sub>
+    <dt id="fun-dispatch">
+        <div>dispatch()</div><sub>method</sub>
     </dt>
     <dd>
         <p class="proto">function dispatch(ch, data) 
-
         <p class="desc">
             <p> dispatch a message to all processes</p>
         </p>
+
+        
 
         
 
@@ -191,16 +191,16 @@
         
     </dd>
 
-    <dt id="onWorker">
-        <div>onWorker()</div>
-        <sub>method</sub>
+    <dt id="fun-onWorker">
+        <div>onWorker()</div><sub>method</sub>
     </dt>
     <dd>
         <p class="proto">function onWorker(worker) 
-
         <p class="desc">
             <p> This method is called by daemon at worker start</p>
         </p>
+
+        
 
         
 
