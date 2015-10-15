@@ -83,7 +83,7 @@ export function render(name, locals, mimeType) {
     if (!file.exists(filename)) {
         throw new Error("template file not found: " + name);
     }
-    return new Response(co.sync(engine, filename, locals), {
+    return new Response(engine.sync ? engine(filename, locals) : co.sync(engine, filename, locals), {
         headers: {
             'Content-Type': mimeType || defaultMimeType
         }
