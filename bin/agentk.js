@@ -147,12 +147,10 @@ let commands = {
             }
             if (dir.substr(dir.length - 3) === '.js') {
                 require('../index.js').load(path.resolve(dir)).done();
+            } else if (properties.watch) {
+                require('../src/watcher').run(dir)
             } else {
-                if (properties.watch) {
-                    require('../src/watcher').run(dir)
-                } else {
-                    require('../index.js').run(dir);
-                }
+                require('../index.js').run(dir);
             }
         }
     },
