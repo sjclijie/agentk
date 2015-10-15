@@ -43,9 +43,11 @@ if (process.mainModule === module) {
     let target = process.argv[2], path = require('path').resolve(process.argv[3]);
 
     if (target === 'run') {
-        process.env.NODE_UNIQUE_ID = '';
-        require('cluster')._setupWorker();
-        delete process.env.NODE_UNIQUE_ID;
+        if (process.send) {
+            process.env.NODE_UNIQUE_ID = '';
+            require('cluster')._setupWorker();
+            delete process.env.NODE_UNIQUE_ID;
+        }
         exports.run(path);
     } else if (target === 'load') {
         exports.load(path).done();

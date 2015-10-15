@@ -1,6 +1,6 @@
 {
   "name": "@qnpm/agentk",
-  "version": "1.2.2",
+  "version": "1.2.3",
   "description": "synchronous web service framework",
   "main": "index.js",
   "bin": {
