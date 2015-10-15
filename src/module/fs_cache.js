@@ -40,7 +40,7 @@ export default function fs_cache(option) {
         let now = Date.now();
         if (!nocache && filename in files) {
             let cached = files[filename];
-            if (cached.recheck) {
+            if (cached.recheck > now) {
                 return cached;
             }
             // recheck

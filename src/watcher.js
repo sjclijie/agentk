@@ -18,7 +18,7 @@ exports.run = function (dir) {
             respawning = false;
             worker.kill('SIGINT');
             spawn();
-        })
+        });
     });
 
     function spawn() {
