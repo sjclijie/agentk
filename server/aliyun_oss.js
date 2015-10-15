@@ -40,10 +40,10 @@ export function request(conf, method, object, body, headers) {
         let signedStr = `${method}\n${md5}\n${mimeType}\n${date}\n${signedHeaders}/${conf.bucket}${object}`;
         newHeaders.Authorization = "OSS " + conf.key.ak + ":" + crypto.hmac_sha1(conf.key.secret, signedStr, 'base64');
     }
-    return co.yield('http://' + conf.host + object, http.fetch({
+    return co.yield(http.fetch('http://' + conf.host + object, {
         method: method,
         headers: newHeaders,
-        body: body,
+        body: body
     }));
 }
 
