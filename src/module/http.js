@@ -8,6 +8,7 @@ import * as zlib from 'zlib';
 import {read as stream_read} from 'stream'
 
 const ohttp = require('http'),
+    ohttps = require('https'),
     ourl = require('url'),
     ofs = require('fs'),
     oquerystring = require('querystring');
@@ -667,7 +668,7 @@ export function fetch(url, options) {
         headers.host = parsedUrl.host;
         options = {
             host: parsedUrl.hostname,
-            port: parsedUrl.port || 80,
+            port: parsedUrl.port || (parsedUrl.protocol === 'https:' ? 443 : 80),
             path: parsedUrl.path
         }
     }
@@ -675,7 +676,7 @@ export function fetch(url, options) {
     options.headers = groupHeaders(req);
 
     return new Promise(function (resolve, reject) {
-        req.stream.pipe(ohttp.request(options, function (tres) {
+        req.stream.pipe((parsedUrl.protocol === 'https:' ? ohttps : ohttp).request(options, function (tres) {
             resolve(new Response(tres, {
                 status: tres.statusCode,
                 statusText: tres.statusMessage,
