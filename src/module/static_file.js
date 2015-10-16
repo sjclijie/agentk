@@ -79,7 +79,7 @@ export default function staticFile(directory, option) {
             match: function (req) {
                 const headers = req.headers;
                 if (req.filename in files && headers.get('cache-control') !== 'no-cache') { // uses cache
-                    let cached = files[filename];
+                    let cached = files[req.filename];
                     if (cached.recheck > Date.now()) { // cache is fine
                         if (headers.get('if-none-match') === cached.etag ||
                             headers.get('if-modified-since') === cached.lm) {

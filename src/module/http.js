@@ -361,7 +361,7 @@ export class Request extends Body {
      */
     get hostname() {
         parseUrl(this);
-        return this.host;
+        return this.hostname;
     }
 
     //noinspection InfiniteRecursionJS
@@ -380,6 +380,12 @@ export class Request extends Body {
     get pathname() {
         parseUrl(this);
         return this.pathname
+    }
+
+    //noinspection InfiniteRecursionJS
+    get originalPathname() {
+        parseUrl(this);
+        return this.originalPathname
     }
 
     //noinspection InfiniteRecursionJS
@@ -662,7 +668,7 @@ export function fetch(url, options) {
         headers.host = 'localhost';
         options = {
             socketPath: parsedUrl.pathname,
-            path: '/' + (parsedUrl.search || ''),
+            path: '/' + (parsedUrl.search || '')
         }
     } else {
         headers.host = parsedUrl.host;
@@ -764,6 +770,8 @@ function parseUrl(req) {
             value: url.port
         }, pathname: {
             writable: true,
+            value: url.pathname
+        }, originalPathname: {
             value: url.pathname
         }, search: {
             value: url.search
