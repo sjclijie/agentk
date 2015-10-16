@@ -749,7 +749,6 @@ function handleScope(body, locals, replace, insert) {
             if (handleRest) {
                 let lastParam = params[paramLen - 1];
                 if (lastParam.type === Syntax.RestElement) {
-                    console.log(lastParam);
                     if (paramLen === 1) {
                         replace(lastParam, '')
                     } else {
