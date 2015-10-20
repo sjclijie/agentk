@@ -758,7 +758,7 @@ export function parseQuery(query) {
 }
 
 function parseUrl(req) {
-    let url = ourl.parse(req.originalUrl, true);
+    let url = ourl.parse(req._url, true);
     Object.defineProperties(req, {
         scheme: {
             value: url.protocol

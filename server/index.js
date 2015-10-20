@@ -42,7 +42,11 @@ if (storage.name == 'aliyun_oss') {
 } else if (storage.name === 'file') {
     file.mkdirp(storage.directory);
     process.chdir(storage.directory);
-    storage.get = include('../src/module/static_file.js', __dirname)[moduleDefault]('.');
+    storage.get = include('../src/module/static_file.js', __dirname)[moduleDefault]('.', {
+        hash_method(content, stat) {
+            return '"' + md5(content, 'hex').toUpperCase() + '"'
+        }
+    });
     storage.put = function (req, fullname, buf) {
         file.write(fullname.substr(1), buf);
         return {ok: true}
