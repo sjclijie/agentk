@@ -29,6 +29,10 @@ export function exists(file) {
     return ofs.existsSync(file)
 }
 
+export function rename(oldPath, newPath) {
+    return ofs.renameSync(oldPath, newPath)
+}
+
 export function mkdir(file) {
     ofs.mkdirSync(file);
 }
@@ -46,9 +50,9 @@ export function isDirectory(file) {
 }
 
 export function mkdirp(file) {
-    if(!exists(file)) {
+    if (!exists(file)) {
         mkParentDir(file);
-        mkdir(file);   
+        mkdir(file);
     }
 }
 
