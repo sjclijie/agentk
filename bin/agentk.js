@@ -255,16 +255,17 @@ let commands = {
     },
     "logs": {
         help: "print program stdout/stderr log message",
-        args: "<program path>",
+        args: "[<program path>]",
         maxArgs: 1,
         func: function (dir) {
-            if (!arguments.length) {
-                return showHelp();
-            }
             let file = path.join(process.env.HOME, '.agentk/programs');
             if (!fs.existsSync(file)) return;
             let arr = JSON.parse(fs.readFileSync(file, 'utf8'));
-            dir = path.resolve(dir);
+            if (dir) {
+                dir = path.resolve(dir);
+            } else {
+                dir = process.cwd();
+            }
             if (win32) dir = dir.replace(/\\/g, '/').toLowerCase();
             let found;
             for (let program of arr) {
@@ -510,6 +511,23 @@ esac\n');
                 }
                 return buf;
             }
+        }
+    },
+    "update": {
+        help: "update modules from server",
+        args: "[program directory] [--cached]",
+        desc: "query the server for updates of all files in src/module. Use --cached to cache old files",
+        func: function (dir) {
+            if (dir) {
+                dir = path.resolve(dir, 'src/module');
+            } else {
+                dir = path.resolve('src/module');
+            }
+            console.log('chdir to', dir);
+            process.chdir(dir);
+            loadAndRun('../server/publish', function (publish) {
+                publish.update();
+            });
         }
     }
 };

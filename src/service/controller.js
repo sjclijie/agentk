@@ -28,7 +28,8 @@ export function service_stop() {
     callService('exit');
 }
 
-export function service_upstart_install(uname) {
+export function service_upstart_install() {
+    let uname = process.properties.user || 'root';
     let version;
     try {
         version = child_process.exec('initctl version');
@@ -65,7 +66,8 @@ exec /bin/su ${uname} <<< "exec ${nodeScript()}"`}
     console.log(`${uname}: service installed, use \x1b[36msudo initctl start ak_${uname}\x1b[0m to start the service`);
 }
 
-export function service_upstart_uninst(uname) {
+export function service_upstart_uninst() {
+    let uname = process.properties.user || 'root';
     const filename = `/etc/init/ak_${uname}.conf`;
     if (!file.exists(filename)) {
         throw new Error(`${uname}: service not installed`);
@@ -73,7 +75,8 @@ export function service_upstart_uninst(uname) {
     file.rm(filename);
 }
 
-export function service_systemd_install(uname) {
+export function service_systemd_install() {
+    let uname = process.properties.user || 'root';
     const filename = `/etc/systemd/system/ak_${uname}.service`;
     if (file.exists(filename)) {
         throw new Error(`${uname}: service already installed`);
@@ -98,7 +101,8 @@ WantedBy=multi-user.target
     console.log(`${uname}: service installed, use \x1b[36msudo systemctl start ak_${uname}.service\x1b[0m to start the service`);
 }
 
-export function service_systemd_uninst(uname) {
+export function service_systemd_uninst() {
+    let uname = process.properties.user || 'root';
     const filename = `/etc/systemd/system/ak_${uname}.service`;
     if (!file.exists(filename)) {
         throw new Error(`${uname}: service not installed`);
@@ -107,7 +111,8 @@ export function service_systemd_uninst(uname) {
     file.rm(`/etc/systemd/system/multi-user.target.wants/ak_${uname}.service`);
 }
 
-export function service_sysv_install(uname) {
+export function service_sysv_install() {
+    let uname = process.properties.user || 'root';
 
     let inittab = '/etc/inittab',
         script = sysvScript(uname),
@@ -131,7 +136,8 @@ export function service_sysv_install(uname) {
     file.write(inittab, current + 'k' + next_id + script);
 }
 
-export function service_sysv_uninst(uname) {
+export function service_sysv_uninst() {
+    let uname = process.properties.user || 'root';
     let inittab = '/etc/inittab',
         script = sysvScript(uname),
         current = '' + file.read(inittab);
