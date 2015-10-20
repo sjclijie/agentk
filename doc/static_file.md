@@ -1,4 +1,4 @@
-<!-- @rev ab0098bc1e6b9bf04b0c223b37a6d8c4 20ae7b -->
+<!-- @rev 82feee2f68a634be3d3e62d972b7b068 20ae7b -->
 # static_file
 
 static file request handler
