@@ -28,8 +28,8 @@ export default class Router {
     exact(url, cb) {
         this.add({
             handle: cb,
-            prefix: 'if(req.pathname === ' + JSON.stringify(url) + ') {',
-            suffix: '}'
+            prefix: 'if(pathname === ' + JSON.stringify(url) + ') {\n',
+            suffix: '}\n'
         });
     }
 
@@ -41,11 +41,8 @@ export default class Router {
         let len = prefix.length, $0 = JSON.stringify(prefix);
         this.add({
             handle: ret,
-            prefix: `if(req.pathname.substr(0, ${len}) === ${$0}) {
-    var $1 = req.pathname, $2 = req.url;
-    req.pathname = $1.substr(${len - 1});
-    req.url = $2.substr(${len - 1});`,
-            suffix: '  req.pathname = $1;\n  req.url = $2\n}'
+            prefix: `if(pathname.substr(0, ${len}) === ${$0}) {\n  const $0 = pathname;\n  pathname = req.pathname = pathname.substr(${len - 1});\n`,
+            suffix: '  pathname = req.pathname = $0\n}'
         });
         return ret;
     }
@@ -54,13 +51,8 @@ export default class Router {
         let ret = new Router(cb);
         this.add({
             handle: ret,
-            prefix: 'var $0 = ' + pattern + '.exec(req.pathname);\n' +
-            'if($0) {\n' +
-            '  var $1 = args;\n' +
-            '  $0[0] = req;\n' +
-            ' args = $0;',
-            suffix: '  args=$1;\n' +
-            '}'
+            prefix: 'const $0 = ' + pattern + '.exec(pathname);\nif($0) {\n  const $1 = args;\n  $0[0] = req;\n  args = $0;\n',
+            suffix: '  args = $1;\n}'
         });
 
         return ret;
@@ -70,12 +62,8 @@ export default class Router {
         let ret = new Router();
         this.add({
             handle: ret,
-            prefix: 'try {',
-            suffix: '} catch($1) {\n' +
-            '  var $2 = args;\n' +
-            '  args = [req, $1];\n' +
-            '  $invoke($0)\n' +
-            '  args = $2;\n}',
+            prefix: 'try {\n',
+            suffix: '} catch($1) {\n  if((_ = $0.apply(req, [req, $1])) !== Z) return _;\n}\n',
             args: [cb]
         });
         return ret;
@@ -96,9 +84,19 @@ export default class Router {
     }
 }
 
-
 function router_compile() {
-    let handle = $compile(this, 0, 0);
+    let handle = $compile(this, 0, 0, '');
+
+    let code = handle.code;
+    // optimize matches
+    code = code.replace(/const _(\d+) = pathname;\n  pathname = (req\.pathname = pathname.substr\(\d+\);\n(?:\$invoke\(\$\d+\)\n)+)  pathname = req\.pathname = _\1/g, '$2  req.pathname = pathname');
+    // optimize exact
+    code = code.replace(/(if\(pathname === "\/.*?")\) \{\n\$invoke\((\$\d+)\)\n\}/g, '$1 && (_ = $2.apply(req, args)) !== Z) return _;');
+    // optimize match
+    code = code.replace(/const _(\d+) = args;\n  _(\d+)\[0\] = req;\n  args = _\2;\n\$invoke\((\$\d+)\)\n  args = _\1;/g, '_$2[0] = req;\n  if((_ = $3.apply(req, _$2)) !== Z) return _;');
+    // replace invokes
+    code = code.replace(/\$invoke\((\$\d+)\)/g, 'if((_ = $1.apply(req, args)) !== Z) return _;');
+
     this.compile = Boolean;
     let args = handle.args;
     let argnames = '';
@@ -107,7 +105,7 @@ function router_compile() {
     }
     argnames += 'slice';
     args.push(args.slice);
-    let code = 'function router(req) {var args = slice.call(arguments), _;\n' + handle.code.replace(/\$invoke\((\$\w+)\)/g, 'if((_ = $1.apply(req, args)) !== Z) return _;') + '}';
+    code = 'function router(req) {let args = slice.call(arguments), _, pathname = req.pathname;\n' + code + '}';
     if (this.completions) {
         args = args.concat(this.completions);
         let wrapping = 'router.apply(req, arguments)';
@@ -115,18 +113,18 @@ function router_compile() {
             wrapping = 'c' + i + '(req, ' + wrapping + ')';
             argnames += ',c' + i;
         }
-        code = 'return function(req) {return ' + wrapping + '};\n' + code
+        code = '"use strict";\nreturn function(req) {return ' + wrapping + '};\n' + code
     } else {
-        code = 'return ' + code;
+        code = '"use strict";\nreturn ' + code;
     }
-    //console.log('function test(){' + code + '}');
+    //console.log('function test(' + argnames + ',Z){' + code + '}');
     this._compiled = new Function(argnames + ',Z', code).apply(null, args);
 }
 
 function $compile(cb, first_arg, first_xarg) {
     if (typeof  cb === 'function') {
         return {
-            code: '$invoke($' + first_arg + ')',
+            code: '$invoke($' + first_arg + ')\n',
             args: [cb],
             first_arg: first_arg + 1,
             first_xarg: first_xarg
@@ -136,20 +134,21 @@ function $compile(cb, first_arg, first_xarg) {
     let args = [], code = '';
     for (let caller of cb.callers) {
         //console.log(caller);
-        let argc = caller.args ? caller.args.length : 0, maxExtras = 0;
-        let prefix = caller.prefix.replace(/\$(\d)\b/g, replacement),
+        let argc = caller.args ? caller.args.length : 0, maxExtras = -1;
+        var prefix = caller.prefix.replace(/\$(\d)\b/g, replacement),
             suffix = caller.suffix.replace(/\$(\d)\b/g, replacement);
-        let handle = $compile(caller.handle, first_arg + argc, first_xarg + maxExtras);
-        code += prefix + '\n' + handle.code + '\n' + suffix;
+        let handle = $compile(caller.handle, first_arg + argc, first_xarg + maxExtras + 1);
+        code += prefix + handle.code + suffix;
 
 
         function replacement(m, u) {
             u = u | 0;
             if (u >= argc) { // extra arg
+                u -= argc;
                 if (u > maxExtras) {
                     maxExtras = u;
                 }
-                return '$$' + (first_xarg + u);
+                return '_' + (first_xarg + u);
             }
             return '$' + (first_arg + u)
         }
