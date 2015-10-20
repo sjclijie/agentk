@@ -479,7 +479,7 @@ function handleScope(body, locals, replace, insert) {
                     replace({
                         range: [stmt.range[0], stmt.body.range[0] + 1]
                     }, (stmt.id ? 'let ' + className + ' = ' : '') + 'function (super_proto) {' +
-                        (body.has_constructor ? 'let ' + className + ';' : 'function ' + className + '() {}') +
+                        (body.has_constructor ? 'let ' + className + ';' : 'function ' + className + '() {return super_proto.constructor.apply(this,arguments)}') +
                         'const proto = {__proto__: super_proto};');
                     replace({
                         range: [stmt.body.range[1] - 1, stmt.range[1]]

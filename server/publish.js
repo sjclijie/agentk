@@ -10,7 +10,7 @@ export default function (args) {
         let configFile = require('path').join(process.env.HOME, '.agentk/config.json');
         if (exists(configFile)) {
             try {
-                host = JSON.parse('' + read(configFile))['server.host'];
+                host = JSON.parse('' + read(configFile))['module.server'];
             } catch (e) {
             }
         }

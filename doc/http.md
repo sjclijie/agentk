@@ -1,4 +1,4 @@
-<!-- @rev d610eec88aef3bb3aef619fdd3338d2d 20ae7b -->
+<!-- @rev 92b94cc2929a376ddb5af60f1e40807e 20ae7b -->
 # http
 
 ----
@@ -483,6 +483,16 @@ get Request::pathname()
 
 > {String} request pathname, like `"/test"`
      
+
+------------------------------------------------------------------------
+### originalPathname()
+
+```js
+get Request::originalPathname() 
+```
+
+
+
 
 ------------------------------------------------------------------------
 ### pathname()
