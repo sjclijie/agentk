@@ -78,17 +78,13 @@ let server = http.listen(manifest.config.port, function (req) {
         }
         let fullname = `/${m[1]}@${hexsum}.js`;
         let tres = storage.put(req, fullname, buf, sum);
-        if (tres.statusCode >= 300) { // not OK
-            return new http.Response(tres, {
-                status: tres.statusCode
-            });
+        if (tres.status >= 300) { // not OK
+            return tres
         }
         //console.log('upload success');
         tres = storage.copy(fullname, req.originalUrl);
-        if (tres.statusCode >= 300) { // not OK
-            return new http.Response(tres, {
-                status: tres.statusCode
-            });
+        if (tres.status >= 300) { // not OK
+            return tres
         }
         watcher.add('upload', Date.now() - uploadStart);
         return new http.Response();
