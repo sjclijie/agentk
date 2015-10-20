@@ -28,6 +28,7 @@ export const mimeTypes = {
     png: 'image/png'
 };
 
+import LRUCache from 'lru_cache';
 
 /**
  *
@@ -75,64 +76,7 @@ export default function staticFile(directory, option) {
         cc = 'max-age=' + (expires / 1000 | 0);
     }
 
-    const cache = function (capacity) { // simple impl of LRU cache
-        const entries = {};
-        var head = null, tail = null, count = 0;
-
-        function update(entry) {
-            if (entry === head) return;
-
-            if (entry === tail) {
-                tail = entry.prev;
-                tail.next = null;
-            } else {
-                entry.prev.next = entry.next;
-                entry.next.prev = entry.prev;
-            }
-
-            head.prev = entry;
-            entry.next = head;
-            entry.prev = null;
-            head = entry;
-        }
-
-        return {
-            get: function (key) {
-                const entry = entries[key];
-                if (entry) {
-                    update(entry);
-                    return entry.value;
-                }
-            },
-            set: function (key, value) {
-                let entry = entries[key];
-                if (entry) {
-                    update(entry);
-                } else if (count === capacity) { // drop tail
-                    entry = tail;
-                    delete entries[entry.key];
-                    entry.key = key;
-                    entries[key] = entry;
-                    update(entry);
-                } else {
-                    entry = entries[key] = {
-                        key: key,
-                        prev: null,
-                        next: head,
-                        value: -1
-                    };
-                    if (count) {
-                        head.prev = entry;
-                    } else {
-                        tail = entry;
-                    }
-                    head = entry;
-                    count++;
-                }
-                entry.value = value;
-            }
-        }
-    }(cache_capacity);
+    const cache = LRUCache(cache_capacity);
 
     return function (req) {
         const headers = req.headers;
