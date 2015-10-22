@@ -55,7 +55,6 @@ export class Test {
     }
 
 
-
     [Symbol.iterator]() {
 
     }
@@ -63,6 +62,10 @@ export class Test {
 
 
 export default class MyTest extends Test {
+    static beforeCons() {
+        return 'haha';
+    }
+
     constructor(a) {
         super(a);
         this.name = a
@@ -84,6 +87,7 @@ void a.foo;
 a.foo = 0;
 
 Test.prototype.XXX = 123;
+assert.strictEqual(MyTest.beforeCons(), 'haha');
 assert.strictEqual(a.xxx, 123);
 
 Test.bar();
