@@ -35,7 +35,7 @@ function run() {
             for (var key in statusMap) {
                 msg += key + ':' + stats[+key] + ' ';
             }
-            msg += ') ' + errors + ' errors, ' + (bytesRecv >> 20) + ' MB recv \x1b[u';
+            msg += ') ' + errors + ' errors, ' + (bytesRecv / 1048576 | 0) + ' MB recv \x1b[u';
             process.stdout.write(msg);
             sec = now;
             reqs = 0;
