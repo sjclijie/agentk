@@ -1,3 +1,26 @@
+/**
+ *
+ * @title Qunar single site login helper
+ *
+ * @example
+ *
+ *     import qsso from 'module/qsso';
+ *     const admin_email = 'kyrios.li@qunar.com';
+ *     const email_title = 'Request for permission of xxx.qunar.com';
+ *     const users = {'kyrios.li': {
+ *         permission: 'supervisor'
+ *     }}
+ *
+ *     function onuser(username) {
+ *         return users[username] || false
+ *     }
+ *
+ *     router.prefix('/admin', qsso({admin_email, email_title), onuser)
+ *     router.exact('/admin/dashboard', req => {
+ *         console.log(req.user.id, req.user.info.permission); // "kyrios.li", "supervisor"
+ *         // TODO: code goes here
+ *     })
+ */
 import Router from 'router';
 import {fetch,parseQuery,Response} from 'http';
 import {sha1} from 'crypto';
@@ -5,6 +28,7 @@ import {sha1} from 'crypto';
 /**
  *
  * @param {object} options optional arguments, which contains:
+ *
  *   - login_url `string`: callback url when user is not login, defaults to `/login`
  *   - cookie_name `string`: cookie name used to save login info, defaults to `AKUID`
  *   - cookie_expires `number`: cookie expiration time in seconds, defaults to 30 days
@@ -12,10 +36,11 @@ import {sha1} from 'crypto';
  *   - cookie_secret `string`: cookie encryption key, defaults to MAC address
  *   - admin_email `string`: admin email address to be shown up when user is not in the grant list
  *   - email_title `string`: default email title to be added when user is not in the grant list
+ *
  * @param {function} onuser callback called when user access, should return any value if user is permitted
  *   or `false` if user is not permitted
  */
-export default function (options, onuser) {
+export default function qsso (options, onuser) {
     const login_url = options.login_url || '/login';
     const cookie_name = options.cookie_name || 'AKUID';
     const cookie_secret = sha1(options.cookie_secret || getMACAddr()); // buffer

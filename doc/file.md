@@ -1,4 +1,4 @@
-<!-- @rev c05a53a46b86d52ad9a2983cea0fdffb 20ae7b -->
+<!-- @rev 5f893b04acb77c882904ab5f25b9e9a7 20ae7b -->
 # file
 
 ----
@@ -63,6 +63,16 @@ function symlink(src, dst)
 
 ```js
 function exists(file) 
+```
+
+
+
+
+------------------------------------------------------------------------
+### rename()
+
+```js
+function rename(oldPath, newPath) 
 ```
 
 
