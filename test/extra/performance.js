@@ -14,8 +14,8 @@ if (process.argv[2] === 'load') { // child
         const options = {
             method: 'GET',
             host: '127.0.0.1',
-            port: process.env.server_port,
-            path: '/',
+            port: process.env.server_port || '80',
+            path: process.env.server_path || '/',
             agent: agent
         };
 
