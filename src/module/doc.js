@@ -201,8 +201,9 @@ export default function (outDir, format) {
                         decl.comment = comment;
                         onExportFunctionDecl(decl, decl.id.name);
                     } else if (decl.type === Syntax.VariableDeclaration) {
-                        decl.declarations[0].comment = comment;
+                        //decl.declarations[0].comment = comment;
                         for (let vardecl of decl.declarations) {
+                            vardecl.comment = comment;
                             vardecl.kind = decl.kind;
                             decls[vardecl.id.name] = vardecl;
                             onExportVariableDecl(vardecl, vardecl.id.name);
@@ -296,7 +297,7 @@ export default function (outDir, format) {
                 module._default = {
                     type: 'variable',
                     title: hasDefault.id.name,
-                    name:  hasDefault.id.name
+                    name: hasDefault.id.name
                 }
             } else if (hasDefault.type === Syntax.Literal) { // expression
                 //console.log(name, 'has default', hasDefault);

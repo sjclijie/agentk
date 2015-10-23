@@ -31,8 +31,8 @@
 <% } %>
 
 <ul>
-    <% consts.forEach(function(obj) {%><li>constant <a href="#<%- obj.name %>"><%- obj.name %></a><% if(obj.comment.type) { %>:<code><%- parseTypename(obj.comment.type) %></code><% } %></li><%})%>
-    <% variables.forEach(function(obj) {%><li>variable <a href="#<%- obj.name %>"><%- obj.name %></a><% if(obj.comment.type) { %>:<code><%- parseTypename(obj.comment.type) %></code><% } %></li><%})%>
+    <% consts.forEach(function(obj) {%><li><%- obj.comment.method ? 'method' : 'constant'%> <a href="#<%- obj.name %>"><%- obj.name %></a><% if(obj.comment.type) { %>:<code><%- parseTypename(obj.comment.type) %></code><% } %></li><%})%>
+    <% variables.forEach(function(obj) {%><li><%- obj.comment.method ? 'method' : 'variable'%> <a href="#<%- obj.name %>"><%- obj.name %></a><% if(obj.comment.type) { %>:<code><%- parseTypename(obj.comment.type) %></code><% } %></li><%})%>
     <% methods.forEach(function(method) {%><li><a href="#<%- method.title %>"><%- method.prototype %></a><%
         if (method.comment.hasOwnProperty('constructor')) { %> <b>constructor</b><%
         } else if(method.static) { %><b>static</b><%} %></li><%})%>
@@ -44,7 +44,7 @@
 consts.forEach(function(obj) {var comment = obj.comment; %>
     <dt id="<%- obj.name %>">
     <div><%- obj.name %></div>
-    <sub>constant</sub>
+    <sub><%- obj.comment.method ? 'method' : 'constant'%></sub>
     </dt>
     <dd>
         <p class="proto"><%- obj.name %><% if(comment.type) { %>:<code><%- parseTypename(comment.type) %></code><% }
@@ -64,7 +64,7 @@ consts.forEach(function(obj) {var comment = obj.comment; %>
 variables.forEach(function(obj) {var comment = obj.comment; %>
     <dt id="<%- obj.name %>">
         <div><%- obj.name %></div>
-        <sub>variable</sub>
+        <sub><%- obj.comment.method ? 'method' : 'variable'%></sub>
     </dt>
     <dd>
         <p class="proto"><%- obj.name %><% if(comment.type) { %>:<code><%- parseTypename(comment.type) %></code><% }

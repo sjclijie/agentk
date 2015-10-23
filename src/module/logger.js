@@ -1,5 +1,7 @@
 /**
- * Logging helper
+ * Helper for log writing
+ *
+ * @title Logging helper
  *
  * @example
  *
@@ -9,24 +11,18 @@
  *     logger.format.info = '[$level] $datetime $($1.method) $($1.pathname) $($2.status) $0\n'
  *     logger.output.info = 'log/info.log'
  *     logger.info('lorem ipsum', req, res)
+ *
  */
 
 const _fs = require('fs');
 
-export const VERBOSE = 8, DEBUG = 7, INFO = 6, WARN = 4, ERROR = 3, FATAL = 0;
-
-/**
- * controlling which log level is activated
- * @type {number}
- */
-export let level = INFO;
 
 const _defaultDatetimeFormat = 'yyyy-MM-dd HH:mm:ss', _defaultLogFormat = '[$level] $datetime $0\n';
 /**
  * formats of each log level.
  * Some variables can be used in the log format:
  *
- *   - `$level` current log level, like: DEBUG INFO WARN ERROR FATAL
+ *   - `$level` current log level, like: `DEBUG INFO WARN ERROR FATAL`
  *   - `$datetime` datetime in format `yyyy-MM-dd HH:mm:ss`
  *   - `$filename` source file from which the logger method is called
  *   - `$line` line number of the source file from which the logger method is called
@@ -38,20 +34,22 @@ const _defaultDatetimeFormat = 'yyyy-MM-dd HH:mm:ss', _defaultLogFormat = '[$lev
  * Format of the datetime parameter can be specified like: `$datetime{yyyy/MM/dd HH:mm:ss.SSS}`, tokens which can be
  * used in the datetime formatter are:
  *
- *   - yyyy 4-digits years, like 2015
- *   - MM 2-digits months, like 01, 02, ..., 12
- *   - MMM 3-characters month name, like Jan, Feb, ..., Dec
- *   - dd 2-digits date, like 01, 02, ..., 31
- *   - DDD 3-characters day name of week, like Sun, Mon, ..., Sat
- *   - HH 2-digits hours in 24-hours
- *   - mm 2-digits minutes
- *   - ss 2-digits seconds
- *   - SSS 3-digits milliseconds
+ *   - `yyyy` 4-digits years, like 2015
+ *   - `MM` 2-digits months, like 01, 02, ..., 12
+ *   - `MMM` 3-characters month name, like Jan, Feb, ..., Dec
+ *   - `dd` 2-digits date, like 01, 02, ..., 31
+ *   - `DDD` 3-characters day name of week, like Sun, Mon, ..., Sat
+ *   - `HH` 2-digits hours in 24-hours
+ *   - `mm` 2-digits minutes
+ *   - `ss` 2-digits seconds
+ *   - `SSS` 3-digits milliseconds
  *
  * Default formats for each log levels are `'[$level] $datetime $0\n'`, which will print the log level, the datetime and the
  * first argument.
  *
- * A log level should not be used before it is set up with the format and output parameter
+ * A log method should not be called before its format and output parameter is set up
+ *
+ * @type Object
  */
 export const format = {
     verbose: _defaultLogFormat,
@@ -65,6 +63,7 @@ export const format = {
 /**
  * Output targets
  *
+ * @type Object
  * specify a filename or a stream
  */
 export const output = {
@@ -75,6 +74,14 @@ export const output = {
     error: process.stderr,
     fatal: process.stderr
 };
+
+export const VERBOSE = 8, DEBUG = 7, INFO = 6, WARN = 4, ERROR = 3, FATAL = 0;
+
+/**
+ * current log level. The log levels that has lower priority will be ignored.
+ * @type {number}
+ */
+export let level = INFO;
 
 function logger(_level, name) {
     return function () { // first called
@@ -268,6 +275,13 @@ function bufferedWriter(fd) {
     }
 }
 
+/**
+ * log method that will format the arguments into a string and write them into output
+ *
+ * @method
+ *
+ * @type {Function}
+ */
 export let verbose = logger(VERBOSE, 'verbose'),
     debug = logger(DEBUG, 'debug'),
     info = logger(INFO, 'info'),
