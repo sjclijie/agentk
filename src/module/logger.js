@@ -264,13 +264,11 @@ function bufferedWriter(fd) {
     };
 
     function write() {
-        _fs.write(fd, buffer, null, 'utf8', function (err, written) {
+        _fs.write(fd, buffer, null, 'utf8', function (err) {
             if (err) { // write failed
                 console.log('logger::bufferedWriter: write failed:' + err.message);
-                buffer = '';
-            } else if (buffer = buffer.substr(written)) {
-                write()
             }
+            buffer = '';
         });
     }
 }
