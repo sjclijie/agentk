@@ -10,9 +10,7 @@ exports.run = function (dir) {
 
     let worker, respawning, lastRespawn = Date.now();
     spawn();
-    watch(srcDir);
-
-    function onevent() {
+    fs.watch(srcDir, {recursive: true}, function onevent() {
         if (respawning) return;
         respawning = true;
         if (Date.now() - lastRespawn < 1000) {
@@ -20,17 +18,8 @@ exports.run = function (dir) {
         } else {
             setTimeout(respawn, 10);
         }
-    }
+    });
 
-    function watch(dir) {
-        fs.watch(dir, onevent);
-        for (let name of fs.readdirSync(dir)) {
-            let childFile = path.join(dir, name);
-            if (fs.statSync(childFile).isDirectory()) {
-                watch(childFile)
-            }
-        }
-    }
 
     function respawn() {
         respawning = false;
