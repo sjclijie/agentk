@@ -1,14 +1,14 @@
 "use strict";
-const http = require('http');
+var http = require('http');
 
-let maxConn = (process.argv[4] | 0) || 100, running = 0;
+var maxConn = (process.argv[4] | 0) || 100, running = 0;
 console.log('< or >: adjust conns; q: exit');
 
-let agent = http.globalAgent;
+var agent = http.globalAgent;
 
 agent.maxSockets = 4096;
 
-const options = {
+var options = {
     method: 'GET',
     host: '127.0.0.1',
     port: process.env.server_port || '80',
@@ -16,19 +16,27 @@ const options = {
     agent: agent
 };
 
-let sec = 0;
-let reqs = 0;
-let oks = 0;
-let errors = 0;
-let bytesRecv = 0;
+var sec = 0;
+var reqs = 0;
+var oks = 0;
+var errors = 0;
+var bytesRecv = 0;
+var statusCodes = [];
+var statusMap = {};
+var stats = new Uint32Array(600);
 
 function run() {
     while (running < maxConn) {
         running++;
         reqs++;
-        let now = Date.now() / 1000 | 0;
+        var now = Date.now() / 1000 | 0;
         if (sec !== now) {
-            process.stdout.write('\x1b[s ' + reqs + ' q/s ' + maxConn + ' conns, ' + oks + ' oks, ' + errors + ' errors, ' + (bytesRecv >> 20) + ' MB recv \x1b[u');
+            var msg = '\x1b[s ' + reqs + ' q/s ' + maxConn + ' conns, ' + oks + ' oks( ';
+            for (var key in statusMap) {
+                msg += key + ':' + stats[+key] + ' ';
+            }
+            msg += ') ' + errors + ' errors, ' + (bytesRecv >> 20) + ' MB recv \x1b[u';
+            process.stdout.write(msg);
             sec = now;
             reqs = 0;
         }
@@ -39,6 +47,9 @@ function run() {
 run();
 
 function onres(tres) {
+    oks++;
+    statusMap[tres.statusCode] = true;
+    stats[tres.statusCode]++;
     tres.on('data', function (data) {
         bytesRecv += data.length
     }).on('end', function () {
