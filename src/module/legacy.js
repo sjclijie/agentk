@@ -29,7 +29,16 @@
 export function middleware(cb) {
     return function (req) {
         return co.promise(function (resolve, reject) {
-            cb(req.request, req.response, function (err) {
+            const response = req.response, _end = response.end;
+            response.end = function () {
+                _end.apply(response, arguments);
+                response.writeHead = response.end = Boolean;
+                resolve(false);
+            };
+
+            cb(req.request, response, function (err) {
+                response.end = _end;
+                // next called
                 if (err) reject(err);
                 else resolve();
             })

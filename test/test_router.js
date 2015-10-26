@@ -41,13 +41,11 @@ test.test('prefix', function () {
         assertEqual(arguments.length, 1);
         assertEqual(req, $req);
         assertEqual(req.pathname, '/bar');
-        assertEqual(req.url, '/bar?a=b');
         $req.called = true;
     });
 
     router.apply($req, [$req]);
     assertEqual($req.pathname, '/foo/bar');
-    assertEqual($req.url, '/foo/bar?a=b');
     assert($req.called);
 });
 
@@ -93,7 +91,6 @@ test.test('multiple', function () {
         assertEqual(arguments.length, 1);
         assertEqual(req, $req);
         assertEqual(req.pathname, '/bar');
-        assertEqual(req.url, '/bar?a=b');
         $req.called = true;
         return {};
     });
@@ -102,20 +99,17 @@ test.test('multiple', function () {
         assertEqual(arguments.length, 1);
         assertEqual(req, $req);
         assertEqual(req.pathname, '/baz');
-        assertEqual(req.url, '/baz?a=b');
         $req.called = true;
         return {};
     });
 
     router.apply($req, [$req]);
     assertEqual($req.pathname, '/bar');
-    assertEqual($req.url, '/bar?a=b');
     assert($req.called);
 
     $req = {pathname: '/foo2/baz', url: '/foo2/baz?a=b'};
     router.apply($req, [$req]);
     assertEqual($req.pathname, '/baz');
-    assertEqual($req.url, '/baz?a=b');
     assert($req.called);
 });
 
@@ -129,27 +123,23 @@ test.test('cascade', function () {
         assertEqual(m, 'foo');
         assertEqual(req, $req);
         assertEqual(req.pathname, '/foo/bar/baz');
-        assertEqual(req.url, '/foo/bar/baz?a=b');
         $req.called = true;
     }).prefix('/foo/bar', function (req, m) {
         assertEqual(arguments.length, 2);
         assertEqual(m, 'foo');
         assertEqual(req, $req);
         assertEqual(req.pathname, '/baz');
-        assertEqual(req.url, '/baz?a=b');
         $req.called2 = true;
     }).exact('/baz', function (req, m) {
         assertEqual(arguments.length, 2);
         assertEqual(m, 'foo');
         assertEqual(req, $req);
         assertEqual(req.pathname, '/baz');
-        assertEqual(req.url, '/baz?a=b');
         $req.called3 = true;
     });
 
     router.apply($req, [$req]);
     assertEqual($req.pathname, '/foo/bar/baz');
-    assertEqual($req.url, '/foo/bar/baz?a=b');
     assert($req.called);
     assert($req.called2);
 
@@ -171,7 +161,6 @@ test.test('cascade catcher', function () {
         assertEqual(arguments.length, 1);
         assertEqual(req, $req);
         assertEqual(req.pathname, '/baz');
-        assertEqual(req.url, '/baz?a=b');
         throw $err;
     });
 

@@ -1,95 +1,84 @@
-import * as http from '../../src/module/http';
-if (process.argv[2] === 'load') { // child
-    setTimeout(function () {
-        "use strict";
-        const http = require('http');
+"use strict";
+var http = require('http');
 
-        let maxConn = (process.argv[4] | 0) || 100, running = 0;
-        console.log('< or >: adjust conns; q: exit');
+var maxConn = (process.argv[4] | 0) || 100, running = 0;
+console.log('< or >: adjust conns; q: exit');
 
-        let agent = http.globalAgent;
+var agent = http.globalAgent;
 
-        agent.maxSockets = 4096;
+agent.maxSockets = 4096;
 
-        const options = {
-            method: 'GET',
-            host: '127.0.0.1',
-            port: process.env.server_port,
-            path: '/',
-            agent: agent
-        };
+var options = {
+    method: 'GET',
+    host: '127.0.0.1',
+    port: process.env.server_port || '80',
+    path: process.env.server_path || '/',
+    agent: agent
+};
 
-        let sec = 0;
-        let reqs = 0;
+var sec = 0;
+var reqs = 0;
+var oks = 0;
+var errors = 0;
+var bytesRecv = 0;
+var statusCodes = [];
+var statusMap = {};
+var stats = new Uint32Array(600);
 
-        function run() {
-            while (running < maxConn) {
-                running++;
-                reqs++;
-                let now = Date.now() / 1000 | 0;
-                if (sec !== now) {
-                    process.stdout.write('\x1b[s ' + reqs + ' q/s ' + maxConn + ' conns\x1b[u');
-                    sec = now;
-                    reqs = 0;
-                }
-                http.request(options, onres).end();
+function run() {
+    while (running < maxConn) {
+        running++;
+        reqs++;
+        var now = Date.now() / 1000 | 0;
+        if (sec !== now) {
+            var msg = '\x1b[s ' + reqs + ' q/s ' + maxConn + ' conns, ' + oks + ' oks( ';
+            for (var key in statusMap) {
+                msg += key + ':' + stats[+key] + ' ';
             }
+            msg += ') ' + errors + ' errors, ' + (bytesRecv / 1048576 | 0) + ' MB recv \x1b[u';
+            process.stdout.write(msg);
+            sec = now;
+            reqs = 0;
         }
-
-        run();
-
-        function onres(tres) {
-            tres.on('data', Boolean).on('end', function () {
-                running--;
-                run();
-            })
-        }
-
-        process.stdin.resume();
-        process.stdin.setRawMode(true);
-        process.stdin.on('data', function (data) {
-            if (data[0] === 0x71) {
-                process.stdout.write('\n');
-                process.exit(0)
-            } else if (data[0] === 44) { // --
-                if (maxConn > 10) {
-                    maxConn -= 10;
-                } else {
-                    maxConn = 0;
-                }
-            } else if (data[0] === 46) { // ++
-                maxConn += 10;
-                run();
-            }
-        });
-    });
-} else {
-
-    let ok = new http.Response('foo bar');
-
-    ok.headers.append('Cache-Control', 'no-cache');
-    ok.headers.append('Server', 'blahblah');
-
-    let server = http.listen(0, function (req) {
-        for (let i = 0; i < 5; i++) {
-            co.sleep(1);
-        }
-        return ok;
-    }, '127.0.0.1', 1024);
-
-    console.log('performance: server listening at ', server.address());
-
-    require('child_process').spawn(process.execPath, [
-        '--harmony',
-        require('path').join(__dirname, '../../index.js'),
-        'load',
-        __filename
-    ], {
-        env: {
-            server_port: server.address().port
-        },
-        stdio: 'inherit'
-    }).on('exit', function () {
-        server.close()
-    });
+        http.request(options, onres).on('error', onerror).end();
+    }
 }
+
+run();
+
+function onres(tres) {
+    oks++;
+    statusMap[tres.statusCode] = true;
+    stats[tres.statusCode]++;
+    tres.on('data', function (data) {
+        bytesRecv += data.length
+    }).on('end', function () {
+        running--;
+        run();
+    })
+}
+
+function onerror() {
+    errors++;
+    running--;
+    run();
+}
+
+process.stdin.resume();
+process.stdin.setRawMode(true);
+process.stdin.on('data', function (data) {
+    if (data[0] === 0x71) {
+        process.stdout.write('\n');
+        process.exit(0)
+    } else if (data[0] === 44) { // --
+        if (maxConn > 10) {
+            maxConn -= 10;
+        } else {
+            maxConn = 0;
+        }
+    } else if (data[0] === 46) { // ++
+        maxConn += 10;
+        run();
+    }
+});
+

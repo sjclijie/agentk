@@ -159,7 +159,7 @@ System.module = function (source, option) {
     } else {
         result = compile(source, option);
     }
-    //console.log(result);
+    //console.log(option.filename, result);
     let ctor = vm.runInThisContext(result, option);
     // console.log(option, result, ctor);
 
@@ -479,11 +479,11 @@ function handleScope(body, locals, replace, insert) {
                     replace({
                         range: [stmt.range[0], stmt.body.range[0] + 1]
                     }, (stmt.id ? 'let ' + className + ' = ' : '') + 'function (super_proto) {' +
-                        (body.has_constructor ? 'let ' + className + ';' : 'function ' + className + '() {return super_proto.constructor.apply(this,arguments)}') +
-                        'const proto = {__proto__: super_proto};');
+                        (body.has_constructor ? '' : 'function ' + className + '() {return super_proto.constructor.apply(this,arguments)}') +
+                        'const proto = ' + className + '.prototype = {__proto__: super_proto, constructor: ' + className + '};');
                     replace({
                         range: [stmt.body.range[1] - 1, stmt.range[1]]
-                    }, className + '.prototype = proto; return ' + className + '}(' + (stmt.superClass ? stmt.superClass.name : 'Object') + '.prototype);');
+                    }, 'return ' + className + '}(' + (stmt.superClass ? stmt.superClass.name : 'Object') + '.prototype);');
                 } else {
                     stmt.body.body.forEach(handleStatement);
                 }
@@ -491,8 +491,7 @@ function handleScope(body, locals, replace, insert) {
             case Syntax.MethodDefinition:
                 if (!handleClass) { // do nothing
                 } else if (stmt.kind === 'constructor') {
-                    replace(stmt.key, 'proto.constructor = ' + arguments[2].className + ' = function ' + arguments[2].className);
-                    insert(stmt.range[1], ';');
+                    replace(stmt.key, 'function ' + arguments[2].className);
                     arguments[2].has_constructor = true;
                 } else if (stmt.kind === 'get' || stmt.kind === 'set') {
                     if (stmt.key.type === Syntax.Identifier) {

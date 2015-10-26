@@ -1,4 +1,6 @@
 /**
+ * This module helps read and parse file by caching the result and automatically determine whether or not the file
+ * content should be read and parsed again.
  *
  * @title file system cache handler
  */
@@ -16,16 +18,14 @@ const stat = cachedOp(fs.stat),
  *     import Router from 'router';
  *     import fs_cache from 'fs_cache';
  *     let reader = fs_cache('static');
- *     let content = reader('js/index.js');
+ *     let content = reader('js/index.js').content;
  *
- *
- * @param {string} directory absolute path or relative to working directory
  * @param {object} [option] optional arguments:
  *
  *   - cached:`number` file modification check iteration in ms, default to 3s
  *   - handler:`string` file content handler
  *
- * @returns {function} reader
+ * @returns {function} reader that accepts a filename and returns an object which contains the result
  */
 export default function fs_cache(option) {
     let recheckInterval = 3000,

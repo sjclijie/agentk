@@ -1,4 +1,4 @@
-<!-- @rev c370a1b73967fc905f46b4a2986247f6 20ae7b -->
+<!-- @rev 4a94093feb23aed9dbf214f79dcf61d1 20ae7b -->
 # fs_cache
 
 file system cache handler
@@ -7,6 +7,8 @@ file system cache handler
 ----
 
 
+ This module helps read and parse file by caching the result and automatically determine whether or not the file
+ content should be read and parsed again.
 
 
 
@@ -24,8 +26,6 @@ function fs_cache(option)
 
 **Params**
 
-  - directory `string`
-    <br>absolute path or relative to working directory
   - option(optional) `object`
     <br>optional arguments:
 
@@ -35,7 +35,7 @@ function fs_cache(option)
 
 **Returns**
 
-> {function} reader
+> {function} reader that accepts a filename and returns an object which contains the result
  
 
 ## Module default
