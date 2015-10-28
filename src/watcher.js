@@ -4,7 +4,7 @@ const cp = require('child_process'),
     fs = require('fs'),
     path = require('path');
 
-const watch = process.platform === 'linux' ? function (dir, cb) {
+function watch(dir, cb) {
     fs.watch(dir, cb);
 
     for (let name of fs.readdirSync(dir)) {
@@ -13,9 +13,7 @@ const watch = process.platform === 'linux' ? function (dir, cb) {
             watch(subpath, cb);
         }
     }
-} : function (dir, cb) {
-    fs.watch(dir, {recursive: true}, cb);
-};
+}
 
 exports.run = function (dir) {
     let srcDir = path.resolve(dir, 'src');

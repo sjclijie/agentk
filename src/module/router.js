@@ -48,14 +48,26 @@ export default class Router {
     }
 
     match(pattern, cb) {
-        let ret = new Router(cb);
+        let handle = new Router(cb);
         this.add({
-            handle: ret,
+            handle,
             prefix: 'const $0 = ' + pattern + '.exec(pathname);\nif($0) {\n  const $1 = args;\n  $0[0] = req;\n  args = $0;\n',
             suffix: '  args = $1;\n}'
         });
 
-        return ret;
+        return handle;
+    }
+
+    test(tester) {
+        let handle = new Router();
+        this.add({
+            handle,
+            prefix: 'if($0.apply(req, args)) {\n',
+            suffix: '}',
+            args: [tester]
+        });
+
+        return handle;
     }
 
     catcher(cb) {
@@ -105,7 +117,8 @@ function router_compile() {
     }
     argnames += 'slice';
     args.push(args.slice);
-    code = 'function router(req) {let args = slice.call(arguments), _, pathname = req.pathname;\n' + code + '}';
+    code = 'function router(req) {let args = slice.call(arguments), _, pathname = req.pathname;\n' +
+        'req.rewrite = function(pattern, repl) {const m=pattern.exec(pathname); if(m){ pathname=req.pathname = repl.replace(/\$(\$|\d+)/g,function(_,n){return m[n]})}};\n' + code + '}';
     if (this.completions) {
         args = args.concat(this.completions);
         let wrapping = 'router.apply(req, arguments)';
