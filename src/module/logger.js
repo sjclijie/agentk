@@ -129,7 +129,7 @@ function logger(_level, name) {
                     'ss': '17,2',
                     'SSS': '20,3'
                 };
-                code += '+' + JSON.stringify(format).replace(/yyyy-MM-dd|HH:mm:ss|yyyy|MM|dd|MMM|DDD|HH|mm|ss|SSS/g, function (field) {
+                code += '+' + JSON.stringify(format).replace(/yyyy-MM-dd|HH:mm:ss|yyyy|MMM?|dd|DDD|HH|mm|ss|SSS/g, function (field) {
                         return '"+_ts.substr(' + dateCodes[field] + ')+"';
                     }).replace(/""\+|\+""/g, '');
             } else if (matched === '$(') {
