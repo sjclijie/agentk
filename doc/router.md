@@ -1,4 +1,4 @@
-<!-- @rev 10e1aa50ab736ef070bb5cbc85071259 20ae7b -->
+<!-- @rev 9022e2c767f61e463e0f9d26d0f8983d 20ae7b -->
 # router
 
 ----
@@ -72,6 +72,16 @@ function Router::prefix(prefix, cb)
 
 ```js
 function Router::match(pattern, cb) 
+```
+
+
+
+
+------------------------------------------------------------------------
+### test()
+
+```js
+function Router::test(tester) 
 ```
 
 
