@@ -54,7 +54,7 @@ export function rc_create(options) {
 
     let cmd = addslashes(process.execPath) + ' --harmony ' + addslashes(options.entryFile) + ' $1 ' + addslashes(dir) + ' --dir=' + addslashes(rundir);
     if (username !== 'root') {
-        cmd = 'su ' + username + ' -c ' + cmd
+        cmd = 'su ' + username + ' -c "' + cmd + '"'
     }
 
     let defaultKeys = Object.keys(defaults).join('|');
