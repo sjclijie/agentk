@@ -423,8 +423,8 @@ let commands = {
         "    \x1b[32m--alias.start=foobaz\x1b[0m   override default behavior start with foobaz\n",
         func: function (filename, dir) {
             if (arguments.length < 2)
-                return showHelp()
-            callService('rc_create', {filename: filename, dir: dir});
+                return showHelp();
+            callService('rc_create', {filename: filename, dir: dir, entryFile: __filename});
         }, completion: function () {
             let lastArg = arguments[arguments.length - 1];
             if (!lastArg) return;

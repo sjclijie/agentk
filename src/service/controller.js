@@ -33,7 +33,7 @@ export function service_stop() {
 export function rc_create(options) {
     let defaults = {start: 1, stop: 1, restart: 1, reload: 1, status: 1};
 
-    let username = 'root', scripts = '', keys = '', properties=process.properties;
+    let username = 'root', scripts = '', keys = '', properties = process.properties;
     for (let key of Object.keys(properties)) {
         if (key === 'user') {
             username = properties.user;
@@ -43,7 +43,7 @@ export function rc_create(options) {
                 defaults[aliased] = 1;
             } else {
                 delete defaults[aliased];
-                scripts += '  ' + aliased + ')\n    send_msg ' + JSON.stringify(m[2]) + '\n    ;;\n';
+                scripts += '  ' + aliased + ')\n    send_msg ' + JSON.stringify(properties[key]) + '\n    ;;\n';
                 keys += '|' + aliased;
             }
         }
@@ -52,9 +52,9 @@ export function rc_create(options) {
     const rundir = getDirectory(username);
     const dir = path.resolve(options.dir);
 
-    let cmd = addslashes(process.execPath) + ' --harmony ' + addslashes(__filename) + ' $1 ' + addslashes(dir) + '--dir=' + addslashes(rundir);
+    let cmd = addslashes(process.execPath) + ' --harmony ' + addslashes(options.entryFile) + ' $1 ' + addslashes(dir) + ' --dir=' + addslashes(rundir);
     if (username !== 'root') {
-        cmd = 'SU=' + username + ' ' + cmd
+        cmd = 'su ' + username + ' -c ' + cmd
     }
 
     let defaultKeys = Object.keys(defaults).join('|');
@@ -65,9 +65,10 @@ export function rc_create(options) {
         keys = keys.substr(1);
     }
 
-    file.write('/etc/init.d/' + options.filename, '#!/bin/sh\n\
+    const outFile = '/etc/init.d/' + options.filename;
+    file.write(outFile, '#!/bin/sh\n\
 function send_msg() {\n\
-' + cmd + '\n\
+  ' + cmd + '\n\
 }\n\n\
 case "$1" in\n' + scripts + '\
   *)\n\
