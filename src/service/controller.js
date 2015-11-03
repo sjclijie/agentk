@@ -33,7 +33,7 @@ export function service_stop() {
 export function rc_create(options) {
     let defaults = {start: 1, stop: 1, restart: 1, reload: 1, status: 1};
 
-    let username = 'root', scripts = '', keys = '';
+    let username = 'root', scripts = '', keys = '', properties=process.properties;
     for (let key of Object.keys(properties)) {
         if (key === 'user') {
             username = properties.user;
