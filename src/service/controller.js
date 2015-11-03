@@ -374,7 +374,7 @@ function addslashes(str) {
     return str.replace(/[^0-9a-zA-Z.-_+=\/~]/g, '\\$&');
 }
 function getDirectory(uname) {
-    if (process.properties.dir) return process.properties.dir;
+    if (process.properties.dir) return path.resolve(process.properties.dir);
 
     let m = file.read('/etc/passwd').toString().match(new RegExp(`^${uname}(?::[^:]*){4}:([^:]*)`, 'm'));
     if (m) {
