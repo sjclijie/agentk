@@ -416,16 +416,16 @@ let commands = {
         maxArgs: 3,
         desc: "creates a script file in /etc/init.d that can be used to control the program.\n\n" +
         "Optional arguments:\n" +
-        "  \x1b[36musername\x1b[0m target user to be used to run the script, default to \x1b[32mroot\x1b[0m\n" +
+        "  \x1b[36muser\x1b[0m target user to be used to run the script, default to \x1b[32mroot\x1b[0m\n" +
         "  \x1b[36malias.xxx\x1b[0m add optional behavior or override default behaviors. For example:\n" +
         "    \x1b[32m--alias.foobar=foobar\x1b[0m  add an optional behavior named foobar\n" +
-        "    \x1b[32m--alias.foobar=foobaz\x1b[0m  add an optional behavior named foobar, which will trigger foobaz\n" +
+        "    \x1b[32m--alias.foobar=foobaz\x1b[0m  optional behavior foobar will trigger foobaz\n" +
         "    \x1b[32m--alias.start=foobaz\x1b[0m   override default behavior start with foobaz\n",
         func: function (filename, dir) {
             if (arguments.length < 2)
-                throw new Error('filename and program directory must be specified');
-            callService('rc_create', {filename, dir});
-        }, completion: function (a, b, c) {
+                return showHelp()
+            callService('rc_create', {filename: filename, dir: dir});
+        }, completion: function () {
             let lastArg = arguments[arguments.length - 1];
             if (!lastArg) return;
             if (lastArg.substr(0, 7) === '--user=') {
