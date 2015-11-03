@@ -31,8 +31,6 @@ export function service_stop() {
 }
 
 export function rc_create(options) {
-    const dir = path.resolve(options);
-    let outFile = '/etc/init.d/' + options.filename;
     let defaults = {start: 1, stop: 1, restart: 1, reload: 1, status: 1};
 
     let username = 'root', scripts = '', keys = '';
@@ -52,6 +50,7 @@ export function rc_create(options) {
     }
 
     const rundir = getDirectory(username);
+    const dir = path.resolve(options.dir);
 
     let cmd = addslashes(process.execPath) + ' --harmony ' + addslashes(__filename) + ' $1 ' + addslashes(dir) + '--dir=' + addslashes(rundir);
     if (username !== 'root') {
@@ -66,7 +65,7 @@ export function rc_create(options) {
         keys = keys.substr(1);
     }
 
-    file.write(outFile, '#!/bin/sh\n\
+    file.write('/etc/init.d/' + options.filename, '#!/bin/sh\n\
 function send_msg() {\n\
 ' + cmd + '\n\
 }\n\n\
