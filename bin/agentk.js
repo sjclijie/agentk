@@ -258,7 +258,7 @@ let commands = {
         args: "[<program path>]",
         maxArgs: 1,
         func: function (dir) {
-            let file = path.join(process.env.HOME, '.agentk/programs');
+            let file = getFilePath('programs');
             if (!fs.existsSync(file)) return;
             let arr = JSON.parse(fs.readFileSync(file, 'utf8'));
             if (dir) {
@@ -458,7 +458,7 @@ let commands = {
                 } else {
                     config[name] = val;
                 }
-                fs.writeFileSync(path.join(process.env.HOME, '.agentk/config.json'), JSON.stringify(config, null, 2));
+                fs.writeFileSync(getFilePath('config.json'), JSON.stringify(config, null, 2));
             }
         }, completion: function (name) {
             if (arguments.length === 1 || arguments.length === 2 && name === '-d' && (name = arguments[1])) {
@@ -508,13 +508,18 @@ if (!args.length) {
 cmd && commands[cmd].func.apply(null, args.slice(1));
 
 function readConfig() {
-    let configFile = path.join(process.env.HOME, '.agentk/config.json');
+    let configFile = getFilePath('config.json');
     if (!fs.existsSync(configFile)) return {};
     try {
         return JSON.parse(fs.readFileSync(configFile, 'utf8'));
     } catch (e) {
         return {};
     }
+}
+
+function getFilePath(name) {
+    if (properties.dir) return path.resolve(properties.dir, name);
+    else return path.join(process.env.HOME, '.agentk', name);
 }
 
 function showHelp() {
@@ -532,7 +537,7 @@ function loadAndRun(modulePath, cb) {
 
 function completeRunningJobs(arg) {
     // read active jobs from file
-    let file = path.join(process.env.HOME, '.agentk/programs');
+    let file = getFilePath('programs');
     if (!fs.existsSync(file)) return;
     let arr = JSON.parse(fs.readFileSync(file, 'utf8')),
         curr = win32 ? process.cwd().replace(/\\/g, '/').toLowerCase() : process.cwd(),
