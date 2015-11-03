@@ -5,7 +5,8 @@ import * as child_process from '../module/child_process';
 const path = require('path');
 
 const win32 = process.platform === 'win32';
-const listen_path = path.join(process.env.HOME, '.agentk/daemon.sock');
+const listen_path = process.properties.dir ? path.join(process.properties.dir, 'daemon.sock')
+    : path.join(process.env.HOME, '.agentk/daemon.sock');
 
 const dir = win32 ? process.cwd().replace(/\\/g, '/').toLowerCase() : process.cwd();
 
@@ -198,8 +199,11 @@ export function description() {
   ● To check whether your system supports systemd, run
         \x1b[36msudo systemctl --version\x1b[0m
   ● A \x1b[34;1musername\x1b[0m can be supplied like \x1b[33m--user=xxx\x1b[0m, otherwise \x1b[31;1mroot\x1b[0m will be used.
-  ● A \x1b[34;1mdirectory\x1b[0m can be supplied like \x1b[33m--dir=xxx\x1b[0m, otherwise \x1b[31;1m/home/xxx/.agentk\x1b[0m will
-    be used.
+  ● A \x1b[34;1mdirectory\x1b[0m can be supplied like \x1b[33m--dir=xxx\x1b[0m, otherwise \x1b[31;1m/home/{user}/.agentk\x1b[0m
+    will be used. You can then interact with the deamon later with a same
+    argument, for example:
+        \x1b[36msudo ak service systemd_install --user=kyrios --dir=/var/run/agentk\x1b[0m
+        \x1b[36mak start --dir=/var/run/agentk\x1b[0m (must run as kyrios)
   ● The daemon service will be automatically started when the computer finishes
     its boot, and respawned if killed unexpectedly.
   ● To make the installation to take effect immediately, run
