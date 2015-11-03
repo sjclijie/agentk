@@ -39,26 +39,29 @@ export function update() {
         let res = co.yield(http.fetch(`http://${host}/${name}.js`, {
             headers: {'if-none-match': '"' + hash.toUpperCase() + '"'}
         }));
+
+        let log_prefix = name + '                : '.substr(name.length);
+
         if (res.status === 304) {
-            console.log(name + '\t: not modified (' + hash + ')');
+            process.stdout.write('\x1b[32m' + log_prefix + 'up to date (' + hash + ')\x1b[0m\n');
             continue;
         }
         if (res.status === 404) {
-            console.log(name + '\t: not found on remote server');
+            process.stdout.write('\x1b[31m' + log_prefix + 'not found on remote server\x1b[0m\n');
             continue;
         }
         let content = co.yield(res.buffer()),
             checksum = md5(content).toString('hex').toUpperCase(),
             etag = '"' + checksum + '"';
         if (etag !== res.headers.get('etag')) {
-            console.log(name + '\t: checksum mismatch (not updated)');
+            process.stdout.write('\x1b[34m' + log_prefix + 'checksum mismatch (not updated)\x1b[0m\n');
             continue;
         }
         if (cached) { // rename file
             rename(file, name + '@' + hash + '.js');
         }
         write(file, content);
-        console.log(name + '\t: updated (' + checksum + ')');
+        process.stdout.write('\x1b[36m' + log_prefix + 'updated    (' + checksum + ')\x1b[0m\n');
     }
 }
 

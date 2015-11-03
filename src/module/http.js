@@ -538,10 +538,7 @@ export class Response extends Body {
     }
 
     static file(file) {
-        return new Response(ofs.createReadStream(file).on('error', function (err) {
-            console.error('unexpected file error', err);
-            this.push(null)
-        }));
+        return new Response(ofs.createReadStream(file));
     }
 }
 
@@ -617,23 +614,33 @@ export function listen(port, cb, host, backlog) {
                 throw new Error('illegal response object');
             }
 
-            response.writeHead(resp.status, resp.statusText, groupHeaders(resp));
-
             let tmp;
             if (tmp = resp._buffer) {
+                writeHeaders();
                 response.end(tmp);
             } else if (tmp = resp._stream) {
-                tmp.pipe(response);
+                tmp.on('data', function (data) {
+                    writeHeaders();
+                    response.write(data);
+                    this.pipe(response)
+                }).on('error', onerror);
             } else {
                 resp._payload.then(function (buffer) {
+                    writeHeaders();
                     response.end(buffer);
-                })
+                }, onerror)
             }
-        }).then(null, function (err) { // on error
+
+            function writeHeaders() {
+                response.writeHead(resp.status, resp.statusText, groupHeaders(resp));
+            }
+        }).then(null, onerror);
+        function onerror(err) {
+            console.log(err.code);
             response.writeHead(500);
             response.end(err.message);
-            console.error(err.stack);
-        })
+            console.error(err.stack || err.message);
+        }
     }
 
     function resolver(req) {
