@@ -291,7 +291,7 @@ let commands = {
     },
     "service": {
         help: "service controlling scripts",
-        args: "start|stop|systemd_install|systemd_uninst|upstart_install|upstart_uninst|sysv_install|sysv_uninst",
+        args: "start|stop|systemd_install|systemd_uninst|upstart_install|upstart_uninst|sysv_install|sysv_uninst|rc-create",
         maxArgs: 2,
         get desc() {
             callService('description');
@@ -424,50 +424,7 @@ let commands = {
         func: function (filename, dir) {
             if (arguments.length < 2)
                 throw new Error('filename and program directory must be specified');
-            dir = path.resolve(dir);
-            let outFile = '/etc/init.d/' + filename;
-            let defaults = {start: 1, stop: 1, restart: 1, reload: 1, status: 1};
-
-            let username = 'root', scripts = '', keys = '';
-            for (let key of Object.keys(properties)) {
-                if (key === 'user') {
-                    username = properties.user;
-                } else if (key.substr(0, 6) === 'alias.') {
-                    let aliased = key.substr(6), action = properties[key];
-                    if (aliased === action) {
-                        defaults[aliased] = 1;
-                    } else {
-                        delete defaults[aliased];
-                        scripts += '  ' + aliased + ')\n    send_msg ' + JSON.stringify(m[2]) + '\n    ;;\n';
-                        keys += '|' + aliased;
-                    }
-                }
-            }
-
-            let cmd = '  HOME="' + process.env.HOME + '" ' + addslashes(process.execPath) + ' --harmony ' + addslashes(__filename) + ' $1 ' + addslashes(dir);
-            if (username !== 'root') {
-                cmd = 'SU=' + username + ' ' + cmd
-            }
-
-            let defaultKeys = Object.keys(defaults).join('|');
-            if (defaultKeys) {
-                scripts = '  ' + defaultKeys + ')\n    send_msg "$1"\n    ;;\n' + scripts;
-                keys = defaultKeys + keys;
-            } else {
-                keys = keys.substr(1);
-            }
-
-            fs.writeFileSync(outFile, '#!/bin/sh\n\
-function send_msg() {\n\
-' + cmd + '\n\
-}\n\n\
-case "$1" in\n' + scripts + '\
-  *)\n\
-    echo "Usage: $0 {' + keys + '}"\n\
-    exit 2\n\
-esac\n');
-            fs.chmodSync(outFile, '755');
-            console.log('rc script file created.\nUsage: \x1b[36m' + outFile + '\x1b[0m {' + keys + '}');
+            callService('rc_create', {filename, dir});
         }, completion: function (a, b, c) {
             let lastArg = arguments[arguments.length - 1];
             if (!lastArg) return;
@@ -563,10 +520,6 @@ function readConfig() {
 function showHelp() {
     args[0] = 'help';
     commands.help.func(cmd);
-}
-
-function addslashes(str) {
-    return str.replace(/[^0-9a-zA-Z.-_+=\/~]/g, '\\$&');
 }
 
 function loadAndRun(modulePath, cb) {

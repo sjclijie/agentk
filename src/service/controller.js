@@ -5,8 +5,9 @@ import * as child_process from '../module/child_process';
 const path = require('path');
 
 const win32 = process.platform === 'win32';
-const listen_path = process.properties.dir ? path.join(process.properties.dir, 'daemon.sock')
-    : path.join(process.env.HOME, '.agentk/daemon.sock');
+const listen_path = process.properties.dir ?
+    path.resolve(process.properties.dir, 'daemon.sock') :
+    path.join(process.env.HOME, '.agentk/daemon.sock');
 
 const dir = win32 ? process.cwd().replace(/\\/g, '/').toLowerCase() : process.cwd();
 
@@ -27,6 +28,59 @@ export function service_start() {
 
 export function service_stop() {
     callService('exit');
+}
+
+export function rc_create(options) {
+    const dir = path.resolve(options);
+    let outFile = '/etc/init.d/' + options.filename;
+    let defaults = {start: 1, stop: 1, restart: 1, reload: 1, status: 1};
+
+    let username = 'root', scripts = '', keys = '';
+    for (let key of Object.keys(properties)) {
+        if (key === 'user') {
+            username = properties.user;
+        } else if (key.substr(0, 6) === 'alias.') {
+            let aliased = key.substr(6), action = properties[key];
+            if (aliased === action) {
+                defaults[aliased] = 1;
+            } else {
+                delete defaults[aliased];
+                scripts += '  ' + aliased + ')\n    send_msg ' + JSON.stringify(m[2]) + '\n    ;;\n';
+                keys += '|' + aliased;
+            }
+        }
+    }
+
+    const rundir = getDirectory(username);
+
+    let cmd = addslashes(process.execPath) + ' --harmony ' + addslashes(__filename) + ' $1 ' + addslashes(dir) + '--dir=' + addslashes(rundir);
+    if (username !== 'root') {
+        cmd = 'SU=' + username + ' ' + cmd
+    }
+
+    let defaultKeys = Object.keys(defaults).join('|');
+    if (defaultKeys) {
+        scripts = '  ' + defaultKeys + ')\n    send_msg "$1"\n    ;;\n' + scripts;
+        keys = defaultKeys + keys;
+    } else {
+        keys = keys.substr(1);
+    }
+
+    file.write(outFile, '#!/bin/sh\n\
+function send_msg() {\n\
+' + cmd + '\n\
+}\n\n\
+case "$1" in\n' + scripts + '\
+  *)\n\
+    echo "Usage: $0 {' + keys + '}"\n\
+    exit 2\n\
+esac\n');
+    file.chmod(outFile, '755');
+    console.log('rc script file created.\nUsage: \x1b[36m' + outFile + '\x1b[0m {' + keys + '}');
+
+    function addslashes(str) {
+        return str.replace(/[^0-9a-zA-Z\.\-\_\+=\/~]/g, '\\$&');
+    }
 }
 
 export function service_upstart_install() {
