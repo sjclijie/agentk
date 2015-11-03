@@ -343,10 +343,10 @@ let commands = {
             }
 
             let ret;
-            let args = process.argv.slice(6);
-            if (args.length === 0) {
+            if (args.length === 4) {
                 ret = commands.help.completion(arg2 || '', true);
             } else {
+                let args = process.argv.slice(6);
                 if (arg2 in commands) {
                     let command = commands[arg2];
                     if (!command.completion || 'maxArgs' in command && args.length > command.maxArgs) {
