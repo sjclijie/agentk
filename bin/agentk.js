@@ -258,7 +258,7 @@ let commands = {
         args: "[<program path>]",
         maxArgs: 1,
         func: function (dir) {
-            let file = path.join(process.env.HOME, '.agentk/programs');
+            let file = getFilePath('programs');
             if (!fs.existsSync(file)) return;
             let arr = JSON.parse(fs.readFileSync(file, 'utf8'));
             if (dir) {
@@ -291,7 +291,7 @@ let commands = {
     },
     "service": {
         help: "service controlling scripts",
-        args: "start|stop|systemd_install|systemd_uninst|upstart_install|upstart_uninst|sysv_install|sysv_uninst",
+        args: "start|stop|systemd_install|systemd_uninst|upstart_install|upstart_uninst|sysv_install|sysv_uninst|rc-create",
         maxArgs: 2,
         get desc() {
             callService('description');
@@ -343,10 +343,10 @@ let commands = {
             }
 
             let ret;
-            let args = process.argv.slice(6);
-            if (args.length === 0) {
+            if (args.length === 4) {
                 ret = commands.help.completion(arg2 || '', true);
             } else {
+                let args = process.argv.slice(6);
                 if (arg2 in commands) {
                     let command = commands[arg2];
                     if (!command.completion || 'maxArgs' in command && args.length > command.maxArgs) {
@@ -416,59 +416,16 @@ let commands = {
         maxArgs: 3,
         desc: "creates a script file in /etc/init.d that can be used to control the program.\n\n" +
         "Optional arguments:\n" +
-        "  \x1b[36musername\x1b[0m target user to be used to run the script, default to \x1b[32mroot\x1b[0m\n" +
+        "  \x1b[36muser\x1b[0m target user to be used to run the script, default to \x1b[32mroot\x1b[0m\n" +
         "  \x1b[36malias.xxx\x1b[0m add optional behavior or override default behaviors. For example:\n" +
         "    \x1b[32m--alias.foobar=foobar\x1b[0m  add an optional behavior named foobar\n" +
-        "    \x1b[32m--alias.foobar=foobaz\x1b[0m  add an optional behavior named foobar, which will trigger foobaz\n" +
+        "    \x1b[32m--alias.foobar=foobaz\x1b[0m  optional behavior foobar will trigger foobaz\n" +
         "    \x1b[32m--alias.start=foobaz\x1b[0m   override default behavior start with foobaz\n",
         func: function (filename, dir) {
             if (arguments.length < 2)
-                throw new Error('filename and program directory must be specified');
-            dir = path.resolve(dir);
-            let outFile = '/etc/init.d/' + filename;
-            let defaults = {start: 1, stop: 1, restart: 1, reload: 1, status: 1};
-
-            let username = 'root', scripts = '', keys = '';
-            for (let key of Object.keys(properties)) {
-                if (key === 'user') {
-                    username = properties.user;
-                } else if (key.substr(0, 6) === 'alias.') {
-                    let aliased = key.substr(6), action = properties[key];
-                    if (aliased === action) {
-                        defaults[aliased] = 1;
-                    } else {
-                        delete defaults[aliased];
-                        scripts += '  ' + aliased + ')\n    send_msg ' + JSON.stringify(m[2]) + '\n    ;;\n';
-                        keys += '|' + aliased;
-                    }
-                }
-            }
-
-            let cmd = '  HOME="' + process.env.HOME + '" ' + addslashes(process.execPath) + ' --harmony ' + addslashes(__filename) + ' $1 ' + addslashes(dir);
-            if (username !== 'root') {
-                cmd = 'SU=' + username + ' ' + cmd
-            }
-
-            let defaultKeys = Object.keys(defaults).join('|');
-            if (defaultKeys) {
-                scripts = '  ' + defaultKeys + ')\n    send_msg "$1"\n    ;;\n' + scripts;
-                keys = defaultKeys + keys;
-            } else {
-                keys = keys.substr(1);
-            }
-
-            fs.writeFileSync(outFile, '#!/bin/sh\n\
-function send_msg() {\n\
-' + cmd + '\n\
-}\n\n\
-case "$1" in\n' + scripts + '\
-  *)\n\
-    echo "Usage: $0 {' + keys + '}"\n\
-    exit 2\n\
-esac\n');
-            fs.chmodSync(outFile, '755');
-            console.log('rc script file created.\nUsage: \x1b[36m' + outFile + '\x1b[0m {' + keys + '}');
-        }, completion: function (a, b, c) {
+                return showHelp();
+            callService('rc_create', {filename: filename, dir: dir, entryFile: __filename});
+        }, completion: function () {
             let lastArg = arguments[arguments.length - 1];
             if (!lastArg) return;
             if (lastArg.substr(0, 7) === '--user=') {
@@ -501,7 +458,7 @@ esac\n');
                 } else {
                     config[name] = val;
                 }
-                fs.writeFileSync(path.join(process.env.HOME, '.agentk/config.json'), JSON.stringify(config, null, 2));
+                fs.writeFileSync(getFilePath('config.json'), JSON.stringify(config, null, 2));
             }
         }, completion: function (name) {
             if (arguments.length === 1 || arguments.length === 2 && name === '-d' && (name = arguments[1])) {
@@ -551,7 +508,7 @@ if (!args.length) {
 cmd && commands[cmd].func.apply(null, args.slice(1));
 
 function readConfig() {
-    let configFile = path.join(process.env.HOME, '.agentk/config.json');
+    let configFile = getFilePath('config.json');
     if (!fs.existsSync(configFile)) return {};
     try {
         return JSON.parse(fs.readFileSync(configFile, 'utf8'));
@@ -560,13 +517,14 @@ function readConfig() {
     }
 }
 
+function getFilePath(name) {
+    if (properties.dir) return path.resolve(properties.dir, name);
+    else return path.join(process.env.HOME, '.agentk', name);
+}
+
 function showHelp() {
     args[0] = 'help';
     commands.help.func(cmd);
-}
-
-function addslashes(str) {
-    return str.replace(/[^0-9a-zA-Z.-_+=\/~]/g, '\\$&');
 }
 
 function loadAndRun(modulePath, cb) {
@@ -579,7 +537,7 @@ function loadAndRun(modulePath, cb) {
 
 function completeRunningJobs(arg) {
     // read active jobs from file
-    let file = path.join(process.env.HOME, '.agentk/programs');
+    let file = getFilePath('programs');
     if (!fs.existsSync(file)) return;
     let arr = JSON.parse(fs.readFileSync(file, 'utf8')),
         curr = win32 ? process.cwd().replace(/\\/g, '/').toLowerCase() : process.cwd(),

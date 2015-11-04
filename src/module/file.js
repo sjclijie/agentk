@@ -70,3 +70,7 @@ export function open(path, flags) {
 export function close(fd) {
     ofs.closeSync(fd);
 }
+
+export function chmod(path, mode) {
+    return ofs.chmodSync(path, mode)
+}

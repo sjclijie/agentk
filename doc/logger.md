@@ -1,4 +1,4 @@
-<!-- @rev 2b3f10ab89480bb83504a2f158a1baf6 20ae7b -->
+<!-- @rev f8bc4857ecbadab587d4113f0b334ddc 20ae7b -->
 # logger
 
 Logging helper

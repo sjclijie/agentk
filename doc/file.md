@@ -1,4 +1,4 @@
-<!-- @rev 5f893b04acb77c882904ab5f25b9e9a7 20ae7b -->
+<!-- @rev b3ec40a8f71f053fcdbe0c70f25f7a27 20ae7b -->
 # file
 
 ----
@@ -153,6 +153,16 @@ function open(path, flags)
 
 ```js
 function close(fd) 
+```
+
+
+
+
+------------------------------------------------------------------------
+### chmod()
+
+```js
+function chmod(path, mode) 
 ```
 
 

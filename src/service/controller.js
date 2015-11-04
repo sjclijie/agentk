@@ -5,7 +5,9 @@ import * as child_process from '../module/child_process';
 const path = require('path');
 
 const win32 = process.platform === 'win32';
-const listen_path = path.join(process.env.HOME, '.agentk/daemon.sock');
+const listen_path = process.properties.dir ?
+    path.resolve(process.properties.dir, 'daemon.sock') :
+    path.join(process.env.HOME, '.agentk/daemon.sock');
 
 const dir = win32 ? process.cwd().replace(/\\/g, '/').toLowerCase() : process.cwd();
 
@@ -26,6 +28,59 @@ export function service_start() {
 
 export function service_stop() {
     callService('exit');
+}
+
+export function rc_create(options) {
+    let defaults = {start: 1, stop: 1, restart: 1, reload: 1, status: 1};
+
+    let username = 'root', scripts = '', keys = '', properties = process.properties;
+    for (let key of Object.keys(properties)) {
+        if (key === 'user') {
+            username = properties.user;
+        } else if (key.substr(0, 6) === 'alias.') {
+            let aliased = key.substr(6), action = properties[key];
+            if (aliased === action) {
+                defaults[aliased] = 1;
+            } else {
+                delete defaults[aliased];
+                scripts += '  ' + aliased + ')\n    send_msg ' + JSON.stringify(properties[key]) + '\n    ;;\n';
+                keys += '|' + aliased;
+            }
+        }
+    }
+
+    const rundir = getDirectory(username);
+    const dir = path.resolve(options.dir);
+
+    let cmd = addslashes(process.execPath) + ' --harmony ' + addslashes(options.entryFile) + ' $1 ' + addslashes(dir) + ' --dir=' + addslashes(rundir);
+    if (username !== 'root') {
+        cmd = 'su ' + username + ' -c "' + cmd + '"'
+    }
+
+    let defaultKeys = Object.keys(defaults).join('|');
+    if (defaultKeys) {
+        scripts = '  ' + defaultKeys + ')\n    send_msg "$1"\n    ;;\n' + scripts;
+        keys = defaultKeys + keys;
+    } else {
+        keys = keys.substr(1);
+    }
+
+    const outFile = '/etc/init.d/' + options.filename;
+    file.write(outFile, '#!/bin/sh\n\
+function send_msg() {\n\
+  ' + cmd + '\n\
+}\n\n\
+case "$1" in\n' + scripts + '\
+  *)\n\
+    echo "Usage: $0 {' + keys + '}"\n\
+    exit 2\n\
+esac\n');
+    file.chmod(outFile, '755');
+    console.log('rc script file created.\nUsage: \x1b[36m' + outFile + '\x1b[0m {' + keys + '}');
+
+    function addslashes(str) {
+        return str.replace(/[^0-9a-zA-Z\.\-\_\+=\/~]/g, '\\$&');
+    }
 }
 
 export function service_upstart_install() {
@@ -54,7 +109,7 @@ start on filesystem
 stop on runlevel [016]
 
 respawn
-chdir ${getHome(uname)}/.agentk
+chdir ${getDirectory(uname)}
 ${vers >= 10004 ? `
 setuid ${uname}
 
@@ -87,7 +142,7 @@ Description=AgentK: Integrated Node.JS Framework
 
 [Service]
 User=${uname}
-WorkingDirectory=${getHome(uname)}/.agentk
+WorkingDirectory=${getDirectory(uname)}
 ExecStart=${nodeScript()}
 ExecReload=${process.execPath} --harmony ${addslashes(path.join(__dirname, '../../bin/agentk.js'))} reload --all
 KillMode=process
@@ -150,7 +205,7 @@ export function service_sysv_uninst() {
 }
 
 function sysvScript(uname) {
-    return `:2345:respawn:/bin/su ${addslashes(uname)} <<< "cd; mkdir -p .agentk; cd .agentk; exec ${nodeScript()}"\n`;
+    return `:2345:respawn:/bin/su ${addslashes(uname)} <<< "cd ${getDirectory(uname)}; exec ${nodeScript()}"\n`;
 }
 
 function nodeScript() {
@@ -174,11 +229,11 @@ export function description() {
 
   ak service start
   ak service stop
-  ak service systemd_install [--user=<username>]
+  ak service systemd_install [--user=<username>] [--dir=<directory>]
   ak service systemd_uninst  [--user=<username>]
-  ak service upstart_install [--user=<username>]
+  ak service upstart_install [--user=<username>] [--dir=<directory>]
   ak service upstart_uninst  [--user=<username>]
-  ak service sysv_install    [--user=<username>]
+  ak service sysv_install    [--user=<username>] [--dir=<directory>]
   ak service sysv_uninst     [--user=<username>]
 
 \x1b[36mDESCRIPTION\x1b[0m
@@ -193,38 +248,49 @@ export function description() {
     starts again
 
 \x1b[32;1m● \x1b[32mak service systemd_install\x1b[0m: installs daemon service into operating system's
-    systemd scripts.
-    Systemd is a high performance service manager. You can run
-        \x1b[36msudo systemctl --version\x1b[0m to see whether your system supports systemd.
-    The daemon service will be automatically started when the computer finishes
+    \x1b[35msystemd\x1b[0m scripts.
+    Systemd is a high performance service manager.
+  ● To check whether your system supports systemd, run
+        \x1b[36msudo systemctl --version\x1b[0m
+  ● A \x1b[34;1musername\x1b[0m can be supplied like \x1b[33m--user=xxx\x1b[0m, otherwise \x1b[31;1mroot\x1b[0m will be used.
+  ● A \x1b[34;1mdirectory\x1b[0m can be supplied like \x1b[33m--dir=xxx\x1b[0m, otherwise \x1b[31;1m/home/{user}/.agentk\x1b[0m
+    will be used. You can then interact with the deamon later with a same
+    argument, for example:
+        \x1b[36msudo ak service systemd_install --user=kyrios --dir=/var/run/agentk\x1b[0m
+        \x1b[36mak start --dir=/var/run/agentk\x1b[0m (must run as kyrios)
+  ● The daemon service will be automatically started when the computer finishes
     its boot, and respawned if killed unexpectedly.
-    A username should be supplied, otherwise \x1b[31;1mroot\x1b[0m will be used.
-    To make the installation to take effect immediately, run
+  ● To make the installation to take effect immediately, run
         \x1b[36msudo systemctl start ak_[username].service\x1b[0m
 
 \x1b[32;1m● \x1b[32mak service systemd_uninst\x1b[0m: removes the systemd service installation
     \x1b[33mPLEASE DO\x1b[0m stop the service before it is uninstalled, run
-        \x1b[36msudo systemctl status ak_[username].service\x1b[0m to check whether the service
-    is running or stopped, and run
-        \x1b[36msudo systemctl stop ak_[username].service\x1b[0m to stop the service.
+  ● To check whether the service is running, run
+        \x1b[36msudo systemctl status ak_[username].service\x1b[0m
+  ● To stop the service, run
+        \x1b[36msudo systemctl stop ak_[username].service\x1b[0m
 
-\x1b[32;1m● \x1b[32mak service upstart_install\x1b[0m: like \x1b[36msystemd_install\x1b[0m, but uses upstart to control
+\x1b[32;1m● \x1b[32mak service upstart_install\x1b[0m: like \x1b[36msystemd_install\x1b[0m, but uses \x1b[35mupstart\x1b[0m to control
     the service.
-    Upstart is a event-driven service manager. You can run
-        \x1b[36msudo initctl version\x1b[0m to see whether your system supports upstart.
-    To make the installation to take effect immediately, run
+    Upstart is a event-driven service manager.
+  ● To check whether your system supports upstart, run
+        \x1b[36msudo initctl version\x1b[0m
+  ● A \x1b[34;1musername\x1b[0m and \x1b[34;1mdirectory\x1b[0m can be supplied (see \x1b[32;1msystemd_install\x1b[0m)
+  ● To make the installation to take effect immediately, run
         \x1b[36msudo initctl start ak_[username]\x1b[0m
 
 \x1b[32;1m● \x1b[32mak service upstart_uninst\x1b[0m: removes the upstart service installation
     \x1b[33mPLEASE DO\x1b[0m stop the service before it is uninstalled, run
-        \x1b[36msudo initctl status ak_[username]\x1b[0m to check whether the service
-    is running or stopped, and run
-        \x1b[36msudo initctl stop ak_[username]\x1b[0m to stop the service.
+  ● To check whether the service is running, run
+        \x1b[36msudo initctl status ak_[username]\x1b[0m
+  ● To stop the service, run
+        \x1b[36msudo initctl stop ak_[username]\x1b[0m
 
-\x1b[32;1m● \x1b[32mak service sysv_install\x1b[0m: like \x1b[36msystemd_install\x1b[0m, but uses sysvinit to spawn and
-    guard the daemon service. The sysvinit service manager is out of date, if
-    you don't know which to choose, please contact your system admin
-    To make the installation to take effect immediately, run
+\x1b[32;1m● \x1b[32mak service sysv_install\x1b[0m: like \x1b[36msystemd_install\x1b[0m, but uses \x1b[35msysvinit\x1b[0m to spawn and
+    guard the daemon service.
+  ● The sysvinit service manager is out of date, if you don't know which to
+    choose, please contact your system admin
+  ● To make the installation to take effect immediately, run
         \x1b[36msudo init q\x1b[0m
 
 \x1b[32;1m● \x1b[32mak service sysv_uninst\x1b[0m: removes the sysvinit service installation.
@@ -319,7 +385,7 @@ function callService(name, data) {
     if (win32) {
         url = 'http://127.0.0.1:32761/?' + name
     } else {
-        url = 'unix://' + listen_path + '?' + name 
+        url = 'unix://' + listen_path + '?' + name
     }
     let resp = co.yield(http.fetch(url, options));
 
@@ -365,12 +431,14 @@ function forkAndCall(name, data) {
 function addslashes(str) {
     return str.replace(/[^0-9a-zA-Z.-_+=\/~]/g, '\\$&');
 }
-function getHome(uname) {
+function getDirectory(uname) {
+    if (process.properties.dir) return path.resolve(process.properties.dir);
+
     let m = file.read('/etc/passwd').toString().match(new RegExp(`^${uname}(?::[^:]*){4}:([^:]*)`, 'm'));
     if (m) {
-        return m[1]
+        return m[1] + '/.agentk'
     } else {
-        console.warn(`\x1b[33mWARN\x1b[0m unable to find home directory in /etc/passwd, using /home/${uname}`);
-        return '/home/' + uname;
+        console.warn(`\x1b[33mWARN\x1b[0m unable to find home directory in /etc/passwd for user ${uname}, using /home/${uname}`);
+        return '/home/' + uname + '/.agentk';
     }
 }

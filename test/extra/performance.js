@@ -24,14 +24,18 @@ var bytesRecv = 0;
 var statusCodes = [];
 var statusMap = {};
 var stats = new Uint32Array(600);
-
+var maxqps = -1;
+var start = Date.now(), startSec = start / 1000 | 0;
 function run() {
     while (running < maxConn) {
         running++;
         reqs++;
         var now = Date.now() / 1000 | 0;
         if (sec !== now) {
-            var msg = '\x1b[s ' + reqs + ' q/s ' + maxConn + ' conns, ' + oks + ' oks( ';
+            if (reqs > maxqps) maxqps = reqs;
+
+            var msg = '\x1b[s ' + reqs + ' q/s (' + maxqps + ' max, ' + (oks * 1000 / (Date.now() - start)).toFixed(2) + ' avg) ' +
+                (now - startSec) + 's elapsed ' + maxConn + ' conns, ' + oks + ' oks( ';
             for (var key in statusMap) {
                 msg += key + ':' + stats[+key] + ' ';
             }
