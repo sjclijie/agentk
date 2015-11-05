@@ -118,7 +118,7 @@ function router_compile() {
     argnames += 'slice';
     args.push(args.slice);
     code = 'function router(req) {let args = slice.call(arguments), _, pathname = req.pathname;\n' +
-        'req.rewrite = function(pattern, repl) {const m=pattern.exec(pathname); if(m){ pathname=req.pathname = repl.replace(/\$(\$|\d+)/g,function(_,n){return m[n]})}};\n' + code + '}';
+        'req.rewrite = function(pattern, repl) {const m=pattern.exec(pathname); if(m){pathname=req.pathname = repl.replace(/\\$(\\$|\\d+)/g,function(_,n){return m[n]})}};\n' + code + '}';
     if (this.completions) {
         args = args.concat(this.completions);
         let wrapping = 'router.apply(req, arguments)';
