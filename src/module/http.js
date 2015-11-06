@@ -636,7 +636,6 @@ export function listen(port, cb, host, backlog) {
             }
         }).then(null, onerror);
         function onerror(err) {
-            console.log(err.code);
             response.writeHead(500);
             response.end(err.message);
             console.error(err.stack || err.message);
