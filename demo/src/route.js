@@ -11,10 +11,6 @@ view.path = manifest.config.views;
 
 const route = new Router();
 
-route.prefix('/static', function (req) {
-    return Response.file('static' + req.pathname)
-});
-
 route.exact('/', req => view.render("index", {
     title: 'Demo project for AgentK',
     message: 'It works!'
