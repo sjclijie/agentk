@@ -17,6 +17,50 @@ class Context {
             })
         });
     }
+
+    cachedStatement(sql, interval, serializer) {
+        serializer = serializer || (data => data.join());
+        interval = interval || 3000;
+        const conn = this._conn;
+        const cache = {__proto__: null};
+
+        let nextScan = Date.now() + interval; // key=>{expires, promise}
+
+        return function (...data) {
+            let now = Date.now(),
+                key = serializer(data),
+                cached = cache[key];
+            if (cached && cached.expires > now) {
+                return co.yield(cached.promise)
+            }
+            // not existed or expired
+
+            if (nextScan < now) {
+                // scan for expired keys
+                for (let k in cache) {
+                    if (cache[k].expires <= now) {
+                        delete cache[k]
+                    }
+                }
+                nextScan = now + interval;
+            }
+            cached = cache[key] = {
+                expires: Infinity,
+                promise: new Promise(function (resolve, reject) {
+                    conn.query(sql, data, function (err, result) {
+                        if (err) {
+                            cached.expires = 0;
+                            reject(err);
+                        } else {
+                            cached.expires = now + interval;
+                            resolve(result);
+                        }
+                    })
+                })
+            };
+            return co.yield(cached.promise)
+        }
+    }
 }
 
 class Connection extends Context {

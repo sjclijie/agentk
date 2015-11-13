@@ -33,7 +33,10 @@ export function write(str, buf) {
             buf[len++] = ch;
         } else {
             let gbk = gbks[ch];
-            if (!gbk) throw new Error('unmappable character: ' + JSON.stringify(str[i]));
+            if (!gbk) {
+                let code = str.charCodeAt(i).toString(16);
+                throw new Error('unmappable character: \\u' + '0000'.substr(code.length) + code + ' at index ' + i);
+            }
             buf[len++] = gbk >> 8;
             buf[len++] = gbk;
         }

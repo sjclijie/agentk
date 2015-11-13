@@ -428,7 +428,7 @@ export class Request extends Body {
         if (cookie) {
             let reg = /(\w+)=(.*?)(?:; |$)/g, m;
             while (m = reg.exec(cookie)) {
-                cookies[m[1]] = decodeURIComponent(m[2]);
+                cookies[m[1]] = m[2];
             }
         }
         Object.defineProperty(this, 'cookies', {value: cookies});
@@ -654,7 +654,6 @@ export function listen(port, cb, host, backlog) {
  */
 export let client_ua = `AgentK/${process.versions.agentk} NodeJS/${process.version.substr(1)}`;
 
-
 /**
  * Compose a http request.
  * `fetch` has two prototypes:
@@ -669,6 +668,7 @@ export let client_ua = `AgentK/${process.versions.agentk} NodeJS/${process.versi
  */
 export function fetch(url, options) {
     const req = typeof url === 'object' && url instanceof Request ? url : new Request(url, options);
+    const delay = options && options.timeout || 3000;
     let parsedUrl = ourl.parse(req._url), headers = {};
     if (parsedUrl.protocol === 'unix:') {
         headers.host = 'localhost';
@@ -688,13 +688,26 @@ export function fetch(url, options) {
     options.headers = groupHeaders(req);
 
     return new Promise(function (resolve, reject) {
-        req.stream.pipe((parsedUrl.protocol === 'https:' ? ohttps : ohttp).request(options, function (tres) {
+        let timer = setTimeout(ontimeout, delay);
+        const treq = req.stream.pipe((parsedUrl.protocol === 'https:' ? ohttps : ohttp).request(options, function (tres) {
+            clearTimeout(timer);
+            timer = null;
             resolve(new Response(tres, {
                 status: tres.statusCode,
                 statusText: tres.statusMessage,
                 headers: tres.headers
             }))
-        }).on('error', reject))
+        }).on('error', reject));
+
+        function ontimeout() {
+            reject({errno: "ETIMEOUT", message: `http::fetch: Request timeout (${req.url})`});
+            timer = null;
+            try {
+                treq.abort();
+                treq.socket.destroy();
+            } catch (e) {
+            }
+        }
     })
 }
 
