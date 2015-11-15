@@ -129,7 +129,7 @@ System['import'] = function (name) {
  * @return The module
  */
 function importer(name, __dirname) {
-    return co.yield(include(name, __dirname))
+    return co.yield(include(name, __dirname).then(null, function(err){console.error(name+':caught',err); throw err;}))
 }
 
 const resolvedPaths = {};
@@ -167,7 +167,7 @@ System.module = function (source, option) {
     module[loadProgress] = co.run(function () {
         option.paths = resolveModulePath(option.dir);
         option.id = option.filename;
-        ctor(module, co, importer, Module.prototype.require.bind(option), option.filename, option.dir, moduleDefault, initModule);
+        ctor(module, co, importer, Module.prototype.require.bind(option), option.filename, option.dir, moduleDefault, initModule, loadProgress);
         return module;
     });
     return module;
@@ -211,7 +211,7 @@ function compile(source, option) {
         }
     }
 
-    return '(function(module, co, include, require, __filename, __dirname, moduleDefault, initModule) {"use strict";'
+    return '(function(module, co, include, require, __filename, __dirname, moduleDefault, initModule, loadProgress) {"use strict";'
         + exports[0] + replacer.concat() + exports[1] + exports[2] + '})';
 }
 
@@ -340,7 +340,7 @@ function findImports(body, globals, replace, option) {
 
         if (!stmt.specifiers.length) { // import only
             stmt.range.push();
-            replace(stmt, 'include(' + stmt.source.raw + ',__dirname);');
+            replace(stmt, 'include(' + stmt.source.raw + ',__dirname)[loadProgress].done();');
             continue;
         }
         let lastSpecifier = stmt.specifiers.pop();
