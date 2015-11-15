@@ -12,8 +12,8 @@ const definedModules = {}; // name: Primise(module)
 let moduleCache;
 
 try {
-    let cache = require('node-shared-cache');
-    moduleCache = new cache.Cache('agentk-module-cache', 1 << 20, cache.SIZE_1K);
+      let cache = require('node-shared-cache');
+      moduleCache = new cache.Cache('agentk-module-cache', 1 << 20, cache.SIZE_1K);
 } catch (e) {
 }
 
@@ -159,7 +159,7 @@ System.module = function (source, option) {
     } else {
         result = compile(source, option);
     }
-    //console.log(option.filename, result);
+    // console.log(option.filename, result);
     let ctor = vm.runInThisContext(result, option);
     // console.log(option, result, ctor);
 
@@ -385,10 +385,7 @@ function handleScope(body, locals, replace, insert) {
         if (stmt.type === Syntax.VariableDeclaration) {
             if (stmt.kind === 'var') {
                 stmt.type = null;
-                for (let decl of stmt.declarations) {
-                    handleDeclerator(decl);
-                    decl.init && handleExpr(decl.init);
-                }
+                stmt.declarations.forEach(handleDeclerator);
             }
         } else if (stmt.type === Syntax.FunctionDeclaration) {
             stmt.id && (locals[stmt.id.name] = VARIABLE_TYPE);
@@ -406,13 +403,8 @@ function handleScope(body, locals, replace, insert) {
             case Syntax.ImportDeclaration:
                 throw new Error('unexpected import declaration');
             case Syntax.VariableDeclaration:
-                for (let decl of stmt.declarations) {
-                    handleDeclerator(decl);
-                    decl.init && handleExpr(decl.init);
-                }
-
+                stmt.declarations.forEach(handleDeclerator);
                 break;
-
             case Syntax.BlockStatement:
                 handleScope(stmt, {__proto__: locals}, replace, insert);
                 break;
@@ -702,7 +694,7 @@ function handleScope(body, locals, replace, insert) {
     function handleDeclOrExpr(stmt) {
         if (stmt.type === Syntax.VariableDeclaration) { // make a scope
             locals = {__proto__: locals};
-            handleDeclerator(stmt.declarations[0]);
+            stmt.declarations.forEach(handleDeclerator);
         } else {
             handleExpr(stmt);
         }
@@ -713,6 +705,7 @@ function handleScope(body, locals, replace, insert) {
             handleDestruct(decl.id);
         } else {
             locals[decl.id.name] = VARIABLE_TYPE;
+            decl.init && handleExpr(decl.init);
         }
     }
 
