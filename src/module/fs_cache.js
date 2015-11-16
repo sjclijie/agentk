@@ -23,7 +23,7 @@ const stat = cachedOp(fs.stat),
  * @param {object} [option] optional arguments:
  *
  *   - cached:`number` file modification check iteration in ms, default to 3s
- *   - handler:`string` file content handler
+ *   - handler:`function` file content handler
  *
  * @returns {function} reader that accepts a filename and returns an object which contains the result
  */
