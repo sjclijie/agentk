@@ -1,4 +1,4 @@
-import {Headers, Body} from '../src/module/http';
+import {Headers, Body, Request, Response, fetch, listen} from '../src/module/http';
 
 
 const assert = require('assert'), assertEqual = assert.strictEqual;
@@ -333,3 +333,29 @@ test_body.test("streaming", function () {
 });
 
 // =================== END TEST BODY ================
+
+// ==== BEGIN TEST FETCH
+
+let test_fetch = new Test("fetch");
+
+let server = listen(0, function (req) {
+    if (req.pathname === '/timeout') {
+        co.sleep(100);
+        return Response.error(200);
+    }
+
+}), port = server.address().port;
+
+test_fetch.test('timeout', function () {
+    try {
+        co.yield(fetch(`http://127.0.0.1:${port}/timeout`, {
+            timeout: 10
+        }))
+    } catch (e) {
+        assertEqual(e.errno, 'ETIMEOUT');
+        return;
+    }
+    throw new Error('should not be here')
+});
+
+server.close();

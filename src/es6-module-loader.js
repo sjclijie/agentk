@@ -12,8 +12,8 @@ const definedModules = {}; // name: Primise(module)
 let moduleCache;
 
 try {
-      let cache = require('node-shared-cache');
-      moduleCache = new cache.Cache('agentk-module-cache', 1 << 20, cache.SIZE_1K);
+    let cache = require('node-shared-cache');
+    moduleCache = new cache.Cache('agentk-module-cache', 1 << 20, cache.SIZE_1K);
 } catch (e) {
 }
 
@@ -129,7 +129,7 @@ System['import'] = function (name) {
  * @return The module
  */
 function importer(name, __dirname) {
-    return co.yield(include(name, __dirname).then(null, function(err){console.error(name+':caught',err); throw err;}))
+    return co.yield(include(name, __dirname))
 }
 
 const resolvedPaths = {};
@@ -159,7 +159,7 @@ System.module = function (source, option) {
     } else {
         result = compile(source, option);
     }
-    // console.log(option.filename, result);
+    //console.log(option.filename, result);
     let ctor = vm.runInThisContext(result, option);
     // console.log(option, result, ctor);
 
