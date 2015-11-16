@@ -167,7 +167,7 @@ System.module = function (source, option) {
     module[loadProgress] = co.run(function () {
         option.paths = resolveModulePath(option.dir);
         option.id = option.filename;
-        ctor(module, co, importer, Module.prototype.require.bind(option), option.filename, option.dir, moduleDefault, initModule);
+        ctor(module, co, importer, Module.prototype.require.bind(option), option.filename, option.dir, moduleDefault, initModule, loadProgress);
         return module;
     });
     return module;
@@ -211,7 +211,7 @@ function compile(source, option) {
         }
     }
 
-    return '(function(module, co, include, require, __filename, __dirname, moduleDefault, initModule) {"use strict";'
+    return '(function(module, co, include, require, __filename, __dirname, moduleDefault, initModule, loadProgress) {"use strict";'
         + exports[0] + replacer.concat() + exports[1] + exports[2] + '})';
 }
 
@@ -340,7 +340,7 @@ function findImports(body, globals, replace, option) {
 
         if (!stmt.specifiers.length) { // import only
             stmt.range.push();
-            replace(stmt, 'include(' + stmt.source.raw + ',__dirname);');
+            replace(stmt, 'include(' + stmt.source.raw + ',__dirname)[loadProgress].done();');
             continue;
         }
         let lastSpecifier = stmt.specifiers.pop();
@@ -385,10 +385,7 @@ function handleScope(body, locals, replace, insert) {
         if (stmt.type === Syntax.VariableDeclaration) {
             if (stmt.kind === 'var') {
                 stmt.type = null;
-                for (let decl of stmt.declarations) {
-                    handleDeclerator(decl);
-                    decl.init && handleExpr(decl.init);
-                }
+                stmt.declarations.forEach(handleDeclerator);
             }
         } else if (stmt.type === Syntax.FunctionDeclaration) {
             stmt.id && (locals[stmt.id.name] = VARIABLE_TYPE);
@@ -406,13 +403,8 @@ function handleScope(body, locals, replace, insert) {
             case Syntax.ImportDeclaration:
                 throw new Error('unexpected import declaration');
             case Syntax.VariableDeclaration:
-                for (let decl of stmt.declarations) {
-                    handleDeclerator(decl);
-                    decl.init && handleExpr(decl.init);
-                }
-
+                stmt.declarations.forEach(handleDeclerator);
                 break;
-
             case Syntax.BlockStatement:
                 handleScope(stmt, {__proto__: locals}, replace, insert);
                 break;
@@ -702,7 +694,7 @@ function handleScope(body, locals, replace, insert) {
     function handleDeclOrExpr(stmt) {
         if (stmt.type === Syntax.VariableDeclaration) { // make a scope
             locals = {__proto__: locals};
-            handleDeclerator(stmt.declarations[0]);
+            stmt.declarations.forEach(handleDeclerator);
         } else {
             handleExpr(stmt);
         }
@@ -713,6 +705,7 @@ function handleScope(body, locals, replace, insert) {
             handleDestruct(decl.id);
         } else {
             locals[decl.id.name] = VARIABLE_TYPE;
+            decl.init && handleExpr(decl.init);
         }
     }
 

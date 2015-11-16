@@ -587,14 +587,17 @@ function groupHeaders(obj) {
  * @returns {node.http::http.Server} returned after the `listening` event has been fired
  */
 export function listen(port, cb, host, backlog) {
-    let co_run = co.run;
     return co.promise(function (resolve, reject) {
-        ohttp.createServer(handler).listen(port, host, backlog, function () {
+        ohttp.createServer(_handler(cb)).listen(port, host, backlog, function () {
             resolve(this)
         }).on('error', reject);
     });
+}
 
-    function handler(request, response) {
+export function _handler(cb) {
+    const co_run = co.run;
+
+    return function (request, response) {
         request.body = request;
         let req = new Request('http://' + request.headers.host + request.url, request);
 

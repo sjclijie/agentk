@@ -1,4 +1,4 @@
-const util = require('util'),
+const _extend = require('util')._extend,
     net = require('net'),
     assert = require('assert');
 
@@ -32,6 +32,16 @@ class Handle {
         console.log('scheduler.js: closing Handle %s', this.key);
     }
 
+
+    send(worker, seq, errno, handle, data) {
+        worker.send(_extend({
+            cmd: 'NODE_CLUSTER',
+            key: this.key,
+            errno: errno,
+            ack: seq,
+            data: this.data
+        }, data), handle)
+    }
 }
 
 class SharedHandle extends Handle {
@@ -54,7 +64,7 @@ class SharedHandle extends Handle {
     add(worker, seq) {
         this.workers++;
         worker.handles[this.key] = true;
-        send(worker, seq, this.key, this.errno, this.handle);
+        this.send(worker, seq, this.errno, this.handle);
     }
 
 }
@@ -92,11 +102,9 @@ class RoundRobinHandle extends Handle {
             let handle = self.handle = server._handle;
             handle.onconnection = distribute;
             if (handle.getsockname) {
-                let data = {};
-                self.data = {sockname: data};
-                handle.getsockname(data);
+                handle.getsockname((self._extra || (self._extra = {})).sockname = {});
             }
-            sendAll(0, null, self.data);
+            sendAll(0, null, self._extra);
             self.workers = frees.length;
         });
 
@@ -109,7 +117,7 @@ class RoundRobinHandle extends Handle {
         function sendAll(errno, handle, data) {
             for (let i = 0, L = pendingWorkers.length; i < L; i += 2) {
                 let worker = pendingWorkers[i];
-                send(worker, pendingWorkers[i + 1], key, errno, handle, data);
+                self.send(worker, pendingWorkers[i + 1], errno, handle, data);
                 if (!errno) {
                     frees.push(worker);
                     worker.handles[key] = true;
@@ -132,7 +140,7 @@ class RoundRobinHandle extends Handle {
             }
             let handle = handles.shift();
             const seq = sendSeq++;
-            send(worker, undefined, key, null, handle, {act: 'newconn', seq: seq});
+            self.send(worker, undefined, null, handle, {act: 'newconn', seq: seq});
             pendingMessages[seq] = function (reply) {
                 if (reply.accepted) {
                     // master closes handle, client keeps handle
@@ -146,12 +154,11 @@ class RoundRobinHandle extends Handle {
     }
 
     add(worker, seq) {
-        send(worker, seq, this.key, null, null, this.data);
+        this.send(worker, seq, null, null, this._extra);
         this.workers++;
         worker.handles[this.key] = true;
         this.handoff(worker);  // In case there are connections pending.
     }
-
 
     remove(worker) {
         super.remove(worker);
@@ -166,20 +173,6 @@ class RoundRobinHandle extends Handle {
     }
 
 }
-
-function send(worker, seq, key, errno, handle, data, cb) {
-    data = util._extend({
-        cmd: 'NODE_CLUSTER',
-        key: key,
-        errno: errno,
-        ack: seq
-    }, data);
-    if (cb) {
-        pendingMessages[data.seq = sendSeq++] = cb;
-    }
-    worker.send(data, handle)
-}
-
 
 const defaultHandle = process.env.NODE_CLUSTER_SCHED_POLICY === 'none' ? SharedHandle
     : process.env.NODE_CLUSTER_SCHED_POLICY === 'rr' ? RoundRobinHandle
@@ -202,7 +195,7 @@ function workerOnMessage(message) {
             message.fd].join(':');
 
         if (key in handles) {
-            send(worker, message.seq, key, EADDRINUSE);
+            schedulers[key].send(worker, message.seq, EADDRINUSE);
             return;
         }
 
@@ -216,6 +209,7 @@ function workerOnMessage(message) {
         console.log('scheduler.js: creating Scheduler %s %s', key, Scheduler.name);
         let handle = new Scheduler(schedulers, key, message);
 
+        if (!handle.data) handle.data = message.data;
         handle.add(worker, message.seq);
     } else if (message.act === 'close') {
         schedulers[message.key].remove(worker);
