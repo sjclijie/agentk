@@ -2,23 +2,25 @@ import fs_cache from 'fs_cache';
 import {read as file_read} from 'file';
 
 /**
- * header footer helper
+ * ss_include
+ *
+ * @alias server side include
  *
  * @usage
  *
  *     // import module
- *     import {header_footer} from 'q_frontend';
+ *     import {ss_include} from 'q_frontend';
  *
- *     // init header_footer helper
- *     Handlebars.registerHelper("header_footer", header_footer('../include'))
+ *     // init ss_include helper
+ *     Handlebars.registerHelper("ss_include", ss_include('../include'))
  *     // call helper in handlebars template:
- *     {{header_footer "header_main"}}
+ *     {{ss_include "header_main"}}
  *
  * @param {string} path
  * @param {number} [cached]
  * @returns {Function} a method that accepts a filename, and returns its content
  */
-export function header_footer(path, cached) {
+export function ss_include(path, cached) {
     let cache = fs_cache({
         cached: cached || 30e3,
         handler: String
@@ -58,4 +60,3 @@ export function ver(path, compiler) {
         return compiler(source);
     }
 }
-
