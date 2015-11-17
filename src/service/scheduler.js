@@ -21,7 +21,7 @@ class Handle {
 
     remove(worker) {
         assert(this.key in worker.handles, 'worker does not contain this handle');
-        
+
         delete worker.handles[this.key];
         if (--this.workers) return;
         // free handle
@@ -204,8 +204,11 @@ const defaultHandle = process.env.NODE_CLUSTER_SCHED_POLICY === 'none' ? SharedH
 function workerOnMessage(message) {
     if (!message || message.cmd !== 'NODE_CLUSTER') return;
     if ('ack' in message) {
-        pendingMessages[message.ack](message);
-        delete pendingMessages[message.ack];
+        let cb = pendingMessages[message.ack];
+        if (cb) {
+            cb(message);
+            delete pendingMessages[message.ack];
+        }
         return;
     }
     const worker = this, handles = worker.handles, schedulers = worker.program.schedulers;
