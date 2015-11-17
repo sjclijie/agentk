@@ -34,7 +34,7 @@ var agent = http.globalAgent;
 
 agent.maxSockets = 4096;
 
-var sec, reqs, oks, errors, bytesRecv, statusCodes, statusMap, stats, maxqps, start;
+var sec, reqs, oks, errors, bytesRecv, statusCodes, statusMap, stats, maxqps, start, startSec;
 clear();
 
 var pending = null;
@@ -99,7 +99,8 @@ function clear() {
     statusCodes = [];
     statusMap = {};
     stats = new Uint32Array(600);
-    start = Date.now(), startSec = start / 1000 | 0;
+    start = Date.now();
+    startSec = start / 1000 | 0;
 }
 
 process.stdin.resume();
