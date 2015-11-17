@@ -63,7 +63,7 @@ function run() {
         if (sec !== now) {
             if (reqs > maxqps) maxqps = reqs;
 
-            var msg = '\x1b[s conn:' + conns + ' maxqps:' + qps + '  \n ' + reqs + ' q/s (' + maxqps + ' max, ' + (oks * 1000 / (Date.now() - start)).toFixed(2) + ' avg)  \n ' +
+            var msg = '\x1b[s conn:' + conns + ' maxqps:' + qps + ' ' + reqs + ' q/s (' + maxqps + ' max, ' + (oks * 1000 / (Date.now() - start)).toFixed(2) + ' avg) ' +
                 (now - startSec) + 's elapsed ' + oks + ' oks( ';
             for (var key in statusMap) {
                 msg += key + ':' + stats[+key] + ' ';
