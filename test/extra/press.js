@@ -26,27 +26,16 @@ queries.forEach(function (obj) {
     }
 });
 
-console.log('\x1b[36m<\x1b[0m  conns -= 10\n' +
-    '\x1b[36m>\x1b[0m  conns += 10\n' +
-    '\x1b[36m[\x1b[0m  qps  -= 10\n' +
-    '\x1b[36m]\x1b[0m  qps  += 10\n' +
-    '\x1b[36mc\x1b[0m  clear\n' +
-    '\x1b[36mq\x1b[0m  exit');
+console.log(
+    '\x1b[36m<\x1b[0m  conn -= 10  \x1b[36m>\x1b[0m  conn += 10  \x1b[36mc\x1b[0m  clear\n' +
+    '\x1b[36m[\x1b[0m  qps  -= 10  \x1b[36m]\x1b[0m  qps  += 10  \x1b[36mq\x1b[0m  exit');
 
 var agent = http.globalAgent;
 
 agent.maxSockets = 4096;
 
-var sec = 0;
-var reqs = 0;
-var oks = 0;
-var errors = 0;
-var bytesRecv = 0;
-var statusCodes = [];
-var statusMap = {};
-var stats = new Uint32Array(600);
-var maxqps = -1;
-var start = Date.now(), startSec = start / 1000 | 0;
+var sec, reqs, oks, errors, bytesRecv, statusCodes, statusMap, stats, maxqps, start;
+clear();
 
 var pending = null;
 
@@ -57,8 +46,6 @@ function run() {
         if (sec === now && reqs >= qps) { // qps drain
             return ondrain();
         }
-        running++;
-        reqs++;
 
         if (sec !== now) {
             if (reqs > maxqps) maxqps = reqs;
@@ -73,6 +60,8 @@ function run() {
             sec = now;
             reqs = 0;
         }
+        running++;
+        reqs++;
         http.request(queries[Math.random() * queries.length | 0], onres).on('error', onerror).end();
     }
 }
@@ -104,10 +93,22 @@ function onerror() {
     run();
 }
 
+function clear() {
+    reqs = sec = oks = errors = bytesRecv = 0;
+    maxqps = -1;
+    statusCodes = [];
+    statusMap = {};
+    stats = new Uint32Array(600);
+    start = Date.now(), startSec = start / 1000 | 0;
+}
+
 process.stdin.resume();
 process.stdin.setRawMode(true);
 process.stdin.on('data', function (data) {
     switch (data[0]) {
+        case 0x63: // c
+            clear();
+            break;
         case 0x71: // q
             process.stdout.write('\n\n\n');
             process.exit(0);
