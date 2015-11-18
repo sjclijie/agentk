@@ -154,30 +154,53 @@ function onWorkerMessage(mesg) {
             ack: mesg.seq
         }, seq = mesg.seq = nextSeq++;
 
+        // send to all pairs
         let waiting = 0;
         for (let pair of this.program.workers) {
             if (pair !== this) {
-                pair.send(mesg);
+                try {
+                    pair.send(mesg);
+                } catch (e) { // pair shutdown
+                    console.error('channel.js::Master::query: pair shutdown');
+                    continue;
+                }
                 waiting++;
             }
         }
+
+        // no pairs waited
         if (!waiting) {
             return this.send(resp);
         }
+
+        // wait for pairs
+        const timer = setTimeout(respond, 400);
         waits[seq] = function (mesg) {
             if (mesg.status === 0) resp.results.push(mesg.result);
-            waiting--;
-            if (!waiting) {
-                delete waits[seq];
-                worker.send(resp);
+            if (!--waiting) {
+                clearTimeout(timer);
+                respond();
             }
         };
+        function respond() {
+            delete waits[seq];
+            try {
+                worker.send(resp);
+            } catch (e) {
+                console.error('channel.js::Master::queryback: querier shutdown');
+            }
+        }
     } else if (cmd === 'queryback') {
-        waits[mesg.ack](mesg);
+        let cb = waits[mesg.ack];
+        cb && cb(mesg);
     } else if (cmd === 'dispatch') {
         for (let pair of this.program.workers) {
             if (pair !== this) {
-                pair.send(mesg);
+                try {
+                    pair && pair.send(mesg);
+                } catch (e) {
+                    console.error('channel.js::Master::dispatch: pair shutdown');
+                }
             }
         }
     }
