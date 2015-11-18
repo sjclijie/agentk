@@ -43,7 +43,11 @@ try {
     handleRest = true;
 }
 
-const System = global.System || (global.System = {});
+global.include = function (name) {
+    return include(name).then(function (module) {
+        return module[loadProgress]
+    })
+};
 
 const loadProgress = Symbol('loadProgress'),
     moduleDefault = Symbol.for('default');
@@ -67,7 +71,10 @@ function include(name, __dirname) {
 
     if (fs.existsSync(name)) {
         try {
-            return definedModules[name] = Promise.resolve(System.module(fs.readFileSync(name, 'utf8'), {filename: name}));
+            let source = fs.readFileSync(name, 'utf8');
+            let module = {}, ret = definedModules[name] = Promise.resolve(module);
+            defineModule(module, source, {filename: name});
+            return ret;
         } catch (e) { // file IO error, or module compilation failed
             return definedModules[name] = Promise.reject(e);
         }
@@ -77,7 +84,9 @@ function include(name, __dirname) {
     return definedModules[name] = require('./publish').download(basename).then(function (buffer) {
         ensureParentDir(name);
         fs.writeFileSync(name, buffer);
-        return System.module(buffer.toString(), {filename: name})
+        let module = {};
+        defineModule(module, buffer.toString(), {filename: name});
+        return module;
     })
 }
 
@@ -114,14 +123,6 @@ function initModule(module, names) {
     Object.defineProperties(module, props);
 }
 
-function onModuleLoad(module) {
-    return module[loadProgress];
-}
-
-System['import'] = function (name) {
-    return include(name).then(onModuleLoad);
-};
-
 /**
  * method called inside module, yields the module when source is parsed
  * @param {string} name The full path of the module to be loaded
@@ -146,8 +147,7 @@ function resolveModulePath(dir) {
     return resolvedPaths[dir] = paths
 }
 
-System.module = function (source, option) {
-    option = option || {filename: '/'};
+function defineModule(module, source, option) {
     option.dir = path.dirname(option.filename);
     let result;
     if (moduleCache) {
@@ -163,23 +163,13 @@ System.module = function (source, option) {
     let ctor = vm.runInThisContext(result, option);
     // console.log(option, result, ctor);
 
-    let module = {};
     module[loadProgress] = co.run(function () {
         option.paths = resolveModulePath(option.dir);
         option.id = option.filename;
         ctor(module, co, importer, Module.prototype.require.bind(option), option.filename, option.dir, moduleDefault, initModule, loadProgress);
         return module;
     });
-    return module;
-};
-
-System.set = function (name, module) {
-    definedModules[name] = Promise.resolve(module);
-};
-
-System.define = function (name, source, option) {
-    System.set(name, System.module(source, option));
-};
+}
 
 const parseOption = {
     sourceType: 'module',

@@ -9,7 +9,7 @@ Promise.prototype.done = function () {
 
 require('./src/es6-module-loader');
 
-exports.load = System.import;
+exports.load = include;
 
 exports.run = function (programDir) {
     let path = require('path');
