@@ -15,7 +15,14 @@ exports.run = function (programDir) {
     let path = require('path');
     programDir = path.resolve(programDir);
     // read manifest
-    let manifest = global.manifest = JSON.parse(require('fs').readFileSync(path.join(programDir, 'manifest.json'), 'utf8'));
+    let manifestFile;
+    if (programDir.substr(-5) === '.json') {
+        manifestFile = programDir;
+        programDir = path.dirname(programDir)
+    } else {
+        manifestFile = path.join(programDir, 'manifest.json')
+    }
+    let manifest = global.manifest = JSON.parse(require('fs').readFileSync(manifestFile, 'utf8'));
     let main = path.resolve(programDir, manifest.main || 'index.js');
     // console.log('run', main, manifest);
     let workdir = programDir;
@@ -40,7 +47,7 @@ exports.run = function (programDir) {
 
 if (process.mainModule === module) {
     process.versions.agentk = require('./package.json').version;
-    let target = process.argv[2], path = require('path').resolve(process.argv[3]);
+    let target = process.argv[2], path = process.argv[3];
 
     if (target === 'run') {
         if (process.send) {
@@ -50,6 +57,6 @@ if (process.mainModule === module) {
         }
         exports.run(path);
     } else if (target === 'load') {
-        exports.load(path).done();
+        exports.load(require('path').resolve(path)).done();
     }
 }
