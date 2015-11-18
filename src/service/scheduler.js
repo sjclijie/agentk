@@ -20,16 +20,15 @@ class Handle {
     }
 
     remove(worker) {
-        if (!(this.key in worker.handles)) {
-            throw new Error('worker does not contain this handle');
-        }
+        assert(this.key in worker.handles, 'worker does not contain this handle');
+
         delete worker.handles[this.key];
         if (--this.workers) return;
         // free handle
         this.handle.close();
         this.handle = null;
         delete this.schedulers[this.key];
-        console.log('scheduler.js: closing Handle %s', this.key);
+        console.log(datetime() + ' scheduler.js: closing Handle %s', this.key);
     }
 
 
@@ -72,8 +71,8 @@ class SharedHandle extends Handle {
 class RoundRobinHandle extends Handle {
     constructor(schedulers, key, option) {
         super(schedulers, key);
-        let frees = this.free = [];
-        let handles = this.handles = [];
+        let workers = this.free = [];
+        let connections = this.handles = [];
         this.handle = null;
         this.data = null;
         this.workers = 0;
@@ -88,67 +87,91 @@ class RoundRobinHandle extends Handle {
         else
             server.listen(option.address);  // UNIX socket path.
 
-        var self = this;
+        const self = this;
 
         let pendingWorkers = [];
 
         // when listening is not triggered, just add workers to pendingWorkers
-        this.add = pendingWorkers.push.bind(pendingWorkers);
-        self.distribute = distribute;
-        self.handoff = handoff;
+        self.add = pendingWorkers.push.bind(pendingWorkers);
+        self.onWorker = onWorker;
 
         server.once('listening', function () {
-            delete self.add;
             let handle = self.handle = server._handle;
-            handle.onconnection = distribute;
+            handle.onconnection = onConnection;
             if (handle.getsockname) {
                 handle.getsockname((self._extra || (self._extra = {})).sockname = {});
             }
-            sendAll(0, null, self._extra);
-            self.workers = frees.length;
+            sendToPendingWorkers(0, null, self._extra);
+            self.workers = workers.length;
         });
 
         server.once('error', function (err) {
-            let errno = process.binding('uv')['UV_' + err.errno];
-            sendAll(errno);
-            delete self.schedulers[key];
+            sendToPendingWorkers(process.binding('uv')['UV_' + err.errno]);
         });
 
-        function sendAll(errno, handle, data) {
+        function sendToPendingWorkers(errno, handle, data) {
             for (let i = 0, L = pendingWorkers.length; i < L; i += 2) {
-                let worker = pendingWorkers[i];
-                self.send(worker, pendingWorkers[i + 1], errno, handle, data);
-                if (!errno) {
-                    frees.push(worker);
+                let worker = pendingWorkers[i], seq = pendingWorkers[i + 1];
+                let succ = !errno;
+                try {
+                    self.send(worker, seq, errno, handle, data);
+                } catch (e) { // an early death could kill the daemon
+                    succ = false;
+                }
+                if (succ) {
                     worker.handles[key] = true;
+                    workers.push(worker);
                 }
             }
             pendingWorkers = null;
+            delete self.add;
+            if (!workers.length) { // no workers available, maybe errno is TRUE or all pending workers are dead
+                if (!errno) server.close();
+                delete schedulers[key];
+            }
         }
 
-        function distribute(err, handle) {
-            handles.push(handle);
-            if (frees.length) self.handoff(frees.pop());
+        function onConnection(err, handle) {
+            if (workers.length) {
+                dispatch(handle, workers.shift());
+            } else {
+                connections.push(handle);
+            }
         }
 
-        function handoff(worker) {
-            if (!(key in worker.handles)) return;
+        function onWorker(worker) {
+            if (connections.length) {
+                dispatch(connections.shift(), worker);
+            } else {
+                workers.push(worker);
+            }
 
-            if (!handles.length) {
-                frees.push(worker);  // Add to ready queue again.
+        }
+
+        function dispatch(handle, worker) {
+            const seq = sendSeq++;
+            try {
+                self.send(worker, undefined, null, handle, {act: 'newconn', seq: seq});
+            } catch (err) { // worker maybe dead
+                console.error(datetime() + ' scheduler.js: handle dispatch failed: ' + (err.stack || err.message || err));
+                delete worker.handles[key];
+                onConnection(0, handle);
                 return;
             }
-            let handle = handles.shift();
-            const seq = sendSeq++;
-            self.send(worker, undefined, null, handle, {act: 'newconn', seq: seq});
+            let acceptTimer = setTimeout(function () {
+                // worker does not accept or reject, maybe already dead?
+                delete pendingMessages[seq];
+                onConnection(0, handle);
+            }, 2000);
             pendingMessages[seq] = function (reply) {
+                clearTimeout(acceptTimer);
                 if (reply.accepted) {
                     // master closes handle, client keeps handle
                     handle.close();
                 } else {
-                    self.distribute(0, handle);  // Worker is shutting down. Send to another.
+                    onConnection(0, handle);  // Worker is shutting down. Send to another.
                 }
-                self.handoff(worker);
+                onWorker(worker);
             };
         }
     }
@@ -157,7 +180,7 @@ class RoundRobinHandle extends Handle {
         this.send(worker, seq, null, null, this._extra);
         this.workers++;
         worker.handles[this.key] = true;
-        this.handoff(worker);  // In case there are connections pending.
+        this.onWorker(worker);  // In case there are connections pending.
     }
 
     remove(worker) {
@@ -181,8 +204,11 @@ const defaultHandle = process.env.NODE_CLUSTER_SCHED_POLICY === 'none' ? SharedH
 function workerOnMessage(message) {
     if (!message || message.cmd !== 'NODE_CLUSTER') return;
     if ('ack' in message) {
-        pendingMessages[message.ack](message);
-        delete pendingMessages[message.ack];
+        let cb = pendingMessages[message.ack];
+        if (cb) {
+            cb(message);
+            delete pendingMessages[message.ack];
+        }
         return;
     }
     const worker = this, handles = worker.handles, schedulers = worker.program.schedulers;
@@ -206,7 +232,7 @@ function workerOnMessage(message) {
 
         let Scheduler = message.addressType === 'udp4' || message.addressType === 'udp6' ? SharedHandle : defaultHandle;
 
-        console.log('scheduler.js: creating Scheduler %s %s', key, Scheduler.name);
+        console.log(datetime() + ' scheduler.js: creating Scheduler %s %s', key, Scheduler.name);
         let handle = new Scheduler(schedulers, key, message);
 
         if (!handle.data) handle.data = message.data;
@@ -228,4 +254,10 @@ export function onWorker(worker) {
     worker.handles = {__proto__: null};
     worker.on('internalMessage', workerOnMessage);
     worker.on('exit', workerOnExit);
+}
+
+const timeOff = new Date().getTimezoneOffset() * 60e3;
+
+function datetime() {
+    return new Date(Date.now() - timeOff).toJSON().substr(0, 23);
 }
