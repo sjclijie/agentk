@@ -500,10 +500,11 @@ export class Response extends Body {
      * @param {object} [options] optional keys to be appended, which can contain any of `expires`, `domain`, `path` etc.
      */
     setCookie(name, value, options) {
-        let val = name + '=' + encodeURIComponent(value);
+        let val = name + '=' + value;
         if (options) {
             for (let key in options) {
-                val += '; ' + key + '=' + options[key]
+                val += '; ' + key;
+                if ((value = options[key]) !== true) val += '=' + value;
             }
         }
 
@@ -608,6 +609,7 @@ export function _handler(cb) {
     const co_run = co.run;
 
     return function (request, response) {
+        console.log(request);
         request.body = request;
         let req = new Request('http://' + request.headers.host + request.url, request);
 
@@ -711,10 +713,14 @@ export function fetch(url, options) {
         const treq = req.stream.pipe((parsedUrl.protocol === 'https:' ? ohttps : ohttp).request(options, function (tres) {
             clearTimeout(timer);
             timer = null;
+            let headers = new Headers();
+            for (let arr = tres.rawHeaders, i = 0, L = arr.length; i < L; i += 2) {
+                headers.append(arr[i], arr[i + 1]);
+            }
             resolve(new Response(tres, {
                 status: tres.statusCode,
                 statusText: tres.statusMessage,
-                headers: tres.headers
+                headers: headers
             }))
         }).on('error', reject));
 
