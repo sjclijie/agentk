@@ -500,10 +500,11 @@ export class Response extends Body {
      * @param {object} [options] optional keys to be appended, which can contain any of `expires`, `domain`, `path` etc.
      */
     setCookie(name, value, options) {
-        let val = name + '=' + encodeURIComponent(value);
+        let val = name + '=' + value;
         if (options) {
             for (let key in options) {
-                val += '; ' + key + '=' + options[key]
+                val += '; ' + key;
+                if ((value = options[key]) !== true) val += '=' + value;
             }
         }
 
@@ -632,11 +633,17 @@ export function _handler(cb) {
                 writeHeaders();
                 response.end(tmp);
             } else if (tmp = resp._stream) {
-                tmp.on('data', function (data) {
+                tmp.once('data', function onData(data) {
+                    tmp.removeListener('end', onEnd);
                     writeHeaders();
                     response.write(data);
-                    this.pipe(response)
-                }).on('error', onerror);
+                    this.pipe(response);
+                }).once('end', onEnd).on('error', onerror);
+
+                function onEnd() {
+                    writeHeaders();
+                    response.end();
+                }
             } else {
                 resp._payload.then(function (buffer) {
                     writeHeaders();
@@ -705,10 +712,14 @@ export function fetch(url, options) {
         const treq = req.stream.pipe((parsedUrl.protocol === 'https:' ? ohttps : ohttp).request(options, function (tres) {
             clearTimeout(timer);
             timer = null;
+            let headers = new Headers();
+            for (let arr = tres.rawHeaders, i = 0, L = arr.length; i < L; i += 2) {
+                headers.append(arr[i], arr[i + 1]);
+            }
             resolve(new Response(tres, {
                 status: tres.statusCode,
                 statusText: tres.statusMessage,
-                headers: tres.headers
+                headers: headers
             }))
         }).on('error', reject));
 
