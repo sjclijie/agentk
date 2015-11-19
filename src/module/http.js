@@ -609,7 +609,6 @@ export function _handler(cb) {
     const co_run = co.run;
 
     return function (request, response) {
-        console.log(request);
         request.body = request;
         let req = new Request('http://' + request.headers.host + request.url, request);
 
