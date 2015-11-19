@@ -632,11 +632,17 @@ export function _handler(cb) {
                 writeHeaders();
                 response.end(tmp);
             } else if (tmp = resp._stream) {
-                tmp.on('data', function (data) {
+                tmp.once('data', function onData(data) {
+                    tmp.removeListener('end', onEnd);
                     writeHeaders();
                     response.write(data);
-                    this.pipe(response)
-                }).on('error', onerror);
+                    this.pipe(response);
+                }).once('end', onEnd).on('error', onerror);
+
+                function onEnd() {
+                    writeHeaders();
+                    response.end();
+                }
             } else {
                 resp._payload.then(function (buffer) {
                     writeHeaders();
