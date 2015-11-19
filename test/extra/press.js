@@ -1,6 +1,7 @@
 "use strict";
-var http = require('http'),
-    url = require('url');
+var _http = require('http'),
+    _url = require('url'),
+    _extend = require('util')._extend;
 
 console.log(process.argv);
 if (process.argv.length === 2) {
@@ -14,9 +15,18 @@ var conns = config.conn || 100,
     qps = config.qps || 1000,
     running = 0;
 var queries = config.requests;
+var defaults = config.defaults;
 
-queries.forEach(function (obj) {
-    var parsed = url.parse(obj.url);
+queries.forEach(function (obj, i) {
+    var url;
+    if (typeof obj === 'string') {
+        obj = queries[i] = _extend({url: url = obj}, defaults);
+    } else {
+        url = obj.url;
+        obj.__proto__ = defaults;
+    }
+
+    var parsed = _url.parse(url);
     obj.host = parsed.hostname;
     obj.port = parsed.port || 80;
     obj.path = parsed.path;
@@ -30,7 +40,7 @@ console.log(
     '\x1b[36m<\x1b[0m  conn -= 10  \x1b[36m>\x1b[0m  conn += 10  \x1b[36mc\x1b[0m  clear\n' +
     '\x1b[36m[\x1b[0m  qps  -= 10  \x1b[36m]\x1b[0m  qps  += 10  \x1b[36mq\x1b[0m  exit');
 
-var agent = http.globalAgent;
+var agent = _http.globalAgent;
 
 agent.maxSockets = 4096;
 
@@ -62,7 +72,7 @@ function run() {
         }
         running++;
         reqs++;
-        http.request(queries[Math.random() * queries.length | 0], onres).on('error', onerror).end();
+        _http.request(queries[Math.random() * queries.length | 0], onres).on('error', onerror).end();
     }
 }
 

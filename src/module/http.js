@@ -187,22 +187,20 @@ export class Body {
         let buf = null, stream = null;
         if (body && body instanceof stream_Readable) {
             stream = body;
+        } else if (!body) {
+            buf = new Buffer(0)
+        } else if (typeof body === 'string') {
+            buf = new Buffer(body)
+        } else if (body instanceof Buffer) {
+            buf = body;
+        } else if (body instanceof ArrayBuffer) {
+            buf = new Buffer(new Uint8Array(body))
         } else {
-            if (!body) {
-                buf = new Buffer(0)
-            } else if (typeof body === 'string') {
-                buf = new Buffer(body)
-            } else if (body instanceof Buffer) {
-                buf = body;
-            } else if (body instanceof ArrayBuffer) {
-                buf = new Buffer(new Uint8Array(body))
-            } else {
-                throw new Error('body accepts only string, Buffer, ArrayBuffer or stream.Readable');
-            }
+            throw new Error('body accepts only string, Buffer, ArrayBuffer or stream.Readable');
         }
         this._stream = stream;
         this._buffer = buf;
-        this._payload = buf && Promise.resolve(buf);
+        this._payload = null;
 
     }
 
@@ -219,7 +217,7 @@ export class Body {
      * @returns {Promise} a promise that yields the request payload as a JSON object
      */
     json() {
-        return this.buffer().then(buf => JSON.parse(buf.toString()))
+        return this.buffer().then(JSON.parse)
     }
 
     /**
@@ -235,20 +233,25 @@ export class Body {
      * @returns {Promise} a promise that yields the request payload as a Buffer
      */
     buffer() {
-        let ret = this._payload;
-        if (!ret) { // start stream reading
-            let body = this, stream = this._stream;
-            this._stream = null;
-            ret = this._payload = new Promise(function (resolve, reject) {
-                let bufs = [];
-                stream.on('data', function (buf) {
-                    bufs.push(buf)
-                }).once('end', function () {
-                    resolve(body._buffer = Buffer.concat(bufs))
-                }).once('error', reject)
-            });
+        let payload = this._payload;
+        if (payload) {
+            return payload;
         }
-        return ret
+        let buffer = this._buffer;
+        if (buffer) {
+            return this._payload = Promise.resolve(buffer);
+        }
+        // start stream reading
+        let body = this, stream = this._stream;
+        body._stream = null;
+        return this._payload = new Promise(function (resolve, reject) {
+            let bufs = [];
+            stream.on('data', function (buf) {
+                bufs.push(buf)
+            }).once('end', function () {
+                resolve(body._buffer = Buffer.concat(bufs))
+            }).once('error', reject)
+        });
     }
 
     /**
@@ -256,22 +259,29 @@ export class Body {
      * @returns {node.stream::stream.Readable} a readable stream
      */
     get stream() {
-        let body = this._stream;
+        let stream = this._stream;
 
-        if (body) { // start stream reading
+        if (stream) { // start stream reading
             this.buffer()
         } else {
-            body = new stream_Readable();
-            body._read = function () {
-                body._read = Boolean;
+            let buffer = this._buffer, payload = this._payload;
+            stream = new stream_Readable();
+            stream._read = function () {
+                stream._read = Boolean;
+                if (buffer) {
+                    onBuffer(buffer)
+                } else {
+                    payload.then(onBuffer)
+                }
+
+                function onBuffer(buf) {
+                    stream.push(buf);
+                    stream.push(null);
+                }
             };
-            this._payload.then(function (buf) {
-                body.push(buf);
-                body.push(null);
-            })
         }
 
-        return body;
+        return stream;
     }
 }
 
@@ -643,7 +653,7 @@ export function _handler(cb) {
             response.end(err.message);
             console.error(err.stack || err.message);
         }
-    }
+    };
 
     function resolver(req) {
         return cb.apply(req, [req]);

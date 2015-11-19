@@ -16,7 +16,12 @@ function watch(dir, cb) {
 }
 
 exports.run = function (dir) {
-    let srcDir = path.resolve(dir, 'src');
+    let srcDir;
+    if (dir.substr(-5) === '.json') {
+        srcDir = path.resolve(dir, '../src');
+    } else {
+        srcDir = path.resolve(dir, 'src');
+    }
     console.log('watching ' + srcDir);
 
     let worker, respawning, lastRespawn = Date.now();
