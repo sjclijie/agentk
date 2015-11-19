@@ -70,19 +70,7 @@ export function render(name, locals, mimeType) {
     } else {
         ext = ext.substr(1);
     }
-    let engine = engines[ext];
-    if (!engine) {
-        try {
-            engine = engines[ext] = module_loader(ext);
-        } catch (e) {
-        }
-    }
-    if (typeof engine !== 'function') {
-        throw new Error("engine for extension '" + ext + "' not found");
-    }
-    if (!file.exists(filename)) {
-        throw new Error("template file not found: " + name);
-    }
+    let engine = engines[ext] || module_loader(ext);
     return new Response(engine.sync ? engine(filename, locals) : co.sync(engine, filename, locals), {
         headers: {
             'Content-Type': mimeType || defaultMimeType
