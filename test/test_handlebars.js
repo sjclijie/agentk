@@ -1,10 +1,8 @@
 import * as view from '../src/module/view';
 
-let h = view.engine(require('handlebars').compile);
+import * as Handlebars from '../src/module/handlebars';
 
-console.log(h('test/extra/test.handlebars', {
-    list: [{name: 'John'}]
-}));
-console.log(h('test/extra/test.handlebars', {
-    list: [{name: 'Jack'}]
-}));
+let h = view.engine(Handlebars.compile);
+
+console.log(h('test/extra/test.handlebars', [{name: 'John'}]) + '');
+console.log(h('test/extra/test.handlebars', [{name: 'Jack. 李'}]) + '');
