@@ -549,7 +549,9 @@ function handleScope(body, locals, replace, insert) {
                 handleExpr(expr.alternate);
                 break;
             case Syntax.CallExpression:
-                if (expr.callee.type === Syntax.Super) { // super()
+                if (!handleClass) {
+                    handleExpr(expr.callee);
+                } else if (expr.callee.type === Syntax.Super) { // super()
                     if (!expr['arguments'].length) {
                         replace(expr, 'super_proto.constructor.call(this)')
                     } else {
@@ -648,7 +650,7 @@ function handleScope(body, locals, replace, insert) {
                 expr.expressions.forEach(handleExpr);
                 break;
             case  Syntax.Super:
-                replace(expr, 'super_proto');
+                if (handleClass) replace(expr, 'super_proto');
                 break;
             default:
                 console.warn('unhandled expr', expr);
