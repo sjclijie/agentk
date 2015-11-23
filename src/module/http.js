@@ -190,7 +190,8 @@ export class Body {
         } else if (!body) {
             buf = new Buffer(0)
         } else if (typeof body === 'string') {
-            buf = new Buffer(body)
+            buf = new Buffer(body.length * 3);
+            buf = buf.slice(0, buf.write(body));
         } else if (body instanceof Buffer) {
             buf = body;
         } else if (body instanceof ArrayBuffer) {
