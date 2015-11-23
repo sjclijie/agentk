@@ -304,57 +304,47 @@ export function status(hasDir) {
         console.log('no program is currently running');
         return;
     }
-
-    let buf1 = '   Programs ',
-        buf2 = ' |\n------------',
-        buf8 = '-|\n\x1b[36m     workers\x1b[0m',
-        buf3 = ' |\n\x1b[36m  start time\x1b[0m',
-        buf4 = ' |\n\x1b[36m   restarted\x1b[0m',
-        buf5 = ' |\n\x1b[36mlast restart\x1b[0m',
-        buf6 = ' |\n\x1b[36m    reloaded\x1b[0m',
-        buf7 = ' |\n\x1b[36m last reload\x1b[0m';
-
-    let maxNameLines = 1, nameLines = [];
+    let maxPathLen = -1, maxSchedulerLen = -1;
 
     for (let i = 0, L = data.length; i < L; i++) {
         let obj = data[i],
-            path = obj.path,
-            width,
-            pathLines = 1;
-
-        if (path.length < 20) {
-            path += '                    '.substr(path.length);
-        } else if (path.length > 20) {
-            pathLines = (path.length + 19) / 20 | 0;
-            path += '                    '.substr(0, pathLines * 20 - path.length);
-            if (pathLines > maxNameLines) {
-                do {
-                    nameLines[maxNameLines++] = '            ' + ' |                     '.repeat(i)
-                } while (maxNameLines < pathLines);
-            }
-        }
-        let suffix = '                    ';
-        if (pathLines === 1) {
-            buf1 += ' | \x1b[32m' + path + '\x1b[0m';
-        } else {
-            buf1 += ' | \x1b[32m' + path.substr(0, 20) + '\x1b[0m';
-            for (let j = 1; j < pathLines; j++) {
-                nameLines[j] += ' | \x1b[32m' + path.substr(j * 20, 20) + '\x1b[0m';
-            }
-        }
-        buf2 += '-|---------------------';
-        buf8 += append(obj.workers, suffix);
-        buf3 += append(formatTime(obj.startup), suffix);
-        buf4 += append(obj.restarted, suffix);
-        buf5 += append(formatTime(obj.lastRestart), suffix);
-        buf6 += append(obj.reloaded, suffix);
-        buf7 += obj.reloaded ? append(formatTime(obj.lastReload), suffix) : ' | ' + suffix;
+            pathLen = obj.path.length;
+        obj.schedulers = obj.schedulers.map(function (key) {
+            let arr = key.split(':');
+            let addr = arr[2];
+            addr = addr === '4' ? 'TCP4' : addr === '6' ? 'TCP6' : addr.toUpperCase();
+            addr += ' (';
+            if (arr[0]) addr += ' host=' + arr[0];
+            if (arr[1]) addr += ' port=' + arr[1];
+            if (arr[3]) addr += ' fd=' + arr[3];
+            addr += ' )';
+            return addr;
+        }).join(', ');
+        let schedLen = obj.schedulers.length;
+        if (pathLen > maxPathLen) maxPathLen = pathLen;
+        if (schedLen > maxSchedulerLen)maxSchedulerLen = schedLen;
     }
-    for (let i = 1; i < maxNameLines; i++) {
-        buf1 += ' |\n' + nameLines[i];
+    let prefix = ' '.repeat(maxPathLen), suffix = ' '.repeat(maxSchedulerLen);
+    let buf = prefix.substr(7) + '\x1b[35;1mProgram\x1b[0m | \x1b[36;1mworkers  ' +
+        '\x1b[33mstart time           ' +
+        '\x1b[31mlast restart         ' +
+        '\x1b[36mrestarted  ' +
+        '\x1b[32;1mschedulers\x1b[0m\n' +
+        '-'.repeat(maxPathLen) + '-|---------------------------------------------------------------' + '-'.repeat(maxSchedulerLen) + '\n';
+    for (let i = 0, L = data.length; i < L; i++) {
+        let obj = data[i];
+        let workers = obj.workers + '',
+            restarted = obj.restarted + '';
+        buf += prefix.substr(obj.path.length) + '\x1b[35' + (i & 1 ? '' : ';1') + 'm'
+            + obj.path + '\x1b[0m | \x1b[36' + (i & 1 ? '' : ';1') + 'm'
+            + workers + '       '.substr(workers.length) + '  \x1b[33m'
+            + formatTime(obj.startup) + '  \x1b[31m'
+            + formatTime(obj.lastRestart) + '  \x1b[36m'
+            + restarted + '         '.substr(restarted.length) + '  \x1b[32m'
+            + obj.schedulers + suffix.substr(obj.schedulers.length) + '\x1b[0m\n';
     }
-    console.log(buf1 + buf2 + buf8 + buf3 + buf4 + buf5 + buf6 + buf7 + ' |');
 
+    process.stdout.write(buf);
 
     function formatTime(t) {
         let time = new Date(t);
@@ -363,11 +353,6 @@ export function status(hasDir) {
 
     function tens(num) {
         return (num < 10 ? '0' : '') + num;
-    }
-
-    function append(str, suffix) {
-        str = '' + str;
-        return ' | ' + str + suffix.substr(str.length)
     }
 }
 

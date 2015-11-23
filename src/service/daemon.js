@@ -42,7 +42,8 @@ const actions = {
                 restarted: program.restarted,
                 reloaded: program.reloaded,
                 lastRestart: program.lastRestart,
-                lastReload: program.lastReload
+                lastReload: program.lastReload,
+                schedulers: Object.keys(program.schedulers)
             }
         })
     },
