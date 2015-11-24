@@ -341,7 +341,7 @@ export function status(hasDir) {
             + formatTime(obj.startup) + '  \x1b[31m'
             + formatTime(obj.lastRestart) + '  \x1b[36m'
             + restarted + '         '.substr(restarted.length) + '  \x1b[32m'
-            + obj.schedulers + suffix.substr(obj.schedulers.length) + '\n';
+            + obj.schedulers + suffix.substr(obj.schedulers.length) + '\x1b[0m\n';
     }
 
     process.stdout.write(buf);

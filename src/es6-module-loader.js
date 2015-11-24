@@ -20,6 +20,7 @@ try {
 let handleTemplate = false,
     handleClass = false,
     handleShorthand = false,
+    handleDefaultParam = false,
     handleRest = false;
 
 try {
@@ -41,6 +42,11 @@ try {
     (0, eval)('(function(...a){})');
 } catch (e) {
     handleRest = true;
+}
+try {
+    (0, eval)('(function(a=1){})');
+} catch (e) {
+    handleDefaultParam = true;
 }
 
 global.include = function (name) {
@@ -207,26 +213,30 @@ function compile(source, option) {
 
 function createReplacement(source) {
     const replaces = [];
+    let nextIdx = 0;
     return {
         replace: function (target, replacement) {
             let range = target.range;
-            range.push(replacement);
+            range.push(nextIdx++, replacement);
             replaces.push(range);
         },
         concat: function () {
             if (!replaces.length) return source;
-            replaces.sort((a, b) => a[0] - b[0]);
+            replaces.sort((a, b) => {
+                let ret = a[0] - b[0];
+                return ret || a[2] - b[2];
+            });
 
             let result = '', currentPos = 0;
             for (let repl of replaces) {
-                result += source.substring(currentPos, repl[0]) + repl[2];
+                result += source.substring(currentPos, repl[0]) + repl[3];
                 currentPos = repl[1];
             }
             result += source.substring(currentPos);
             return result;
         },
         insert: function (pos, str) {
-            replaces.push([pos, pos, str]);
+            replaces.push([pos, pos, nextIdx++, str]);
         }
     }
 }
@@ -712,9 +722,6 @@ function handleScope(body, locals, replace, insert) {
 
 
     function handleFunction(expr) {
-        for (let def of expr.defaults) {
-            def && handleExpr(def);
-        }
         let scope;
         if (expr.type === Syntax.FunctionExpression && expr.id) {
             scope = {
@@ -726,30 +733,112 @@ function handleScope(body, locals, replace, insert) {
         }
         scope = {__proto__: scope};
         let params = expr.params, paramLen = params.length;
+
+        let isBlockBody = expr.body.type === Syntax.BlockStatement;
+
         if (paramLen) {
-            for (let param of params) {
+            let hasDefaults = false;
+            for (let i = 0; i < paramLen; i++) {
+                let param = params[i];
                 scope[param.name] = VARIABLE_TYPE;
-            }
-            if (handleRest) {
-                let lastParam = params[paramLen - 1];
-                if (lastParam.type === Syntax.RestElement) {
-                    if (paramLen === 1) {
-                        replace(lastParam, '')
-                    } else {
-                        replace({
-                            range: [params[paramLen - 2].range[1], lastParam.range[1]]
-                        }, '')
-                    }
-                    if (expr.body.type === Syntax.BlockStatement) {
-                        insert(expr.body.range[0] + 1, 'var ' + lastParam.argument.name + ' = Array.prototype.slice.call(arguments, ' + (paramLen - 1) + ');');
-                    } else {
-                        insert(expr.body.range[0], '{var ' + lastParam.argument.name + ' = Array.prototype.slice.call(arguments, ' + (paramLen - 1) + '); return (');
-                        insert(expr.body.range[1], ')}');
+                if (handleDefaultParam) {
+                    let def = expr.defaults[i];
+                    if (def) {
+                        hasDefaults = true;
+                        handleExpr(def);
+                        i && insert(param.range[0], 'typeof ' + param.name + ' === "undefined" ? ');
+                        insert(def.range[1], ' : 0')
                     }
                 }
             }
+            let hasRest = false, bodyStarts = expr.body.range[0], bodyEnds = expr.body.range[1];
+            if (handleRest) {
+                let lastParam = params[paramLen - 1];
+                if (lastParam.type === Syntax.RestElement) {
+                    hasRest = true
+                }
+            }
+            if (hasDefaults) {
+                let obj = expr.defaults[paramLen - 1] || params[paramLen - 1];
+
+                let names = '';
+                for (let i = 0; i < paramLen - 1; i++) {
+                    let param = params[i];
+                    names += param.name + ', ';
+                }
+                let lastParam = params[paramLen - 1];
+                if (hasRest) {
+                    names = names.substr(0, names.length - 2);
+                } else {
+                    names += lastParam.name
+                }
+
+                if (expr.type === Syntax.ArrowFunctionExpression) {
+                    names += ') => {'
+                } else {
+                    names += ') {'
+                }
+
+                if (hasRest) {
+                    names += 'var ' + lastParam.argument.name + ' = Array.prototype.slice.call(arguments, ' + (paramLen - 1) + ');'
+                }
+                insert(params[0].range[0], expr.defaults[0] ?
+                    names + 'return typeof ' + params[0].name + ' === "undefined" ? ' :
+                    names + 'return '
+                );
+
+                if (isBlockBody) {
+                    if (hasRest) {
+                        replace({
+                            range: [expr.defaults[paramLen - 2].range[1], bodyStarts + 1]
+                        }, ', () => {');
+                    } else {
+                        replace({
+                            range: [obj.range[1], bodyStarts + 1]
+                        }, ', () => {');
+                    }
+                    insert(bodyEnds - 1, '}()')
+                } else {
+                    if (hasRest) {
+                        replace({
+                            range: [expr.defaults[paramLen - 2].range[1], bodyStarts]
+                        }, ', () => { return ');
+                    } else {
+                        replace({
+                            range: [obj.range[1], bodyStarts]
+                        }, ', () => { return ');
+                    }
+                    replace({
+                        range: [bodyEnds, expr.range[1]]
+                    }, '}() }')
+                }
+            } else if (hasRest) {
+                let lastParam = params[paramLen - 1];
+                if (paramLen === 1) {
+                    replace(lastParam, '')
+                } else {
+                    replace({
+                        range: [params[paramLen - 2].range[1], lastParam.range[1]]
+                    }, '')
+                }
+
+                if (isBlockBody) {
+                    insert(bodyStarts + 1, 'var ' + lastParam.argument.name + ' = Array.prototype.slice.call(arguments, ' + (paramLen - 1) + ');');
+                } else {
+                    replace({
+                        range: [lastParam.range[1], bodyStarts]
+                    }, ') => {var ' + lastParam.argument.name + ' = Array.prototype.slice.call(arguments, ' + (paramLen - 1) + '); return ');
+
+                    replace({
+                        range: [bodyEnds, expr.range[1]]
+                    }, '}')
+                }
+            }
+
+
         }
-        if (expr.body.type === Syntax.BlockStatement) {
+        if (isBlockBody) {
+
             handleScope(expr.body, scope, replace, insert);
         } else {
             let oldLocal = locals;
