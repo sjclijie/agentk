@@ -163,7 +163,7 @@ function defineModule(module, source, option) {
     } else {
         result = compile(source, option);
     }
-    console.log(option.filename, result);
+    //console.log(option.filename, result);
     let ctor = vm.runInThisContext(result, option);
 
     module[loadProgress] = co.run(function () {
