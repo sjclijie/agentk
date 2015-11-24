@@ -21,6 +21,9 @@ let handleTemplate = false,
     handleClass = false,
     handleShorthand = false,
     handleDefaultParam = false,
+    arrowBindings = function () {
+            return (() => this)()
+        }.call(definedModules) === definedModules,
     handleRest = false;
 
 try {
@@ -762,45 +765,32 @@ function handleScope(body, locals, replace, insert) {
                 } else {
                     names += lastParam.name
                 }
-
+                let prefix;
                 if (expr.type === Syntax.ArrowFunctionExpression) {
-                    names += ') => {'
+                    prefix = names + ') => {'
                 } else {
-                    names += ') {'
+                    prefix = names + ') {'
                 }
 
                 if (hasRest) {
-                    names += 'var ' + lastParam.argument.name + ' = Array.prototype.slice.call(arguments, ' + (paramLen - 1) + ');'
+                    prefix += 'var ' + lastParam.argument.name + ' = Array.prototype.slice.call(arguments, ' + (paramLen - 1) + ');'
                 }
-                insert(params[0].range[0], expr.defaults[0] ?
-                    names + 'return typeof ' + params[0].name + ' === "undefined" ? ' :
-                    names + 'return '
-                );
+                prefix += expr.defaults[0] ? 'return typeof ' + params[0].name + ' === "undefined" ? ' : 'return ';
+                insert(params[0].range[0], prefix);
+
+                replace({
+                    range: [
+                        (hasRest ? expr.defaults[paramLen - 2] : obj).range[1],
+                        isBlockBody ? bodyStarts + 1 : bodyStarts
+                    ]
+                }, ', ' + (arrowBindings ? '() => {' : 'function(' + names + ') {') + (isBlockBody ? '' : 'return '));
 
                 if (isBlockBody) {
-                    if (hasRest) {
-                        replace({
-                            range: [expr.defaults[paramLen - 2].range[1], bodyStarts + 1]
-                        }, ', () => {');
-                    } else {
-                        replace({
-                            range: [obj.range[1], bodyStarts + 1]
-                        }, ', () => {');
-                    }
-                    insert(bodyEnds - 1, '}()')
+                    insert(bodyEnds - 1, arrowBindings ? '}()' : '}.call(this, ' + names + ')')
                 } else {
-                    if (hasRest) {
-                        replace({
-                            range: [expr.defaults[paramLen - 2].range[1], bodyStarts]
-                        }, ', () => { return ');
-                    } else {
-                        replace({
-                            range: [obj.range[1], bodyStarts]
-                        }, ', () => { return ');
-                    }
                     replace({
                         range: [bodyEnds, expr.range[1]]
-                    }, '}() }')
+                    }, arrowBindings ? '}() }' : '}.call(this, ' + names + ') }')
                 }
             } else if (hasRest) {
                 let lastParam = params[paramLen - 1];
@@ -824,7 +814,6 @@ function handleScope(body, locals, replace, insert) {
                     }, '}')
                 }
             }
-
 
         }
         if (isBlockBody) {
