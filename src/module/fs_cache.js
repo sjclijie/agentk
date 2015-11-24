@@ -27,13 +27,9 @@ const stat = cachedOp(fs.stat),
  *
  * @returns {function} reader that accepts a filename and returns an object which contains the result
  */
-export default function fs_cache(option) {
-    let recheckInterval = 3000,
-        handler = Object;
-    if (option) {
-        recheckInterval = 'cached' in option ? option.cached | 0 : recheckInterval;
-        handler = 'handler' in option ? option.handler : handler;
-    }
+export default function fs_cache(option = {cached: 3000, handler: Object}) {
+    let recheckInterval = option.cached || 3000,
+        handler = option.handler || Object;
 
     const files = {};
     return function (filename, nocache) {

@@ -8,8 +8,7 @@
 const hb = require('handlebars');
 export default hb;
 
-hb.fast_compile = function (string, options) {
-    options = options || {};
+hb.fast_compile = function (string, options = {}) {
     let program = hb.parse(string, options);
     walk(program);
     const fn = hb.compile(program, options);

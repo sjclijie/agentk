@@ -26,8 +26,7 @@ let ids = 0;
  *
  * @returns {node.child_process::ChildProcess}
  */
-export function fork(module, options) {
-    options = options || {};
+export function fork(module, options = {}) {
     const opts = {};
     if (options.directory) {
         opts.cwd = options.directory
@@ -61,8 +60,7 @@ export function fork(module, options) {
  *
  * @returns {Array} `[stdout, stderr]`
  */
-export function exec(cmd, options) {
-    options = options || {};
+export function exec(cmd, options = {}) {
     const opts = {};
     if (options.directory) {
         opts.cwd = options.directory

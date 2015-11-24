@@ -746,7 +746,7 @@ function handleScope(body, locals, replace, insert) {
                     if (def) {
                         hasDefaults = true;
                         handleExpr(def);
-                        insert(param.range[0], 'typeof ' + param.name + ' === "undefined" ? ');
+                        i && insert(param.range[0], 'typeof ' + param.name + ' === "undefined" ? ');
                         insert(def.range[1], ' : 0')
                     }
                 }
@@ -782,8 +782,10 @@ function handleScope(body, locals, replace, insert) {
                 if (hasRest) {
                     names += 'var ' + lastParam.argument.name + ' = Array.prototype.slice.call(arguments, ' + (paramLen - 1) + ');'
                 }
-
-                insert(params[0].range[0], names + 'return ');
+                insert(params[0].range[0], expr.defaults[0] ?
+                    names + 'return typeof ' + params[0].name + ' === "undefined" ? ' :
+                    names + 'return '
+                );
 
                 if (isBlockBody) {
                     if (hasRest) {

@@ -195,3 +195,22 @@ function asserts2(method) {
     assert.deepEqual(method(2, 4, 5), {a: 2, b: 4, d: 5});
     assert.deepEqual(method(2, 4, 5, 3, 8), {a: 2, b: 4, d: 5});
 }
+
+function firstIsDefault(option = {foo: 'bar'}) {
+    return option.foo
+}
+
+assert.strictEqual(firstIsDefault(), 'bar');
+
+firstIsDefault = (option = {foo: 'bar'}, foo = option.foo) => {
+    return foo
+};
+assert.strictEqual(firstIsDefault(), 'bar');
+var firstIsDefaultNonBlock = (option = {foo: 'bar'}, foo = option.foo) => foo;
+assert.strictEqual(firstIsDefaultNonBlock(), 'bar');
+
+function firstIsDefaultWithRest(option = {foo: 'bar'}, ...extra) {
+    return extra[0] + option.foo
+}
+assert.strictEqual(firstIsDefaultWithRest(), 'undefinedbar');
+assert.strictEqual(firstIsDefaultWithRest(undefined, 'foo'), 'foobar');
