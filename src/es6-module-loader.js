@@ -117,10 +117,8 @@ function initModule(module, names) {
         props[name] = {
             configurable: true,
             get: function () {
-                //console.log('getting ' + name);
                 return co.yield(this[loadProgress])[name];
             }, set: function (val) {
-                //console.log('setting ' + name);
                 co.yield(this[loadProgress])[name] = val;
             }
         }
@@ -165,9 +163,8 @@ function defineModule(module, source, option) {
     } else {
         result = compile(source, option);
     }
-    //console.log(option.filename, result);
+    console.log(option.filename, result);
     let ctor = vm.runInThisContext(result, option);
-    // console.log(option, result, ctor);
 
     module[loadProgress] = co.run(function () {
         option.paths = resolveModulePath(option.dir);
@@ -196,15 +193,13 @@ function compile(source, option) {
     let hasAliasedImport = findImports(parsed, globals, replace, option);
     let exports = findExports(parsed, replace, insert);
 
-    if (hasAliasedImport || handleTemplate) {
-        handleScope(parsed, globals, replace, insert);
+    handleScope(parsed, globals, replace, insert);
 
-        if (hasAliasedImport && exports[1]) {// replace exports
-            const exports_replacer = createReplacement(exports[1]);
-            let parsed_export = esprima.parse(exports[1], parseOption);
-            handleScope(parsed_export, globals, exports_replacer.replace, exports_replacer.insert);
-            exports[1] = exports_replacer.concat();
-        }
+    if (hasAliasedImport && exports[1]) {// replace exports
+        const exports_replacer = createReplacement(exports[1]);
+        let parsed_export = esprima.parse(exports[1], parseOption);
+        handleScope(parsed_export, globals, exports_replacer.replace, exports_replacer.insert);
+        exports[1] = exports_replacer.concat();
     }
 
     return '(function(module, co, include, require, __filename, __dirname, moduleDefault, initModule, loadProgress) {"use strict";'
@@ -303,7 +298,6 @@ function findExports(body, replace, insert) {
         } // TODO: export all
     }
 
-    //console.log(names);
     let head = 'initModule(module, ' + JSON.stringify(names) + ');', tail;
     if (names.length) {
         tail = ';\nObject.defineProperties(module, {\n';
@@ -377,7 +371,6 @@ function findImports(body, globals, replace, option) {
     return hasAliasedImport;
 }
 function handleScope(body, locals, replace, insert) {
-    //console.log('handle scope', body.type, body.range);
     body.body.forEach(handleVarAndFunc);
     body.body.forEach(handleStatement);
 
@@ -395,7 +388,6 @@ function handleScope(body, locals, replace, insert) {
     }
 
     function handleStatement(stmt) {
-        //console.log('stmt', stmt);
         switch (stmt.type) {
             case Syntax.ExpressionStatement:
                 handleExpr(stmt.expression);
@@ -529,14 +521,12 @@ function handleScope(body, locals, replace, insert) {
     }
 
     function handleExpr(expr) {
-        //console.log('expr', expr);
         switch (expr.type) {
             case Syntax.Literal:
             case Syntax.ThisExpression:
                 break;
             case Syntax.Identifier:
             {
-                //console.log('handle Identifier', expr.name, locals[expr.name]);
                 let name = expr.name;
                 if (!(name in locals) || locals[name] === VARIABLE_TYPE) break; // not defined or is variable
                 replace(expr, locals[name].replacement);
