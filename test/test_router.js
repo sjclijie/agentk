@@ -184,16 +184,17 @@ test.test('completion', function () {
     router.complete(function (req, result) {
         assertEqual(arguments.length, 2);
         assertEqual(req, $req);
-        assertEqual(result, $response);
-        $req.called2 = true;
-        return 'xxx'
-    });
-    router.complete(function (req, result) {
-        assertEqual(arguments.length, 2);
-        assertEqual(req, $req);
         assertEqual(result, 'xxx');
         $req.called3 = true;
         return 'yyy'
+    });
+
+    router.complete(function (req, result) {
+        assertEqual(arguments.length, 2);
+        assertEqual(req, $req);
+        assertEqual(result, $response);
+        $req.called2 = true;
+        return 'xxx'
     });
 
     let result = router.apply($req, [$req]);

@@ -120,7 +120,7 @@ function router_compile() {
     code = '"use strict";\nreturn function (req) {\n'
         + 'let args = slice.call(arguments), _, pathname = req.pathname, completions = [];\n'
         + 'req.rewrite = function(pattern, repl) {const m = pattern.exec(pathname);if(m){pathname = req.pathname = repl.replace(/\\$(\\$|\\d+)/g,function(_,n){return m[n]})}};\n'
-        + 'function tryCatch(method, catcher) { try {method.call(req, req, pathname, args)} catch(e) {_ = catcher(req, e)} }\n'
+        + 'function tryCatch(method, catcher) { try {method.call(req, req, pathname, args)} catch(e) {_ = catcher.apply(req, [req, e])} }\n'
         + 'do{' + code + '}while(0);\nfor(let i = completions.length; i--;) _ = completions[i](req, _);\nreturn _}';
     //require('fs').writeFile('router.js', 'function test(' + argnames + ',Z){' + code + '}');
     this._compiled = new Function(argnames + ',Z', code).apply(null, args);
