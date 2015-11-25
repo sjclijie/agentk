@@ -364,3 +364,14 @@ export class Pool extends Context {
         return ret;
     }
 }
+
+const _url = require('url');
+
+const pools = {};
+
+export function pool(url) {
+    if (url in pools) return pools[url];
+
+    let parsed = _url.parse(url, true);
+    return pools[url] = new Pool(parsed.port || undefined, parsed.host || undefined, parsed.auth, parsed.query.connections);
+}

@@ -1,7 +1,7 @@
 import * as redis from '../src/module/redis';
 
 const assert = require('assert');
-let pool = new redis.Pool(undefined, undefined, 'test', 4);
+let pool = redis.pool('redis://test@localhost?connections=4');
 
 let rnd = Math.random() + '';
 
