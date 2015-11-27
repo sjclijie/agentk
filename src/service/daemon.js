@@ -187,12 +187,15 @@ function startProgram(dir) {
         option.args.push('load', module);
     }
 
+    let workDir;
+
     if (manifest) {
         option.args.push('run', dir);
-        let workDir = dir;
+        workDir = dir;
         if (manifest.directory) {
             workDir = path.resolve(workDir, manifest.directory)
         }
+        option.directory = workDir;
         if ('stdout' in manifest) {
             option.stdout = path.resolve(workDir, manifest.stdout);
             file.mkParentDir(option.stdout);
@@ -204,6 +207,8 @@ function startProgram(dir) {
         if ('workers' in manifest) {
             workerCount = +manifest.workers;
         }
+    } else {
+        workDir = path.dirname(dir)
     }
 
 
@@ -212,6 +217,7 @@ function startProgram(dir) {
     let program = programs[dir] = {
         stdout: option.stdout || null,
         stderr: option.stderr || null,
+        directory: workDir,
         workers,
         startup: Date.now(),
         restarted,

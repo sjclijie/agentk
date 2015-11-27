@@ -310,15 +310,12 @@ export function status(hasDir) {
         let obj = data[i],
             pathLen = obj.path.length;
         obj.schedulers = obj.schedulers.map(function (key) {
-            let arr = key.split(':');
-            let addr = arr[2];
-            addr = addr === '4' ? 'TCP4' : addr === '6' ? 'TCP6' : addr.toUpperCase();
-            addr += ' (';
-            if (arr[0]) addr += ' host=' + arr[0];
-            if (arr[1]) addr += ' port=' + arr[1];
-            if (arr[3]) addr += ' fd=' + arr[3];
-            addr += ' )';
-            return addr;
+            let arr = key.split(':'); // address,port,family,fd
+            if (arr[3]) return 'custom fd';
+            if (arr[1] === '-1') return 'UNIX (' + arr[0] + ')';
+            let addrType = arr[2];
+            addrType = addrType === '4' ? 'TCP4' : addrType === '6' ? 'TCP6' : addrType.toUpperCase();
+            return addrType + ':' + (arr[0] || '*') + ':' + arr[1];
         }).join(', ');
         let schedLen = obj.schedulers.length;
         if (pathLen > maxPathLen) maxPathLen = pathLen;
