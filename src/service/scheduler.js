@@ -1,5 +1,6 @@
 const _extend = require('util')._extend,
     net = require('net'),
+    path = require('path'),
     assert = require('assert');
 
 let ids = 0;
@@ -233,6 +234,9 @@ function workerOnMessage(message) {
         let Scheduler = message.addressType === 'udp4' || message.addressType === 'udp6' ? SharedHandle : defaultHandle;
 
         console.log(datetime() + ' scheduler.js: creating Scheduler %s %s', key, Scheduler.name);
+        if (message.fd < 0 && message.port < 0) { // unix domain socket
+            message.address = path.resolve(worker.program.directory, message.address);
+        }
         let handle = new Scheduler(schedulers, key, message);
 
         if (!handle.data) handle.data = message.data;

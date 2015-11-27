@@ -783,7 +783,7 @@ function handleScope(body, locals, replace, insert) {
                 }, ', ((' + (arrowBindings ? '' : names) + ') => {' + (isBlockBody ? '' : 'return '));
 
                 if (isBlockBody) {
-                    insert(bodyEnds - 1, arrowBindings ? '}()' : '}).call(this,' + names + ')')
+                    insert(bodyEnds - 1, arrowBindings ? '})()' : '}).call(this,' + names + ')')
                 } else {
                     replace({
                         range: [bodyEnds, expr.range[1]]
