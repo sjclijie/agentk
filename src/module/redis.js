@@ -88,11 +88,20 @@ class Context {
     }
 
     increaseBy(key, num) {
-        return this._query(['INCRBY', key, num]);
+        return this._query([(num | 0) === num ? 'INCRBY' : 'INCRBYFLOAT', key, num]);
     }
 
     decreaseBy(key, num) {
-        return this._query(['DECRBY', key, num]);
+        return this._query([(num | 0) === num ? 'DECRBY' : 'DECRBYFLOAT', key, num]);
+    }
+
+    hincreaseBy(key, hash, num) {
+        return this._query([(num | 0) === num ? 'HINCRBY' : 'HINCRBYFLOAT', key, hash, num]);
+
+    }
+
+    hdecreaseBy(key, hash, num) {
+        return this._query([(num | 0) === num ? 'HDECRBY' : 'HDECRBYFLOAT', key, hash, num]);
     }
 
     query(...args) {

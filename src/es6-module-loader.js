@@ -67,16 +67,13 @@ const loadProgress = Symbol('loadProgress'),
  * @returns {Promise} a promise that resolves the module
  */
 function include(name, __dirname) {
-    if (name in definedModules) return definedModules[name];
-
     if (!/\.(\w+)$/.test(name)) {
         name += '.js';
     }
     if (__dirname) {
         name = path.resolve(__dirname, name);
-
-        if (name in definedModules) return definedModules[name];
     }
+    if (name in definedModules) return definedModules[name];
 
     if (fs.existsSync(name)) {
         try {
@@ -783,14 +780,14 @@ function handleScope(body, locals, replace, insert) {
                         (hasRest ? expr.defaults[paramLen - 2] : obj).range[1],
                         isBlockBody ? bodyStarts + 1 : bodyStarts
                     ]
-                }, ', ' + (arrowBindings ? '() => {' : 'function(' + names + ') {') + (isBlockBody ? '' : 'return '));
+                }, ', ((' + (arrowBindings ? '' : names) + ') => {' + (isBlockBody ? '' : 'return '));
 
                 if (isBlockBody) {
-                    insert(bodyEnds - 1, arrowBindings ? '}()' : '}.call(this, ' + names + ')')
+                    insert(bodyEnds - 1, arrowBindings ? '}()' : '}).call(this,' + names + ')')
                 } else {
                     replace({
                         range: [bodyEnds, expr.range[1]]
-                    }, arrowBindings ? '}() }' : '}.call(this, ' + names + ') }')
+                    }, arrowBindings ? '}() }' : '}.call(this,' + names + ') }')
                 }
             } else if (hasRest) {
                 let lastParam = params[paramLen - 1];
@@ -814,6 +811,7 @@ function handleScope(body, locals, replace, insert) {
                     }, '}')
                 }
             }
+
 
         }
         if (isBlockBody) {
