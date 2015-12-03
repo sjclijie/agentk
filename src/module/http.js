@@ -691,6 +691,14 @@ export function fetch(url, options) {
     const req = typeof url === 'object' && url instanceof Request ? url : new Request(url, options);
     const delay = options && options.timeout || 3000;
     let parsedUrl = ourl.parse(req._url), headers = {};
+    const https = parsedUrl.protocol === 'https:';
+
+    let _agent = agent;
+
+    if (https && options && (options.pfx || options.key || options.ca || options.rejectUnauthorized || options.ciphers || options.secureProtocol)) {
+        _agent = new ohttps.Agent(options);
+    }
+
     if (parsedUrl.protocol === 'unix:') {
         headers.host = 'localhost';
         options = {
@@ -707,10 +715,11 @@ export function fetch(url, options) {
     }
     options.method = req._method;
     options.headers = groupHeaders(req);
+    options.agent = _agent;
 
     return new Promise(function (resolve, reject) {
         let timer = setTimeout(ontimeout, delay);
-        const treq = req.stream.pipe((parsedUrl.protocol === 'https:' ? ohttps : ohttp).request(options, function (tres) {
+        const treq = req.stream.pipe((https ? ohttps : ohttp).request(options, function (tres) {
             clearTimeout(timer);
             timer = null;
             let headers = new Headers();
