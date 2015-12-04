@@ -473,8 +473,15 @@ export class Response extends Body {
 
         let status = this.status = options && 'status' in options ? options.status | 0 : 200;
         this.statusText = options && 'statusText' in options ? '' + options.statusText : ohttp.STATUS_CODES[status] || '';
-        this._headers = options && 'headers' in options && typeof options.headers === 'object' ?
-            options.headers instanceof Headers ? options.headers : new Headers(options.headers) : new Headers();
+        if (options && typeof options.headers === 'object') {
+            this._headers = options.headers instanceof Headers ? options.headers : new Headers(options.headers);
+        } else {
+            this._headers = new Headers();
+
+            if (this._buffer) {
+                this._headers.append('Content-Length', this._buffer.length);
+            }
+        }
     }
 
     /**
@@ -601,8 +608,9 @@ function groupHeaders(obj) {
 export function listen(port, cb, host, backlog) {
     return co.promise(function (resolve, reject) {
         ohttp.createServer(_handler(cb)).listen(port, host, backlog, function () {
+            this.removeListener('error', reject);
             resolve(this)
-        }).on('error', reject);
+        }).once('error', reject);
     });
 }
 
@@ -691,6 +699,14 @@ export function fetch(url, options) {
     const req = typeof url === 'object' && url instanceof Request ? url : new Request(url, options);
     const delay = options && options.timeout || 3000;
     let parsedUrl = ourl.parse(req._url), headers = {};
+    const https = parsedUrl.protocol === 'https:';
+
+    let _agent = agent;
+
+    if (https) {
+        _agent = new ohttps.Agent(options);
+    }
+
     if (parsedUrl.protocol === 'unix:') {
         headers.host = 'localhost';
         options = {
@@ -707,10 +723,11 @@ export function fetch(url, options) {
     }
     options.method = req._method;
     options.headers = groupHeaders(req);
+    options.agent = _agent;
 
     return new Promise(function (resolve, reject) {
         let timer = setTimeout(ontimeout, delay);
-        const treq = req.stream.pipe((parsedUrl.protocol === 'https:' ? ohttps : ohttp).request(options, function (tres) {
+        const treq = req.stream.pipe((https ? ohttps : ohttp).request(options, function (tres) {
             clearTimeout(timer);
             timer = null;
             let headers = new Headers();

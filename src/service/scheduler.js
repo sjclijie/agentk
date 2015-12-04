@@ -29,7 +29,7 @@ class Handle {
         this.handle.close();
         this.handle = null;
         delete this.schedulers[this.key];
-        console.log(datetime() + ' scheduler.js: closing Handle %s', this.key);
+        console.log(`${datetime()} scheduler.js::close Handle: key[${this.key}]`);
     }
 
 
@@ -233,7 +233,7 @@ function workerOnMessage(message) {
 
         let Scheduler = message.addressType === 'udp4' || message.addressType === 'udp6' ? SharedHandle : defaultHandle;
 
-        console.log(datetime() + ' scheduler.js: creating Scheduler %s %s', key, Scheduler.name);
+        console.log(`${datetime()} scheduler.js::new scheduler: key[${key}] class[${Scheduler.name}]`);
         if (message.fd < 0 && message.port < 0) { // unix domain socket
             message.address = path.resolve(worker.program.directory, message.address);
         }
@@ -263,5 +263,6 @@ export function onWorker(worker) {
 const timeOff = new Date().getTimezoneOffset() * 60e3;
 
 function datetime() {
-    return new Date(Date.now() - timeOff).toJSON().substr(0, 23);
+    const dt = new Date(Date.now() - timeOff).toJSON();
+    return dt.substr(0, 10) + ' ' + dt.substr(11, 8);
 }

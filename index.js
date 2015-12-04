@@ -32,12 +32,28 @@ exports.run = function (programDir) {
     process.chdir(workdir);
 
     let co = require('./src/co.js');
-    if (manifest.action) {
+    if (process.send) {
+        let nextSeq = 1;
+        const waits = {};
         process.on('message', function (msg) {
-            if (msg.action === 'trigger' && msg.cmd in manifest.action) {
+            if (manifest.action && msg.action === 'trigger' && msg.cmd in manifest.action) {
                 co.run(onAction, msg.cmd).done();
+            } else if (msg.ack) {
+                let cb = waits[msg.ack];
+                if (cb) {
+                    cb[msg.state](msg.data); // resolve|reject
+                    delete waits[msg.ack];
+                }
             }
-        })
+        });
+
+        process.sendAndWait = function (mesg) {
+            return co.promise(function (resolve, reject) {
+                const seq = mesg.seq = nextSeq++;
+                waits[seq] = [resolve, reject];
+                process.send(mesg);
+            })
+        };
     }
     exports.load(main).done();
     function onAction(action) {

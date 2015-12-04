@@ -32,6 +32,7 @@ const providers = {}; // ch=>cb
 const listeners = {}; // ch=>cb
 
 if (isSlave) { // ipc enabled
+    process.send({action: 'setup', module: 'channel'});
     process.on('message', onMasterMessage)
 }
 
@@ -82,7 +83,7 @@ export function registerListener(ch, cb) {
     }
 }
 
-let nextSeq = 0;
+let nextSeq = 1;
 
 /**
  * query all processes, get the data by the provider registered, and return them as an array
@@ -90,7 +91,8 @@ let nextSeq = 0;
  * @returns {Array} all results of the pairs that registered a provider for this channel
  */
 export function query(ch) {
-    let results = isSlave ? sendAndWait({
+    let results = isSlave ? process.sendAndWait({
+        action: 'channel',
         cmd: 'query',
         channel: ch
     }) : [];
@@ -119,93 +121,58 @@ export function dispatch(ch, data) {
     }
 }
 
-/**
- * This method is called by daemon at worker start
- *
- * @param {node.child_process::ChildProcess} worker
- */
-export function onWorker(worker) {
-    worker.on('message', onWorkerMessage);
-}
+const waitingQueries = {};
 
-
-let waits = {};
-
-function sendAndWait(mesg) {
-    return co.promise(function (resolve) {
-        const seq = mesg.seq = nextSeq++;
-        mesg.action = 'channel';
-        waits[seq] = resolve;
-        process.send(mesg);
-    })
-}
-
-function onWorkerMessage(mesg) {
+export function onMessage(mesg) {
     // outside fiber
-    if (!mesg || mesg.action !== 'channel') return;
     let cmd = mesg.cmd;
     if (cmd === 'query') {
         const worker = this;
-        const resp = {
-            action: 'channel',
-            cmd: 'queryback',
-            status: 0,
-            results: [],
-            ack: mesg.seq
-        }, seq = mesg.seq = nextSeq++;
-
+        const results = [], seq = mesg.seq = nextSeq++;
         // send to all pairs
-        let waiting = 0;
-        for (let pair of this.program.workers) {
-            if (pair !== this) {
-                try {
-                    pair.send(mesg);
-                } catch (e) { // pair shutdown
-                    console.error('channel.js::Master::query: pair shutdown');
-                    continue;
-                }
-                waiting++;
-            }
-        }
+        let waiting = dispatchToPairs(worker, mesg);
 
         // no pairs waited
         if (!waiting) {
-            return this.send(resp);
+            return results;
         }
-
-        // wait for pairs
-        const timer = setTimeout(respond, 400);
-        waits[seq] = function (mesg) {
-            if (mesg.status === 0) resp.results.push(mesg.result);
-            if (!--waiting) {
-                clearTimeout(timer);
-                respond();
+        return co.promise(function (resolve) {
+            // wait for pairs
+            const timer = setTimeout(respond, 400);
+            waitingQueries[seq] = function (mesg) {
+                if (mesg.status === 0) results.push(mesg.result);
+                if (!--waiting) {
+                    clearTimeout(timer);
+                    respond();
+                }
+            };
+            function respond() {
+                delete waitingQueries[seq];
+                resolve(results);
             }
-        };
-        function respond() {
-            delete waits[seq];
-            try {
-                worker.send(resp);
-            } catch (e) {
-                console.error('channel.js::Master::queryback: querier shutdown');
-            }
-        }
+        });
     } else if (cmd === 'queryback') {
-        let cb = waits[mesg.ack];
+        let cb = waitingQueries[mesg.ack];
         cb && cb(mesg);
     } else if (cmd === 'dispatch') {
-        for (let pair of this.program.workers) {
-            if (pair !== this) {
-                try {
-                    pair && pair.send(mesg);
-                } catch (e) {
-                    console.error('channel.js::Master::dispatch: pair shutdown');
-                }
-            }
-        }
+        dispatchToPairs(this, mesg);
     }
 }
 
+function dispatchToPairs(worker, mesg) {
+    let dispatched = 0;
+    for (let pair of worker.program.workers) {
+        if (pair !== worker) {
+            try {
+                pair && pair.send(mesg);
+                dispatched++;
+            } catch (e) {
+                console.error('channel.js::Master::dispatch: pair shutdown');
+            }
+        }
+    }
+    return dispatched;
+}
 
 function onMasterMessage(mesg) {
     if (!mesg || mesg.action !== 'channel') return;
@@ -235,10 +202,6 @@ function onMasterMessage(mesg) {
         } else {
             process.send(resp);
         }
-    } else if (cmd === 'queryback') {
-        const ack = mesg.ack, resolve = waits[ack];
-        delete waits[ack];
-        resolve(mesg.results);
     } else if (cmd === 'dispatch') {
         let ch = mesg.channel;
         if (ch in listeners) {

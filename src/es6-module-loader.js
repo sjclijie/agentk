@@ -190,7 +190,7 @@ function compile(source, option) {
         replace = replacer.replace,
         insert = replacer.insert,
         globals = Object.create(null);
-    let hasAliasedImport = findImports(parsed, globals, replace, option);
+    let hasAliasedImport = findImports(parsed, globals, replace, option.dir);
     let exports = findExports(parsed, replace, insert);
 
     handleScope(parsed, globals, replace, insert);
@@ -320,7 +320,7 @@ function findExports(body, replace, insert) {
 }
 
 const VARIABLE_TYPE = {type: 'variable'};
-function findImports(body, globals, replace, option) {
+function findImports(body, globals, replace, dirname) {
     let hasAliasedImport = false;
     let definedModules = {}, lastModuleUid = 0;
     for (let stmt of body.body) {
@@ -334,7 +334,7 @@ function findImports(body, globals, replace, option) {
 
         if (!stmt.specifiers.length) { // import only
             stmt.range.push();
-            replace(stmt, 'include(' + stmt.source.raw + ',__dirname)[loadProgress].done();');
+            replace(stmt, 'include(' + JSON.stringify(path.join(dirname, stmt.source.value)) + ')[loadProgress].done();');
             continue;
         }
         let lastSpecifier = stmt.specifiers.pop();
@@ -366,7 +366,7 @@ function findImports(body, globals, replace, option) {
         }
         moduleLocal.moduleId = moduleId;
         definedModules[moduleId] = true;
-        replace(stmt, 'let ' + moduleId + '=include(' + stmt.source.raw + ',__dirname);');
+        replace(stmt, 'const ' + moduleId + '=include(' + JSON.stringify(path.join(dirname, stmt.source.value)) + ');');
     }
     return hasAliasedImport;
 }

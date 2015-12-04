@@ -6,6 +6,8 @@ import * as channel from '../module/channel';
 
 const path = require('path');
 
+const timeOff = new Date().getTimezoneOffset() * 60e3;
+
 let server, listen_path = 'daemon.sock', win32 = process.platform === 'win32';
 const main = process.argv[1];
 
@@ -28,7 +30,6 @@ const actions = {
         return true
     },
     start(dir) {
-        console.log('start', dir);
         if (dir in programs) throw new Error(`program '${dir}' already started`);
         return startProgram(dir)
     },
@@ -79,92 +80,19 @@ const actions = {
         return true
     },
     reload(dir) {
-        // TODO reload support
         return actions.restart(dir)
     }
 };
 
+const modules = Object.create(null);
+modules.daemon = trigger;
+
 resumeJobs();
 
-console.log('starting service...');
-server = http.listen(win32 ? 32761 : listen_path, function (req) {
-    console.log(req.method, req.url);
-    let action = req.url.substr(req.url.indexOf('?') + 1);
-
-    let data;
-    if (req.headers.has('data')) {
-        data = JSON.parse(req.headers.get('data'));
-    } else {
-        data = null
-    }
-    try {
-        if (typeof data === 'string' && data in programs) {
-            let program = programs[data];
-            if (program.action && action in program.action) {
-                // trigger action
-                return http.Response.json(triggerAction(program, action));
-            }
-        }
-        if (!(action in actions)) {
-            return http.Response.error(404, 'command not found: ' + action)
-        }
-        return http.Response.json(actions[action](data));
-    } catch (e) {
-        console.error(e.stack || e);
-        return http.Response.error(500, e.message)
-    }
-});
-
-console.log('service started at', server.address());
+server = http.listen(win32 ? 32761 : listen_path, onServiceRequest);
+console.log(`${formatTime(Date.now())} daemon.js: service started at`, server.address());
 if (win32) {
     file.close(file.open(listen_path, 'w'));
-}
-
-function resumeJobs() {
-// resume jobs
-    if (file.exists('programs')) {
-        let programs;
-        try {
-            programs = JSON.parse('' + file.read('programs'));
-        } catch (e) {
-            return
-        }
-        for (let program of programs) {
-            console.log('resuming ' + program.dir);
-            try {
-                startProgram(program.dir);
-            } catch (e) {
-                console.error('program %s resume failed: %s', program.dir, e.message);
-            }
-        }
-        updateLog()
-    }
-}
-
-function getProgram(dir) {
-    if (!(dir in programs)) {
-        throw new Error(`program '${dir}' not started`)
-    }
-    return programs[dir];
-}
-
-function updateLog() {
-    let arr = Object.keys(programs).map(dir => {
-        let program = programs[dir];
-        return {
-            dir: dir,
-            stdout: program.stdout,
-            stderr: program.stderr
-        }
-    });
-    file.write('programs', JSON.stringify(arr));
-}
-
-function triggerAction(program, action) {
-    program.workers.forEach(worker => {
-        worker.send({action: 'trigger', cmd: action})
-    });
-    return true;
 }
 
 function startProgram(dir) {
@@ -256,24 +184,130 @@ function startProgram(dir) {
                 lastRespawn = now;
                 fastRespawn = 0;
             }
-            console.log(`${formatTime(now)} - ${dir}: respawn worker ${i}`);
+            console.log(`${formatTime(now)} daemon.js::respawn: program[${dir}] worker[${i}]`);
             restarted[i]++;
             program.lastRestart = Date.now();
             let worker = workers[i] = fork(main, option);
             worker.program = program;
             worker.on('exit', onExit);
+            worker.on('message', onMessage);
             scheduler.onWorker(worker);
-            channel.onWorker(worker);
-
         }
     }
 }
 
+function resumeJobs() {
+// resume jobs
+    if (file.exists('programs')) {
+        let programs;
+        try {
+            programs = JSON.parse('' + file.read('programs'));
+        } catch (e) {
+            return
+        }
+        for (let program of programs) {
+            console.log(`${formatTime(Date.now())} daemon.js::resume: program[${program.dir}]`);
+            try {
+                startProgram(program.dir);
+            } catch (e) {
+                console.error(`${formatTime(Date.now())} daemon.js::resume: failed program[${program.dir}] message[${e.message}]`);
+            }
+        }
+        updateLog()
+    }
+}
+
+function getProgram(dir) {
+    if (!(dir in programs)) {
+        throw new Error(`program '${dir}' not started`)
+    }
+    return programs[dir];
+}
+
+function updateLog() {
+    let arr = Object.keys(programs).map(dir => {
+        let program = programs[dir];
+        return {
+            dir: dir,
+            stdout: program.stdout,
+            stderr: program.stderr
+        }
+    });
+    file.write('programs', JSON.stringify(arr));
+}
+
 function formatTime(t) {
-    let time = new Date(t);
-    return `${time.getFullYear()}-${tens(time.getMonth() + 1)}-${tens(time.getDate())} ${time.toTimeString().substr(0, 8)}`
+    const dt = new Date(t - timeOff).toJSON();
+    return dt.substr(0, 10) + ' ' + dt.substr(11, 8);
 }
 
 function tens(num) {
     return (num < 10 ? '0' : '') + num;
+}
+
+function onServiceRequest(req) {
+    console.log(`${formatTime(Date.now())} daemon.js: ${req.method} ${req.url}`);
+    let action = req.url.substr(req.url.indexOf('?') + 1);
+
+    let data = req.headers.get('data');
+
+    try {
+        return http.Response.json(trigger({cmd: action, data: data && JSON.parse(data)}));
+    } catch (e) {
+        console.error(`${formatTime(Date.now())} daemon.js: request handling failed cmd[${action}] message[${e.message || e}]`);
+        return http.Response.error(500, e.message)
+    }
+}
+
+function onMessage(msg) {
+    if (!msg || !msg.action) return;
+    let worker = this;
+    co.run(function () {
+        if (msg.action === 'setup') { // setup module
+            let module = msg.module;
+            if (module in modules) return;
+            let method = co.yield(include('../module/' + module, __dirname)).onMessage;
+            if (typeof method === 'function') modules[module] = method;
+            return;
+        }
+        if (msg.action in modules) {
+            let ret, seq = msg.seq;
+            try {
+                ret = {state: 0, data: modules[msg.action].call(worker, msg)};
+            } catch (e) {
+                ret = {state: 1, message: e.message || e}
+            }
+            if (seq) {
+                ret.ack = seq;
+                try {
+                    worker.send(ret)
+                } catch (e) {
+                    console.error(`${formatTime(Date.now())} daemon.js::onMessage: send ack failed, silent ignoring message[${e.message}]`);
+                }
+            }
+        }
+    });
+}
+
+function trigger(msg) {
+    let action = msg.cmd, data = msg.data;
+    if (typeof data === 'string' && data in programs) {
+        let program = programs[data];
+        if (program.action && action in program.action) {
+            // trigger action
+            msg = {action: 'trigger', cmd: action};
+            for (let worker of program.workers) {
+                try {
+                    worker.send(msg)
+                } catch (e) {
+                    console.error(`${formatTime(Date.now())} daemon.js::trigger: send action to worker failed, silent ignoring worker[${worker.pid}] message[${e.message}]`);
+                }
+            }
+            return true;
+        }
+    }
+    if (!(action in actions)) {
+        throw new Error('command not found: ' + action);
+    }
+    return actions[action](data);
 }

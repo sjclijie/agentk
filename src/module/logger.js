@@ -284,4 +284,5 @@ export let verbose = logger(VERBOSE, 'verbose'),
     debug = logger(DEBUG, 'debug'),
     info = logger(INFO, 'info'),
     warn = logger(WARN, 'warn'),
+    error = logger(ERROR, 'error'),
     fatal = logger(FATAL, 'fatal');
