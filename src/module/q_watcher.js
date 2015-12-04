@@ -130,11 +130,11 @@ function sendAll() {
         }
 
         for (let key in allCounts) {
-            buf += prefix + '.' + key + '_Count ' + (allCounts[key] / 60 + 0.5 | 0) + ' ' + ts + '\n';
+            buf += prefix + '.' + key + '_Count ' + (allCounts[key] / 60) + ' ' + ts + '\n';
         }
 
         for (let key in allSums) {
-            buf += prefix + '.' + key + '_Time ' + (allSums[key] / allCounts[key] + 0.5 | 0) + ' ' + ts + '\n';
+            buf += prefix + '.' + key + '_Time ' + (allSums[key] / allCounts[key]) + ' ' + ts + '\n';
         }
 
         onet.connect({
