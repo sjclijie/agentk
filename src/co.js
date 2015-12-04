@@ -24,7 +24,7 @@ exports.run = function (cb, arg) {
             try {
                 result = fiber.run(args);
             } catch (e) {
-                fiber = null;
+                cleanup();
                 return reject(e);
             }
             onresult(result);
@@ -35,7 +35,7 @@ exports.run = function (cb, arg) {
             try {
                 result = fiber.throwInto(err);
             } catch (e) {
-                fiber = null;
+                cleanup();
                 return reject(e);
             }
             onresult(result);
@@ -43,11 +43,22 @@ exports.run = function (cb, arg) {
 
         function onresult(result) {
             if (!fiber.started) {
-                fiber = null;
+                cleanup();
                 resolve(result);
                 return;
             }
             result.then(sched, onerr);
+        }
+
+        function cleanup() {
+            let resources = fiber.resources;
+            if (resources) {
+                fiber.resources = null;
+                for (let handle of resources) {
+                    handle._close();
+                }
+            }
+            fiber = null;
         }
     });
 };
@@ -81,4 +92,22 @@ exports.sleep = function (timeout) {
     exports.yield(new Promise(function (resolve) {
         setTimeout(resolve, timeout);
     }))
+};
+
+const resourceSets = new WeakMap();
+
+exports.addResource = function (obj) {
+    let fiber = Fiber.current,
+        resources = fiber.resources || (fiber.resources = new Set());
+    resourceSets.set(obj, resources);
+    resources.add(obj);
+};
+
+exports.removeResource = function (obj) {
+    resourceSets.get(obj);
+    let resources = resourceSets.get(obj);
+    if (resources) {
+        resources.delete(obj);
+        resourceSets.delete(obj);
+    }
 };

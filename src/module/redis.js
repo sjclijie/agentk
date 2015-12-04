@@ -121,14 +121,12 @@ class Context {
 }
 
 
-let nextID = 0;
 class Connection extends Context {
     constructor(socket, release) {
         super();
 
-        this.id = nextID++;
         this.socket = socket;
-        this.release = release;
+        this._close = release;
         socket._conn = this;
 
         const pending = this.pending = [];
@@ -230,7 +228,8 @@ class Connection extends Context {
     }
 
     _onerror(err) {
-        this.release = Boolean;
+        co.removeResource(this);
+        this._close = Boolean;
         const pending = this.pending;
         while (pending.length) {
             pending.pop().reject(err);
@@ -241,7 +240,7 @@ class Connection extends Context {
         const self = this;
         this.pending.push({
             resolve: function () {
-                self.release()
+                self._close()
             }, reject: function (err) {
                 self.socket.destroy(err);
             }
@@ -265,6 +264,11 @@ class Connection extends Context {
         }
         //console.log('SEND', JSON.stringify(buf));
         this.socket.write(buf, 'binary')
+    }
+
+    release() {
+        co.removeResource(this);
+        this._close();
     }
 }
 
@@ -315,7 +319,6 @@ export class Pool extends Context {
                     connecting++; // do not create connections more than pending requests
                     const socket = _net.connect(option, onSocketConnected).once('error', onSocketError);
                     socket._state = CONNECT;
-                    socket.id = nextID++;
                 } else { // the pool is full, wait for a connection released
                     break
                 }
@@ -348,7 +351,7 @@ export class Pool extends Context {
 
 
         function release() {
-            //console.log('connection released');
+            console.log('connection released');
             assert(this instanceof Connection);
             let socket = this.socket;
             if (socket._state === CONNECT || socket._state === AUTH) { // first connect
@@ -357,23 +360,27 @@ export class Pool extends Context {
             }
             socket._conn = null;
 
-            this.release = Boolean;
+            this._close = Boolean;
             freeList.push(socket);
             autoConnect();
         }
 
         this.getConnection = function () {
+            let ret;
             if (freeList.length) {
-                return new Connection(freeList.shift(), release);
+                ret = new Connection(freeList.shift(), release);
+            } else {
+                ret = co.promise(function (resolve, reject) {
+                    if (freeList.length) {
+                        resolve(new Connection(freeList.shift(), release));
+                    } else {
+                        pending.push({resolve, reject});
+                        autoConnect();
+                    }
+                })
             }
-            return co.promise(function (resolve, reject) {
-                if (freeList.length) {
-                    resolve(new Connection(freeList.shift(), release));
-                } else {
-                    pending.push({resolve, reject});
-                    autoConnect();
-                }
-            })
+            co.addResource(ret);
+            return ret;
         };
     }
 
