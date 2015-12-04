@@ -349,13 +349,13 @@ function findImports(body, globals, replace, dirname) {
             }
         }
 
+        let hasDefault = null;
+
         for (let specifier of stmt.specifiers) {
             switch (specifier.type) {
                 case Syntax.ImportDefaultSpecifier: // import default
-                    globals[specifier.local.name] = {
-                        type: 'imported',
-                        replacement: moduleId + '[moduleDefault]'
-                    };
+                    globals[specifier.local.name] = VARIABLE_TYPE;
+                    hasDefault = specifier.local.name;
                     break;
                 case Syntax.ImportSpecifier: // import normal
                     globals[specifier.local.name] = {
@@ -363,10 +363,23 @@ function findImports(body, globals, replace, dirname) {
                         replacement: moduleId + '.' + specifier.imported.name
                     };
             }
+
         }
+
         moduleLocal.moduleId = moduleId;
         definedModules[moduleId] = true;
-        replace(stmt, 'const ' + moduleId + '=include(' + JSON.stringify(path.join(dirname, stmt.source.value)) + ');');
+
+        let repl;
+        if (hasDefault && stmt.specifiers.length === 1) { // import default only
+            repl = 'const ' + hasDefault + '=include(' + JSON.stringify(path.join(dirname, stmt.source.value)) + ')[moduleDefault];';
+        } else {
+            repl = 'const ' + moduleId + '=include(' + JSON.stringify(path.join(dirname, stmt.source.value)) + ')';
+            if (hasDefault) {
+                repl += ',' + hasDefault + '=' + moduleId + '[moduleDefault]'
+            }
+            repl += ';'
+        }
+        replace(stmt, repl);
     }
     return hasAliasedImport;
 }
