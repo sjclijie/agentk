@@ -41,13 +41,24 @@ class Context {
         return this._query(arr);
     }
 
-    hgetall(key) {
+    hgetAll(key) {
         let arr = this._query(['HGETALL', key]);
         let ret = {};
         for (let i = 0, L = arr.length; i < L; i += 2) {
             ret[arr[i]] = arr[i + 1]
         }
         return ret
+    }
+
+    hsetAll(key, map) {
+        let arr = ['HMSET', key];
+        for (let hash in map) {
+            arr.push(hash, map[hash])
+        }
+        if (arr.length === 4) { // hset key hash val
+            arr[0] = 'HSET'
+        }
+        return this._query(arr)
     }
 
     multi() {
@@ -382,5 +393,5 @@ export function pool(url) {
     if (url in pools) return pools[url];
 
     let parsed = _url.parse(url, true);
-    return pools[url] = new Pool(parsed.port || undefined, parsed.host || undefined, parsed.auth, parsed.query.connections);
+    return pools[url] = new Pool(parsed.port || undefined, parsed.hostname || undefined, parsed.auth, parsed.query.connections);
 }
