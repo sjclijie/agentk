@@ -35,10 +35,10 @@ queries.forEach(function (obj, i) {
     }
 });
 
-console.log(
+process.stdout.write(
     '\x1b[32;1m< conn -= 10  \x1b[35m[ qps -= 10  \x1b[33mc clear\x1b[0m\n' +
     '\x1b[32;1m> conn += 10  \x1b[35m] qps += 10  \x1b[31mq exit\x1b[0m\n' + '' +
-    '\x1b[36;1mtime(s)\x1b[32m  conn\x1b[35m qps(avg  curr   max)\x1b[34m delay(min  curr   max)\x1b[32m    OK\x1b[31m Error\x1b[0m Recv (MB)');
+    '\x1b[36;1mtime (s)\x1b[32m conn\x1b[35m qps(avg curr  max)\x1b[34m delay(min  curr   max)\x1b[32m     OKs\x1b[31m Error\x1b[0m Recv (MB)\n\x1b[s');
 
 var agent = _http.globalAgent;
 
@@ -61,14 +61,13 @@ function run() {
         if (sec !== nowSec) {
             if (reqs > maxqps) maxqps = reqs;
 
-            var tmp = (nowSec - startSec) + '';
-            var msg = '\x1b[s\x1b[36;1m' + align(nowSec - startSec, 6)
-                + ' \x1b[32m' + align(conns, 6)
-                + '\x1b[35m' + align((oks * 1000 / ( timeStart - start)).toFixed(2), 8) + align(reqs, 6) + align(maxqps, 6)
+            var msg = '\x1b[u\x1b[36;1m' + new Date((nowSec - startSec) * 1000).toJSON().substr(11, 8)
+                + '\x1b[32m' + align(conns, 5)
+                + '\x1b[35m' + align((oks * 1000 / ( timeStart - start)).toFixed(2), 8) + align(reqs, 5) + align(maxqps, 5)
                 + ' \x1b[34m' + align(minDelay, 10) + align(delays / reqs | 0, 6) + align(maxDelay, 6)
-                + ' \x1b[32m' + align(oks, 6)
+                + ' \x1b[32m' + align(oks, 8)
                 + '\x1b[31m' + align(errors, 6)
-                + '\x1b[0m' + align(bytesRecv / 1048576 | 0, 9) + '\x1b[u';
+                + '\x1b[0m' + align(bytesRecv / 1048576 | 0, 9);
 
             process.stdout.write(msg);
             sec = nowSec;
