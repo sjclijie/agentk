@@ -72,7 +72,8 @@ function run() {
         }
         running++;
         reqs++;
-        _http.request(queries[Math.random() * queries.length | 0], onres).on('error', onerror).end();
+        var q = queries[Math.random() * queries.length | 0];
+        _http.request(q, onres).on('error', onerror).end(q.data);
     }
 }
 
