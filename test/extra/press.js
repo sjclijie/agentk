@@ -1,6 +1,7 @@
 "use strict";
 var _http = require('http'),
     _url = require('url'),
+    _query = require('querystring'),
     _extend = require('util')._extend;
 
 if (process.argv.length === 2) {
@@ -19,19 +20,24 @@ var defaults = config.defaults;
 queries.forEach(function (obj, i) {
     var url;
     if (typeof obj === 'string') {
-        obj = queries[i] = _extend({url: url = obj}, defaults);
+        url = obj;
+        obj = queries[i] = {__proto__: defaults}
     } else {
         url = obj.url;
         obj.__proto__ = defaults;
     }
+    if (url) {
+        var parsed = _url.parse(url);
+        obj.host = parsed.hostname;
+        obj.port = parsed.port || 80;
+        obj.path = parsed.path;
+    }
 
-    var parsed = _url.parse(url);
-    obj.host = parsed.hostname;
-    obj.port = parsed.port || 80;
-    obj.path = parsed.path;
-
-    if (obj.body) {
-        obj.body = new Buffer(typeof obj.body === 'string' ? obj.body : JSON.stringify(obj.body));
+    if (obj.data) {
+        obj.data = new Buffer(typeof obj.data === 'string' ? obj.data
+                : obj.dataType === 'json' ? JSON.stringify(obj.data)
+                : _query.stringify(obj.data)
+        );
     }
 });
 
@@ -79,7 +85,6 @@ function run() {
         running++;
         reqs++;
         var q = queries[Math.random() * queries.length | 0];
-
         var req = _http.request(q, onres).on('error', onerror);
         req.timeStart = timeStart;
         req.end(q.data);
