@@ -21,10 +21,10 @@ queries.forEach(function (obj, i) {
     var url;
     if (typeof obj === 'string') {
         url = obj;
-        obj = queries[i] = {__proto__: defaults}
+        obj = queries[i] = _extend({}, defaults)
     } else {
+        _extend(obj, defaults);
         url = obj.url;
-        obj.__proto__ = defaults;
     }
     if (url) {
         var parsed = _url.parse(url);
