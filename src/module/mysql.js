@@ -64,9 +64,27 @@ class Context {
 }
 
 class Connection extends Context {
+    constructor(conn) {
+        super(conn);
+
+        co.addResource(this)
+    }
+
     close() {
+        co.removeResource(this);
         this._conn.release();
         this._conn = null;
+    }
+
+    /**
+     * called by co::cleanup
+     * @private
+     */
+    _close() {
+        if (this._conn) {
+            this._conn.release();
+            this._conn = null;
+        }
     }
 }
 
@@ -84,6 +102,18 @@ class Transaction extends Connection {
     rollback() {
         this._conn.rollback();
         this.close();
+    }
+
+    /**
+     * called by co::cleanup
+     * @private
+     */
+    _close() {
+        if (this._conn) {
+            this._conn.rollback();
+            this._conn.release();
+            this._conn = null;
+        }
     }
 }
 

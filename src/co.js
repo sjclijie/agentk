@@ -104,7 +104,6 @@ exports.addResource = function (obj) {
 };
 
 exports.removeResource = function (obj) {
-    resourceSets.get(obj);
     let resources = resourceSets.get(obj);
     if (resources) {
         resources.delete(obj);
