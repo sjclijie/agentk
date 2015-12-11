@@ -343,6 +343,13 @@ let server = listen(0, function (req) {
         co.sleep(100);
         return Response.error(200);
     }
+    if (req.hostname === 'www.example.com') {
+        return Response.json({
+            method: req.method,
+            url: req.url,
+            auth: req.headers.get('proxy-authorization')
+        });
+    }
 
 }), port = server.address().port;
 
@@ -356,6 +363,19 @@ test_fetch.test('timeout', function () {
         return;
     }
     throw new Error('should not be here')
+});
+
+test_fetch.test('proxy', function () {
+    let resp = co.yield(fetch(`http://www.example.com/foo`, {
+        proxy: 'user:pass@localhost:' + port
+    }));
+
+    assert(resp.ok);
+    assert.deepEqual(co.yield(resp.json()), {
+        method: 'GET',
+        url: 'http://www.example.com/foo',
+        auth: 'Basic ' + new Buffer('user:pass').toString('base64')
+    });
 });
 
 server.close();

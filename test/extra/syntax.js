@@ -20,12 +20,13 @@ function test(a, b, ...c) {
 
 assert.deepEqual(test(), []);
 assert.deepEqual(test(1, 2, 3), [3]);
-assert.deepEqual(((a, b, ...c) => c)(1, 2, 3), [3]);
+assert.deepEqual(function (a, b, ...c) {
+    return c
+}(1, 2, 3), [3]);
 
 //// Testing classes
 export class Test {
     constructor() {
-        super();
         this.name = void 0;
     }
 
@@ -81,14 +82,14 @@ export default class MyTest extends Test {
     }
 }
 
-let a = new MyTest('abc');
-a.foobar();
-void a.foo;
-a.foo = 0;
+let abc = new MyTest('abc');
+abc.foobar();
+void abc.foo;
+abc.foo = 0;
 
 Test.prototype.XXX = 123;
 assert.strictEqual(MyTest.beforeCons(), 'haha');
-assert.strictEqual(a.xxx, 123);
+assert.strictEqual(abc.xxx, 123);
 
 Test.bar();
 assert.strictEqual(Test.baz(), "baz");
@@ -112,18 +113,18 @@ asserts((a, b = 1, d = a + b, ...c) => {
     return {a, b, c, d}
 });
 
-function withoutDefault(a, b = 1, d = a + b) {
+function withOutRest(a, b = 1, d = a + b) {
     return {a, b, d}
 }
-asserts2(withoutDefault);
+asserts2(withOutRest);
 asserts2(function (a, b = 1, d = a + b) {
     return {a, b, d}
 });
 
-withoutDefault = (a, b = 1, d = a + b) => {
+withOutRest = (a, b = 1, d = a + b) => {
     return {a, b, d}
 };
-asserts2(withoutDefault);
+asserts2(withOutRest);
 asserts2((a, b = 1, d = a + b) => {
     return {a, b, d}
 });
@@ -214,3 +215,16 @@ function firstIsDefaultWithRest(option = {foo: 'bar'}, ...extra) {
 }
 assert.strictEqual(firstIsDefaultWithRest(), 'undefinedbar');
 assert.strictEqual(firstIsDefaultWithRest(undefined, 'foo'), 'foobar');
+
+let {a, b, c:{d}, e:[f, {g}]} = {
+    a: 1, b: 2, c: {d: 3}, e: [4, {g: 5}]
+};
+
+let [h,{i,j:k}] = [6, {i: 7, j: 8}];
+assert.deepEqual([a, b, d, f, g, h, i, k], [1, 2, 3, 4, 5, 6, 7, 8]);
+a = {};
+[a.b,,b] = 'foo bar baz'.split(' ');
+
+assert.deepEqual({a, b}, {a: {b: 'foo'}, b: 'baz'});
+let [l,,m] = [3, 4, 5];
+assert.deepEqual([l, m], [3, 5]);
