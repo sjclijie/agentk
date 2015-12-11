@@ -569,9 +569,8 @@ export class Response extends Body {
  */
 export const agent = new ohttp.Agent();
 
-function groupHeaders(obj) {
-    const headers = Object.create(null),
-        entries = obj._headers._entries;
+function groupHeaders(obj, headers) {
+    const entries = obj._headers._entries;
     for (let key in entries) {
         let arr = entries[key];
         headers[arr[0]] = arr.length === 2 ? arr[1] : arr.slice(1);
@@ -619,7 +618,7 @@ export function _handler(cb) {
 
     return function (request, response) {
         request.body = request;
-        let req = new Request('http://' + request.headers.host + request.url, request);
+        let req = new Request(request.url[0] === '/' ? 'http://' + request.headers.host + request.url : request.url, request);
 
         req.request = request;
         req.response = response;
@@ -661,7 +660,7 @@ export function _handler(cb) {
             }
 
             function writeHeaders() {
-                response.writeHead(resp.status, resp.statusText, groupHeaders(resp));
+                response.writeHead(resp.status, resp.statusText, groupHeaders(resp, {}));
             }
         }).then(null, onerror);
         function onerror(err) {
@@ -698,32 +697,52 @@ export let client_ua = `AgentK/${process.versions.agentk} NodeJS/${process.versi
 export function fetch(url, options) {
     const req = typeof url === 'object' && url instanceof Request ? url : new Request(url, options);
     const delay = options && options.timeout || 3000;
-    let parsedUrl = ourl.parse(req._url), headers = {};
-    const https = parsedUrl.protocol === 'https:';
+    let proxy = options.proxy, headers = {}, https;
+
+    if (proxy) {
+        https = false;
+        let auth;
+        if (typeof proxy === 'string') {
+            proxy = ourl.parse('http://' + proxy);
+            auth = proxy.auth;
+        } else {
+            if ('user' in proxy) {
+                auth = proxy.user + ':' + proxy.password;
+            }
+        }
+        options = {
+            path: req.url,
+            host: proxy.hostname,
+            port: proxy.port
+        };
+        headers.host = proxy.host;
+        if (auth) {
+            headers['Proxy-Authorization'] = 'Basic ' + new Buffer(auth).toString('base64');
+        }
+    } else {
+        let parsedUrl = ourl.parse(req._url);
+        https = parsedUrl.protocol === 'https:';
+        if (parsedUrl.protocol === 'unix:') {
+            headers.host = 'localhost';
+            options = {
+                socketPath: parsedUrl.pathname,
+                path: '/' + (parsedUrl.search || '')
+            }
+        } else {
+            headers.host = parsedUrl.host;
+            options = {
+                host: parsedUrl.hostname,
+                port: parsedUrl.port || (parsedUrl.protocol === 'https:' ? 443 : 80),
+                path: parsedUrl.path
+            }
+        }
+    }
 
     let _agent = agent;
 
-    if (https) {
-        _agent = new ohttps.Agent(options);
-    }
-
-    if (parsedUrl.protocol === 'unix:') {
-        headers.host = 'localhost';
-        options = {
-            socketPath: parsedUrl.pathname,
-            path: '/' + (parsedUrl.search || '')
-        }
-    } else {
-        headers.host = parsedUrl.host;
-        options = {
-            host: parsedUrl.hostname,
-            port: parsedUrl.port || (parsedUrl.protocol === 'https:' ? 443 : 80),
-            path: parsedUrl.path
-        }
-    }
     options.method = req._method;
-    options.headers = groupHeaders(req);
-    options.agent = _agent;
+    options.headers = groupHeaders(req, headers);
+    options.agent = https ? new ohttps.Agent(options) : _agent;
 
     return new Promise(function (resolve, reject) {
         let timer = setTimeout(ontimeout, delay);
@@ -758,23 +777,7 @@ function handleRequestOptions(options) {
     const headers = options.headers || (options.headers = {});
     'User-Agent' in headers || (headers['User-Agent'] = client_ua);
     'agent' in options || (options.agent = agent);
-    if (options.proxy) {
-        let proxy = options.proxy, auth;
-        if (typeof proxy === 'string') {
-            proxy = ourl.parse('http://' + proxy);
-            auth = proxy.auth;
-        } else {
-            if ('user' in proxy) {
-                auth = proxy.user + ':' + proxy.password;
-            }
-        }
-        options.path = `http://${options.host}:${options.port || '80'}${options.path || '/'}`;
-        options.host = proxy.host;
-        options.port = proxy.port;
-        if (auth) {
-            headers['Proxy-Authorization'] = 'Basic ' + new Buffer(auth).toString('base64');
-        }
-    }
+
 }
 
 /**

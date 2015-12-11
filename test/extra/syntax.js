@@ -20,12 +20,14 @@ function test(a, b, ...c) {
 
 assert.deepEqual(test(), []);
 assert.deepEqual(test(1, 2, 3), [3]);
-assert.deepEqual(((a, b, ...c) => c)(1, 2, 3), [3]);
+assert.deepEqual(function (a, b, ...c) {
+    return c
+}(1, 2, 3), [3]);
 
 //// Testing classes
 export class Test {
     constructor() {
-        super();
+        //super();
         this.name = void 0;
     }
 

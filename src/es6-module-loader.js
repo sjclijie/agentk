@@ -52,14 +52,14 @@ try {
     handleDefaultParam = true;
 }
 
+const loadProgress = Symbol('loadProgress'),
+    moduleDefault = Symbol.for('default');
 global.include = function (name) {
     return include(name).then(function (module) {
         return module[loadProgress]
     })
 };
 
-const loadProgress = Symbol('loadProgress'),
-    moduleDefault = Symbol.for('default');
 
 /**
  * @param {String} name full path of the module name
@@ -787,7 +787,7 @@ function handleScope(body, locals, replace, insert) {
                 } else {
                     replace({
                         range: [bodyEnds, expr.range[1]]
-                    }, arrowBindings ? '}() }' : '}.call(this,' + names + ') }')
+                    }, arrowBindings ? '})() }' : '}).call(this,' + names + ') }')
                 }
             } else if (hasRest) {
                 let lastParam = params[paramLen - 1];
