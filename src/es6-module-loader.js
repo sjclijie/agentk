@@ -560,6 +560,7 @@ function handleScope(body, locals, replace, insert, slice) {
                         } else if (pattern.type === Syntax.ArrayPattern) {
                             for (let i = 0, L = pattern.elements.length; i < L; i++) {
                                 let elem = pattern.elements[i];
+                                if (!elem) continue;
                                 let path = prefix + '[' + i + ']';
                                 if (elem.type === Syntax.Identifier) {
                                     assigns += '; ' + elem.name + ' = ' + path
@@ -723,6 +724,7 @@ function handleScope(body, locals, replace, insert, slice) {
                 } else if (pattern.type === Syntax.ArrayPattern) {
                     for (let i = 0, L = pattern.elements.length; i < L; i++) {
                         let elem = pattern.elements[i];
+                        if (!elem) continue;
                         if (elem.type === Syntax.Identifier) {
                             locals[elem.name] = VARIABLE_TYPE;
                             if (handleDestruct)assigns += ', ' + elem.name + ' = ' + prefix + '[' + i + ']'

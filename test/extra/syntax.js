@@ -223,6 +223,8 @@ let {a, b, c:{d}, e:[f, {g}]} = {
 let [h,{i,j:k}] = [6, {i: 7, j: 8}];
 assert.deepEqual([a, b, d, f, g, h, i, k], [1, 2, 3, 4, 5, 6, 7, 8]);
 a = {};
-[a.b,b] = 'foo bar'.split(' ');
+[a.b,,b] = 'foo bar baz'.split(' ');
 
-assert.deepEqual({a, b}, {a: {b: 'foo'}, b: 'bar'});
+assert.deepEqual({a, b}, {a: {b: 'foo'}, b: 'baz'});
+let [l,,m] = [3, 4, 5];
+assert.deepEqual([l, m], [3, 5]);
