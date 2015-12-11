@@ -21,6 +21,7 @@ let handleTemplate = false,
     handleClass = false,
     handleShorthand = false,
     handleDefaultParam = false,
+    handleDestruct = false,
     arrowBindings = function () {
             return (() => this)()
         }.call(definedModules) === definedModules,
@@ -50,6 +51,12 @@ try {
     (0, eval)('(function(a=1){})');
 } catch (e) {
     handleDefaultParam = true;
+}
+
+try {
+    (0, eval)('(function({a}){})');
+} catch (e) {
+    handleDestruct = true
 }
 
 const loadProgress = Symbol('loadProgress'),
@@ -193,12 +200,12 @@ function compile(source, option) {
     let hasAliasedImport = findImports(parsed, globals, replace, option.dir);
     let exports = findExports(parsed, replace, insert);
 
-    handleScope(parsed, globals, replace, insert);
+    handleScope(parsed, globals, replace, insert, replacer.slice);
 
     if (hasAliasedImport && exports[1]) {// replace exports
         const exports_replacer = createReplacement(exports[1]);
         let parsed_export = esprima.parse(exports[1], parseOption);
-        handleScope(parsed_export, globals, exports_replacer.replace, exports_replacer.insert);
+        handleScope(parsed_export, globals, exports_replacer.replace, exports_replacer.insert, exports_replacer.slice);
         exports[1] = exports_replacer.concat();
     }
 
@@ -232,6 +239,9 @@ function createReplacement(source) {
         },
         insert: function (pos, str) {
             replaces.push([pos, pos, nextIdx++, str]);
+        },
+        slice: function (elem) {
+            return source.slice(elem.range[0], elem.range[1])
         }
     }
 }
@@ -273,24 +283,6 @@ function findExports(body, replace, insert) {
                 throw new Error("export default has already been declared");
             }
             hasDefault = true;
-            let defaultName = null;
-            if (stmt.declaration.type === Syntax.FunctionDeclaration || stmt.declaration.type === Syntax.ClassDeclaration) {
-                arr[i] = stmt.declaration;
-                defaultName = stmt.declaration.id;
-            } else {
-                arr[i] = {
-                    type: Syntax.ExpressionStatement,
-                    expression: stmt.declaration
-                }
-            }
-
-            if (defaultName) {
-                replace({range: [stmt.range[0], stmt.declaration.range[0]]}, '');
-                insert(stmt.range[1], 'Object.defineProperty(module,moduleDefault,{value:' + defaultName.name + '});');
-            } else { // as expression
-                replace({range: [stmt.range[0], stmt.declaration.range[0]]}, 'Object.defineProperty(module,moduleDefault,{value:');
-                insert(stmt.declaration.range[1], '});');
-            }
         } else if (stmt.type === Syntax.VariableDeclaration && stmt.kind === 'const') {
             for (let vardecl of stmt.declarations) {
                 consts[vardecl.id.name] = true;
@@ -370,7 +362,7 @@ function findImports(body, globals, replace, dirname) {
     }
     return hasAliasedImport;
 }
-function handleScope(body, locals, replace, insert) {
+function handleScope(body, locals, replace, insert, slice) {
     body.body.forEach(handleVarAndFunc);
     body.body.forEach(handleStatement);
 
@@ -394,11 +386,27 @@ function handleScope(body, locals, replace, insert) {
                 break;
             case Syntax.ImportDeclaration:
                 throw new Error('unexpected import declaration');
+            case Syntax.ExportDefaultDeclaration:
+                if (stmt.declaration.type === Syntax.FunctionDeclaration) {
+                    handleFunction(stmt.declaration);
+                } else if (stmt.declaration.type === Syntax.ClassDeclaration) {
+                    handleStatement(stmt.declaration);
+                } else {
+                    handleExpr(stmt.declaration)
+                }
+                if (stmt.declaration.id) {
+                    replace({range: [stmt.range[0], stmt.declaration.range[0]]}, '');
+                    insert(stmt.range[1], '\nObject.defineProperty(module,moduleDefault,{value:' + stmt.declaration.id.name + '});');
+                } else {
+                    replace({range: [stmt.range[0], stmt.declaration.range[0]]}, '\nObject.defineProperty(module,moduleDefault,{value:');
+                    insert(stmt.declaration.range[1], '});');
+                }
+                break;
             case Syntax.VariableDeclaration:
                 stmt.declarations.forEach(handleDeclerator);
                 break;
             case Syntax.BlockStatement:
-                handleScope(stmt, {__proto__: locals}, replace, insert);
+                handleScope(stmt, {__proto__: locals}, replace, insert, slice);
                 break;
             case Syntax.IfStatement:
                 handleExpr(stmt.test);
@@ -436,7 +444,7 @@ function handleScope(body, locals, replace, insert) {
                 for (let handler of stmt.handlers) {
                     let scope = {__proto__: locals};
                     scope[handler.param.name] = VARIABLE_TYPE;
-                    handleScope(handler.body, scope, replace, insert);
+                    handleScope(handler.body, scope, replace, insert, slice);
                 }
                 handleBlockOrStatement(stmt.finalizer);
                 break;
@@ -538,6 +546,38 @@ function handleScope(body, locals, replace, insert) {
                 handleExpr(expr.argument);
                 break;
             case Syntax.AssignmentExpression:
+                if (handleDestruct && expr.left.type === Syntax.ArrayPattern) {
+                    let varName = '_tmp' + expr.right.range[0], assigns = '';
+                    const onPattern = function onPattern(pattern, prefix) {
+                        if (pattern.type === Syntax.ObjectPattern) {
+                            for (let prop of pattern.properties) {
+                                if (prop.shorthand) {
+                                    assigns += '; ' + prop.key.name + ' = ' + prefix + '.' + prop.key.name
+                                } else {
+                                    onPattern(prop.value, prefix + '.' + prop.key.name)
+                                }
+                            }
+                        } else if (pattern.type === Syntax.ArrayPattern) {
+                            for (let i = 0, L = pattern.elements.length; i < L; i++) {
+                                let elem = pattern.elements[i];
+                                let path = prefix + '[' + i + ']';
+                                if (elem.type === Syntax.Identifier) {
+                                    assigns += '; ' + elem.name + ' = ' + path
+                                } else if (elem.type === Syntax.ArrayPattern) {
+                                    onPattern(elem, path)
+                                } else {
+                                    assigns += '; ' + slice(elem) + ' = ' + path
+                                }
+                            }
+                        }
+                    };
+
+                    onPattern(expr.left, varName);
+                    replace(expr.left, 'const ' + varName);
+                    handleExpr(expr.right);
+                    insert(expr.right.range[1], assigns);
+                    break;
+                }
             case Syntax.BinaryExpression:
             case Syntax.LogicalExpression:
                 handleExpr(expr.left);
@@ -605,9 +645,6 @@ function handleScope(body, locals, replace, insert) {
             case Syntax.ArrayExpression:
                 expr.elements.forEach(handleExpr);
                 break;
-            case Syntax.ArrayPattern:
-                handleDestruct(expr);
-                break;
             case Syntax.SequenceExpression:
                 expr.expressions.forEach(handleExpr);
                 break;
@@ -657,32 +694,6 @@ function handleScope(body, locals, replace, insert) {
         }
     }
 
-    function handleDestruct(expr) {
-        if (expr.type === Syntax.ObjectPattern) {
-            for (let prop of expr.properties) {
-                if (prop.shorthand) {
-                    locals[prop.key.name] = VARIABLE_TYPE;
-                } else {
-                    handleDestruct(prop.value);
-                }
-            }
-        } else if (expr.type === Syntax.ArrayPattern) {
-            for (let elem of expr.elements) {
-                if (elem.type === Syntax.Identifier) {
-                    locals[elem.name] = VARIABLE_TYPE;
-                } else {
-                    handleDestruct(elem);
-                }
-            }
-        } else if (expr.type === Syntax.RestElement) {
-            locals[expr.argument.name] = VARIABLE_TYPE;
-        } else if (expr.type === Syntax.MemberExpression) { // [a.b] = xxx
-            handleExpr(expr);
-        } else {
-            throw new Error('unhandled destruct element type: ' + expr.type);
-        }
-    }
-
     function handleDeclOrExpr(stmt) {
         if (stmt.type === Syntax.VariableDeclaration) { // make a scope
             locals = {__proto__: locals};
@@ -693,18 +704,47 @@ function handleScope(body, locals, replace, insert) {
     }
 
     function handleDeclerator(decl) {
-        if (decl.id.type !== Syntax.Identifier) {
-            handleDestruct(decl.id);
-        } else {
-            locals[decl.id.name] = VARIABLE_TYPE;
+        const id = decl.id;
+        if (id.type === Syntax.Identifier) {
+            locals[id.name] = VARIABLE_TYPE;
             decl.init && handleExpr(decl.init);
+        } else {
+            let varName = '_tmp' + decl.init.range[0], assigns = '';
+            const onPattern = function onPattern(pattern, prefix) {
+                if (pattern.type === Syntax.ObjectPattern) {
+                    for (let prop of pattern.properties) {
+                        if (prop.value.type === Syntax.Identifier) {
+                            locals[prop.value.name] = VARIABLE_TYPE;
+                            if (handleDestruct) assigns += ', ' + prop.value.name + ' = ' + prefix + '.' + prop.key.name
+                        } else {
+                            onPattern(prop.value, prefix + '.' + prop.key.name)
+                        }
+                    }
+                } else if (pattern.type === Syntax.ArrayPattern) {
+                    for (let i = 0, L = pattern.elements.length; i < L; i++) {
+                        let elem = pattern.elements[i];
+                        if (elem.type === Syntax.Identifier) {
+                            locals[elem.name] = VARIABLE_TYPE;
+                            if (handleDestruct)assigns += ', ' + elem.name + ' = ' + prefix + '[' + i + ']'
+                        } else {
+                            onPattern(elem, prefix + '[' + i + ']')
+                        }
+                    }
+                }
+            };
+
+            onPattern(id, varName);
+            if (handleDestruct) {
+                replace(id, varName);
+                insert(decl.init.range[1], assigns);
+            }
         }
     }
 
     function handleBlockOrStatement(stmt) {
         if (!stmt) return;
         if (stmt.type === Syntax.BlockStatement) {
-            handleScope(stmt, {__proto__: locals}, replace, insert);
+            handleScope(stmt, {__proto__: locals}, replace, insert, slice);
         } else {
             handleStatement(stmt);
         }
@@ -736,8 +776,6 @@ function handleScope(body, locals, replace, insert) {
                     if (def) {
                         hasDefaults = true;
                         handleExpr(def);
-                        i && insert(param.range[0], 'typeof ' + param.name + ' === "undefined" ? ');
-                        insert(def.range[1], ' : 0')
                     }
                 }
             }
@@ -749,18 +787,23 @@ function handleScope(body, locals, replace, insert) {
                 }
             }
             if (hasDefaults) {
-                let obj = expr.defaults[paramLen - 1] || params[paramLen - 1];
 
-                let names = '';
+                let names = '', inits = '';
                 for (let i = 0; i < paramLen - 1; i++) {
                     let param = params[i];
                     names += param.name + ', ';
+                    let def = expr.defaults[i];
+                    if (def) {
+                        inits += 'typeof ' + param.name + ' === "undefined" && (' + param.name + ' = ' + slice(def) + ');'
+                    }
                 }
+
                 let lastParam = params[paramLen - 1];
                 if (hasRest) {
                     names = names.substr(0, names.length - 2);
                 } else {
-                    names += lastParam.name
+                    names += lastParam.name;
+                    inits += 'typeof ' + lastParam.name + ' === "undefined" && (' + lastParam.name + ' = ' + slice(expr.defaults[paramLen - 1]) + ');'
                 }
                 let prefix;
                 if (expr.type === Syntax.ArrowFunctionExpression) {
@@ -772,23 +815,23 @@ function handleScope(body, locals, replace, insert) {
                 if (hasRest) {
                     prefix += 'var ' + lastParam.argument.name + ' = Array.prototype.slice.call(arguments, ' + (paramLen - 1) + ');'
                 }
-                prefix += expr.defaults[0] ? 'return typeof ' + params[0].name + ' === "undefined" ? ' : 'return ';
-                insert(params[0].range[0], prefix);
-
-                replace({
-                    range: [
-                        (hasRest ? expr.defaults[paramLen - 2] : obj).range[1],
-                        isBlockBody ? bodyStarts + 1 : bodyStarts
-                    ]
-                }, ', ((' + (arrowBindings ? '' : names) + ') => {' + (isBlockBody ? '' : 'return '));
-
+                prefix += inits;
+                let suffix;
                 if (isBlockBody) {
-                    insert(bodyEnds - 1, arrowBindings ? '})()' : '}).call(this,' + names + ')')
+                    prefix += 'return ' + (arrowBindings ? '(() => ' : '(function(' + names + ') {');
+                    suffix = arrowBindings ? ')()}' : ').call(this, ' + names + ')}';
                 } else {
-                    replace({
-                        range: [bodyEnds, expr.range[1]]
-                    }, arrowBindings ? '})() }' : '}).call(this,' + names + ') }')
+                    prefix += 'return ' + (arrowBindings ? '(() => ' : '(function(' + names + ') {return ');
+                    suffix = arrowBindings ? ')()}' : '}).call(this, ' + names + ')}';
                 }
+                replace({
+                    range: [params[0].range[0], isBlockBody ? bodyStarts + 1 : bodyStarts]
+                }, prefix);
+                replace({
+                    range: [bodyEnds, expr.range[1]]
+                }, suffix);
+
+
             } else if (hasRest) {
                 let lastParam = params[paramLen - 1];
                 if (paramLen === 1) {
@@ -816,7 +859,7 @@ function handleScope(body, locals, replace, insert) {
         }
         if (isBlockBody) {
 
-            handleScope(expr.body, scope, replace, insert);
+            handleScope(expr.body, scope, replace, insert, slice);
         } else {
             let oldLocal = locals;
             locals = scope;
