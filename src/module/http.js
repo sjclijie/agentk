@@ -698,6 +698,7 @@ export function fetch(url, options) {
     const req = typeof url === 'object' && url instanceof Request ? url : new Request(url, options);
     const delay = options && options.timeout || 3000;
     let proxy = options && options.proxy, headers = {}, https;
+    let _agent = agent;
 
     if (proxy) {
         https = false;
@@ -722,6 +723,7 @@ export function fetch(url, options) {
     } else {
         let parsedUrl = ourl.parse(req._url);
         https = parsedUrl.protocol === 'https:';
+        if (https) _agent = new ohttps.Agent(options);
         if (parsedUrl.protocol === 'unix:') {
             headers.host = 'localhost';
             options = {
@@ -738,11 +740,10 @@ export function fetch(url, options) {
         }
     }
 
-    let _agent = agent;
 
     options.method = req._method;
     options.headers = groupHeaders(req, headers);
-    options.agent = https ? new ohttps.Agent(options) : _agent;
+    options.agent = _agent;
 
     return new Promise(function (resolve, reject) {
         let timer = setTimeout(ontimeout, delay);

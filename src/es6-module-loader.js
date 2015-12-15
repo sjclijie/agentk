@@ -9,14 +9,6 @@ const esprima = require('./esprima'),
     Module = require('module');
 const definedModules = {}; // name: Primise(module)
 
-let moduleCache;
-
-try {
-    let cache = require('node-shared-cache');
-    moduleCache = new cache.Cache('agentk-module-cache', 1 << 20, cache.SIZE_1K);
-} catch (e) {
-}
-
 let handleTemplate = false,
     handleClass = false,
     handleShorthand = false,
@@ -134,17 +126,8 @@ function initModule(module, names) {
     Object.defineProperties(module, props);
 }
 
-/**
- * method called inside module, yields the module when source is parsed
- * @param {string} name The full path of the module to be loaded
- * @param {string} __dirname The full path of the module to be loaded
- * @return The module
- */
-function importer(name, __dirname) {
-    return co.yield(include(name, __dirname))
-}
-
 const resolvedPaths = {};
+const _require = Module.prototype.require;
 
 function resolveModulePath(dir) {
     if (dir in resolvedPaths) return resolvedPaths[dir];
@@ -159,26 +142,24 @@ function resolveModulePath(dir) {
 }
 
 function defineModule(module, source, option) {
-    option.dir = path.dirname(option.filename);
-    let result;
-    if (moduleCache) {
-        let checksum = crypto.createHash('sha1').update(source).digest('utf16le');
-        result = moduleCache[checksum];
-        if (!result) {
-            result = moduleCache[checksum] = compile(source, option);
-        }
-    } else {
-        result = compile(source, option);
-    }
+    const __filename = option.filename,
+        __dirname = option.dir = path.dirname(__filename);
+    let result = compile(source, option);
     //console.log(option.filename, result);
     let ctor = vm.runInThisContext(result, option);
 
     module[loadProgress] = co.run(function () {
-        option.paths = resolveModulePath(option.dir);
-        option.id = option.filename;
-        ctor(module, co, importer, Module.prototype.require.bind(option), option.filename, option.dir, moduleDefault, initModule, loadProgress);
+        initModule(module, option.exports);
+        option.exports = null; // TODO: sub-module exports analyse
+        ctor(module, co, function (name) {
+            return co.yield(include(name, __dirname))
+        }, _require.bind({
+            id: __filename,
+            paths: resolveModulePath(__dirname)
+        }), __filename, __dirname, moduleDefault, loadProgress);
         return module;
     });
+
 }
 
 const parseOption = {
@@ -197,8 +178,9 @@ function compile(source, option) {
         replace = replacer.replace,
         insert = replacer.insert,
         globals = Object.create(null);
-    let hasAliasedImport = findImports(parsed, globals, replace, option.dir);
+    let hasAliasedImport = findImports(parsed, globals, replace);
     let exports = findExports(parsed, replace, insert);
+    option.exports = exports[0];
 
     handleScope(parsed, globals, replace, insert, replacer.slice);
 
@@ -209,8 +191,8 @@ function compile(source, option) {
         exports[1] = exports_replacer.concat();
     }
 
-    return '(function(module, co, include, require, __filename, __dirname, moduleDefault, initModule, loadProgress) {"use strict";'
-        + exports[0] + replacer.concat() + exports[1] + exports[2] + '})';
+    return '(function(module, co, include, require, __filename, __dirname, moduleDefault, loadProgress) {"use strict";'
+        + replacer.concat() + exports[1] + exports[2] + '})';
 }
 
 function createReplacement(source) {
@@ -290,7 +272,7 @@ function findExports(body, replace, insert) {
         } // TODO: export all
     }
 
-    let head = 'initModule(module, ' + JSON.stringify(names) + ');', tail;
+    let tail;
     if (names.length) {
         tail = ';\nObject.defineProperties(module, {\n';
         for (let name of names) {
@@ -308,11 +290,11 @@ function findExports(body, replace, insert) {
         tail = '';
     }
     let trailer = hasDefault ? '' : '\nObject.defineProperty(module,moduleDefault,{value:undefined});';
-    return [head, tail, trailer];
+    return [names, tail, trailer];
 }
 
 const VARIABLE_TYPE = {type: 'variable'};
-function findImports(body, globals, replace, dirname) {
+function findImports(body, globals, replace) {
     let hasAliasedImport = false;
     let definedModules = {}, lastModuleUid = 0;
     for (let stmt of body.body) {
@@ -326,7 +308,7 @@ function findImports(body, globals, replace, dirname) {
 
         if (!stmt.specifiers.length) { // import only
             stmt.range.push();
-            replace(stmt, 'include(' + JSON.stringify(path.join(dirname, stmt.source.value)) + ')[loadProgress].done();');
+            replace(stmt, 'include(' + stmt.source.raw + ')[loadProgress].done();');
             continue;
         }
         let lastSpecifier = stmt.specifiers.pop();
@@ -358,7 +340,7 @@ function findImports(body, globals, replace, dirname) {
         }
         moduleLocal.moduleId = moduleId;
         definedModules[moduleId] = true;
-        replace(stmt, 'const ' + moduleId + '=include(' + JSON.stringify(path.join(dirname, stmt.source.value)) + ');');
+        replace(stmt, 'const ' + moduleId + '=include(' + stmt.source.raw + ');');
     }
     return hasAliasedImport;
 }
