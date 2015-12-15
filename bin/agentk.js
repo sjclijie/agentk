@@ -105,7 +105,8 @@ let commands = {
                 desc && console.log(desc);
                 return;
             } else if (!cmd || cmd === 'help' && !subcmd) { // agentk help?
-                console.log(xtermEscape("$#Gk<usage>: $#Ck<" + exec + "> <command> [<args>]\n"));
+                console.log(xtermEscape("$#Ck<AgentK> v" + require('../package.json').version +
+                    "\n$#Gk<usage>: $#Ck<" + exec + "> <command> [<args>]\n"));
             } else {
                 if (cmd === 'help') { // agentk help xxx
                     cmd = subcmd
@@ -159,10 +160,7 @@ let commands = {
         "args": "[<program directory>]",
         "desc": "run the program located in the directory (or current directory, if none specified), guarded by the " +
         "service. If something bad happened, the program will be restarted. Outputs will be written to log files",
-        func: commander,
-        completion: function () {
-            return process.env.COMP_POINT
-        }
+        func: commander
     },
     "stop": {
         help: "stop program",
@@ -463,7 +461,7 @@ let commands = {
         }, completion: function (name) {
             if (arguments.length === 1 || arguments.length === 2 && name === '-d' && (name = arguments[1])) {
                 var buf = '', config = readConfig();
-                for (var key in config) {
+                for (let key in config) {
                     buf = completion(buf, name, key);
                 }
                 return buf;
@@ -472,19 +470,18 @@ let commands = {
     },
     "update": {
         help: "update modules from server",
-        args: "[program directory] [--cached]",
-        desc: "query the server for updates of all files in src/module. Use --cached to cache old files",
-        func: function (dir) {
-            if (dir) {
-                dir = path.resolve(dir, 'src/module');
-            } else {
-                dir = path.resolve('src/module');
-            }
-            console.log('chdir to', dir);
-            process.chdir(dir);
+        args: "[<modules>] [--cached]",
+        desc: "query the server for updates of modules in src/module. Use --cached to cache old files",
+        func: function () {
+            let modules = Array.prototype.slice.call(arguments);
+            process.chdir('src/module');
             loadAndRun('../server/publish', function (publish) {
-                publish.update();
+                publish.update(modules);
             });
+        },
+        completion: function () {
+            process.chdir('src/module');
+            return commands.publish.completion.apply(this, arguments);
         }
     }
 };

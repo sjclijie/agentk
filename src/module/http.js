@@ -697,7 +697,7 @@ export let client_ua = `AgentK/${process.versions.agentk} NodeJS/${process.versi
 export function fetch(url, options) {
     const req = typeof url === 'object' && url instanceof Request ? url : new Request(url, options);
     const delay = options && options.timeout || 3000;
-    let proxy = options.proxy, headers = {}, https;
+    let proxy = options && options.proxy, headers = {}, https;
 
     if (proxy) {
         https = false;

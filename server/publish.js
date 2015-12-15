@@ -20,30 +20,46 @@ if (!host) {
     console.error("WARN: MODULE_SERVER_HOST environment varible is not set, using " + host);
 }
 
-export function update() {
+export function update(modules) {
     const cached = process.properties.cached;
     let manifest = global.manifest,
         dependencies = manifest && manifest.dependencies;
-    for (let file of readdir('.')) {
-        let m = /^(\w+)\.js$/.exec(file);
-        if (!m) {
-            // maybe http@xxxxxxxxxxxx.js
-            continue;
+
+    if (!modules.length) {
+        for (let file of readdir('.')) {
+            let m = /^(\w+)\.js$/.exec(file);
+            if (!m) {
+                // maybe http@xxxxxxxxxxxx.js
+                continue;
+            }
+            modules.push(m[1]);
         }
-        let name = m[1];
+    }
+
+    let maxLen = 0;
+    for (let name of modules) {
+        if (name.length > maxLen) maxLen = name.length;
+    }
+
+    let prefix = ' '.repeat(maxLen) + ' : ';
+
+    let upToDates = [], upgraded = 0;
+
+    for (let name of modules.sort()) {
         if (dependencies && name in dependencies && dependencies[name] !== '*') {
             // dependencies specifies percific version
             continue;
         }
+        let file = name + '.js';
         let hash = md5(read(file)).toString('hex');
         let res = co.yield(http.fetch(`http://${host}/${name}.js`, {
             headers: {'if-none-match': '"' + hash.toUpperCase() + '"'}
         }));
 
-        let log_prefix = name + '                : '.substr(name.length);
+        let log_prefix = name + prefix.substr(name.length);
 
         if (res.status === 304) {
-            process.stdout.write('\x1b[32m' + log_prefix + 'up to date (' + hash + ')\x1b[0m\n');
+            upToDates.push(name);
             continue;
         }
         if (res.status === 404) {
@@ -61,8 +77,16 @@ export function update() {
             rename(file, name + '@' + hash + '.js');
         }
         write(file, content);
-        process.stdout.write('\x1b[36m' + log_prefix + 'updated    (' + checksum + ')\x1b[0m\n');
+        process.stdout.write('\x1b[36m' + log_prefix + 'updated\x1b[0m\n');
+        upgraded++;
     }
+    let tail = '\n' + upgraded + ' updated / ' + upToDates.length + ' up to date';
+    if (upToDates.length) {
+        tail += ':\n  \x1b[32m' + upToDates.join(' ') + '\x1b[0m\n'
+    } else {
+        tail += '.\n'
+    }
+    process.stdout.write(tail);
 }
 
 export default function (args) {
