@@ -511,6 +511,7 @@ function handleScope(body, locals, replace, insert, slice) {
     }
 
     function handleExpr(expr) {
+        if(!expr) return;
         switch (expr.type) {
             case Syntax.Literal:
             case Syntax.ThisExpression:
