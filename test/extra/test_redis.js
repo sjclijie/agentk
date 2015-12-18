@@ -1,4 +1,4 @@
-import * as redis from '../src/module/redis';
+import * as redis from '../../src/module/redis';
 
 const assert = require('assert');
 let pool = redis.pool('redis://test@localhost?connections=4');
@@ -53,7 +53,7 @@ assert.deepEqual(conn.hkeys('obj').sort(), ['test', 'test2']);
 assert.deepEqual(conn.hmget('obj', ['test', 'test2']), [rnd, randomStr]);
 assert.deepEqual(pool.hmget('obj', ['test', 'test2']), [rnd, randomStr]);
 
-assert.deepEqual(conn.hgetall('obj'), {test: rnd, test2: randomStr});
+assert.deepEqual(conn.hgetAll('obj'), {test: rnd, test2: randomStr});
 
 let nextID = 0;
 
@@ -61,7 +61,7 @@ setInterval(function () {
     let id = nextID++;
     co.run(function () {
         let conn = pool.getConnection();
-        console.log(id, Date.now() + ': got new connection', conn.id, conn.socket.id, conn.socket._state);
+        console.log(id, Date.now() + ': got new connection', conn.socket._state);
         co.yield([
             co.run(function () {
                 assert.deepEqual(conn.hmget('obj', ['test', 'test2']), [rnd, randomStr]);

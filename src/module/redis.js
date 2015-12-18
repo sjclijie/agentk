@@ -130,92 +130,82 @@ class Connection extends Context {
         socket._conn = this;
 
         const pending = this.pending = [];
-        let remained = null;
 
-        this._ondata = function (buf) {
+        let bufLen = 0, buf = null, pos = 0;
+
+        let reader = msgReader();
+
+        this._ondata = function (_buf) {
+            if (bufLen === pos) { // empty
+                buf = _buf;
+            } else {
+                buf = Buffer.concat([buf.slice(pos), _buf]);
+            }
+            pos = 0;
+            bufLen = buf.length;
             //console.log('RECV ', JSON.stringify(buf + ''));
             try {
-                readResults(remained ? Buffer.concat([remained, buf]) : buf);
+                reader.next();
             } catch (e) {
                 socket.emit('error', e);
             }
         };
 
-        function readResults(buf) {
-            let pos = 0, len = buf.length;
-
-            while (pos < len) {
-                const currentPos = pos;
-                let ret = read();
-                if (ret === DRAIN) {
-                    remained = buf.slice(currentPos);
-                    return
+        function* msgReader() {
+            for (; ;) {
+                let ends;
+                while (bufLen < 3 + pos || (ends = search.call(buf, 13, pos + 1)) === -1 || ends === bufLen - 1) {
+                    yield 0; // drain
                 }
-            }
-            remained = null;
-
-            function read() {
-                let ends = search.call(buf, 13, pos + 1);
-                if (ends === -1 || ends === len - 1) { // no CRLF
-                    return DRAIN
-                }
-                assert(buf[ends + 1] === 10);
+                assert(buf[ends + 1] === 10); // \r\n
                 let cmd = buf[pos], msg = buf.toString('binary', pos + 1, ends);
                 pos = ends + 2;
                 switch (cmd) {
                     case 0x2B: // +
                         onData({message: msg});
-                        return;
-                    case 0x2D: // -
-                        onError(msg);
-                        return;
-                    case 0x24: // $
-                    {
-                        let ret = readString(+msg);
-                        if (ret === DRAIN) return DRAIN;
-                        onData(ret);
-                        return
-                    }
+                        continue;
                     case 0x3a: // :
                         onData(+msg);
-                        break;
+                        continue;
+                    case 0x2D: // -
+                        onError(msg);
+                        continue;
+                    case 0x24: // $
+                        onData(yield* stringReader(+msg));
+                        continue;
                     case 0x2a: // *
                     {
                         let ret = [];
                         for (let i = 0, n = +msg; i < n; i++) {
                             assert(buf[pos] === 0x24); // $
-                            ends = search.call(buf, 13, pos + 1);
-                            if (ends === -1 || ends === len - 1) { // no CRLF
-                                return DRAIN
+                            while (bufLen < 3 + pos || (ends = search.call(buf, 13, pos + 1)) === -1 || ends === bufLen - 1) {
+                                yield 0; // drain
                             }
                             assert(buf[ends + 1] === 10);
+
                             msg = buf.toString('binary', pos + 1, ends);
                             pos = ends + 2;
-                            let data = readString(+msg);
-                            if (data === DRAIN) return DRAIN;
-                            ret[i] = data
+                            ret[i] = yield* stringReader(+msg);
                         }
                         onData(ret)
                     }
                 }
-                // update pos
             }
+        }
 
-            function readString(strLen) {
-                //if (Math.random() > 0.5) throw new Error('random throws');
-                assert(strLen === strLen);
-                if (strLen === -1) {
-                    return null
-                }
-                let newEnd = pos + strLen;
-                if (newEnd + 2 > len) {
-                    return DRAIN
-                }
-                assert(buf[newEnd] === 13 && buf[newEnd + 1] === 10); // CRLF
-                let ret = buf.toString('utf8', pos, newEnd);
-                pos = newEnd + 2;
-                return ret
+        function* stringReader(strLen) {
+            assert(strLen === strLen);
+            if (strLen === -1) {
+                return null
             }
+            let strEnd;
+            while ((strEnd = pos + strLen) > bufLen) {
+                yield 0;
+            }
+            assert(buf[strEnd] === 13 && buf[strEnd + 1] === 10); // CRLF
+            let ret = buf.toString('utf8', pos, strEnd);
+            pos = strEnd + 2;
+            return ret
         }
 
         function onData(data) {
@@ -272,8 +262,10 @@ class Connection extends Context {
     }
 }
 
-let encodeBufLen = 4096,
+let
+    encodeBufLen = 4096,
     encodeBuf = new SlowBuffer(encodeBufLen), specialChars = /[^\x00-\x7f]/;
+
 function utf8Encode(str) {
     if (typeof str === 'number') return '' + str;
     if (!specialChars.test(str)) return str;
@@ -298,8 +290,9 @@ export class Pool extends Context {
         let conns = 0, connecting = 0;
 
         const onSocketConnected = password ? function () {
+            //console.log('connected', this);
             this._state = AUTH;
-            this.on('data', onSocketData);
+            this.on('data', onSocketData).on('close', onSocketClose);
 
             new Connection(this, release).auth(password);
         } : function () {
@@ -311,6 +304,7 @@ export class Pool extends Context {
         };
 
         function autoConnect() {
+            //console.log('autoConnect: pending=%d free=%d conns=%d connecting=%d', pending.length, freeList.length, conns, connecting);
             while (pending.length) {
                 if (freeList.length) {
                     pending.shift().resolve(new Connection(freeList.shift(), release))
@@ -330,9 +324,23 @@ export class Pool extends Context {
             if (conn) conn._ondata(buf)
         }
 
+        function onSocketClose() {
+            //console.log('closed', this);
+            if (this._state !== ERROR)
+                this.emit('error', new Error('connection closed'));
+        }
+
         function onSocketError(err) {
+            console.error(339, err);
             if (this._state === CONNECT || this._state === AUTH) { // first connect
                 connecting--;
+            } else { // remove from freeList
+                for (let i = freeList.length; i--;) {
+                    if (freeList[i] === this) {
+                        freeList.splice(i, 1);
+                        break;
+                    }
+                }
             }
             this._state = ERROR;
             const conn = this._conn;
@@ -351,7 +359,6 @@ export class Pool extends Context {
 
 
         function release() {
-            console.log('connection released');
             assert(this instanceof Connection);
             let socket = this.socket;
             if (socket._state === CONNECT || socket._state === AUTH) { // first connect
