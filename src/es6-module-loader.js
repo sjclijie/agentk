@@ -446,22 +446,33 @@ function handleScope(body, locals, replace, insert, slice) {
                 }
                 break;
             case Syntax.ClassDeclaration:
+            {
+                let superClass = stmt.superClass;
+                superClass && handleExpr(superClass);
                 if (handleClass) {
                     let body = stmt.body.body;
                     let className = body.className = stmt.id ? stmt.id.name : 'constructor';
                     body.forEach(handleStatement);
+                    const bodyStart = stmt.body.range[0];
+
                     replace({
-                        range: [stmt.range[0], stmt.body.range[0] + 1]
-                    }, (stmt.id ? 'let ' + className + ' = ' : '') + 'function (super_proto) {' +
-                        (body.has_constructor ? '' : 'function ' + className + '() {return super_proto.constructor.apply(this,arguments)}') +
+                            range: [stmt.range[0], superClass ? superClass.range[0] : bodyStart]
+                        }, (stmt.id ? 'let ' + className + ' = ' : '') + 'function () {const super_proto = (' +
+                        (superClass ? '' : 'Object')
+                    );
+                    replace({
+                        range: [bodyStart, bodyStart + 1]
+                    }, ').prototype;' + (body.has_constructor ? '' : 'function ' + className + '() {return super_proto.constructor.apply(this,arguments)}') +
                         'const proto = ' + className + '.prototype = {__proto__: super_proto, constructor: ' + className + '};');
+
                     replace({
                         range: [stmt.body.range[1] - 1, stmt.range[1]]
-                    }, 'return ' + className + '}(' + (stmt.superClass ? stmt.superClass.name : 'Object') + '.prototype);');
+                    }, 'return ' + className + '}();');
                 } else {
                     stmt.body.body.forEach(handleStatement);
                 }
                 break;
+            }
             case Syntax.MethodDefinition:
                 if (!handleClass) { // do nothing
                 } else if (stmt.kind === 'constructor') {
@@ -511,7 +522,7 @@ function handleScope(body, locals, replace, insert, slice) {
     }
 
     function handleExpr(expr) {
-        if(!expr) return;
+        if (!expr) return;
         switch (expr.type) {
             case Syntax.Literal:
             case Syntax.ThisExpression:
