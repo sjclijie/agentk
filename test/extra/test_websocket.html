@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Document</title>
+</head>
+<body>
+<script>
+    (function () {
+        var ws = new WebSocket('ws://localhost:881/foo/bar');
+        ws.onopen = function () {
+            ws.send('eval Math.random()');
+            setTimeout(function () {
+                ws.send('print ' + navigator.userAgent.repeat(10));
+            })
+        };
+        ws.onmessage = function (msg) {
+            console.log('recv', msg, msg.data);
+        }
+    })()
+</script>
+</body>
+</html>
