@@ -139,7 +139,7 @@ class Connection extends Context {
             if (bufLen === pos) { // empty
                 buf = _buf;
             } else {
-                buf = Buffer.concat([buf.slice(pos), _buf]);
+                buf = Buffer.concat([pos ? buf.slice(pos) : buf, _buf]);
             }
             pos = 0;
             bufLen = buf.length;
