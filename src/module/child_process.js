@@ -34,8 +34,8 @@ export function fork(module, options = {}) {
     let outFd = 0, errFd = 0;
 
     opts.stdio = [0,
-        options.stdout ? outFd = fs.openSync(options.stdout, 'a') : 1,
-        options.stderr ? errFd = fs.openSync(options.stderr, 'a') : 2
+        options.stdout ? options.stdout === 'pipe' ? 'pipe' : outFd = fs.openSync(options.stdout, 'a') : 1,
+        options.stderr ? options.stderr === 'pipe' ? 'pipe' : errFd = fs.openSync(options.stderr, 'a') : 2
     ];
 
     if (options.ipc) {
