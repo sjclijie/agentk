@@ -474,6 +474,8 @@ function handleScope(body, locals, replace, insert, slice) {
                 break;
             }
             case Syntax.MethodDefinition:
+            {
+                let suffix = null;
                 if (!handleClass) { // do nothing
                 } else if (stmt.kind === 'constructor') {
                     replace(stmt.key, 'function ' + arguments[2].className);
@@ -492,7 +494,7 @@ function handleScope(body, locals, replace, insert, slice) {
                             range: [stmt.key.range[1], stmt.value.range[0]]
                         }, ', function ');
                     }
-                    insert(stmt.range[1], ');')
+                    suffix = ');'
                 } else {
                     let receiver = stmt.static ? arguments[2].className : 'proto';
                     if (stmt.key.type === Syntax.Identifier) {
@@ -506,10 +508,12 @@ function handleScope(body, locals, replace, insert, slice) {
                         //insert(stmt.range[0] - 1, receiver);
                         insert(stmt.value.range[0], ' = function');
                     }
-                    insert(stmt.range[1], ';');
+                    suffix = ';'
                 }
                 handleFunction(stmt.value);
+                if (suffix)insert(stmt.range[1], suffix);
                 break;
+            }
             case null:
             case Syntax.DebuggerStatement:
             case Syntax.EmptyStatement:
