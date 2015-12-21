@@ -213,8 +213,6 @@ function logger(_level, name) {
                 code += '+' + str;
             }
         }
-
-
     }
 }
 
@@ -222,54 +220,69 @@ function noop() {
 }
 
 function filenameWriter(filename) {
-    let fd = _fs.openSync(filename, 'a');
-    let handle = bufferedWriter(fd),
-        setFd = handle.setFd;
-    _fs.watch(filename, function (action) {
-        if (action === 'rename') {
-            _fs.close(fd);
-            setFd(fd = _fs.openSync(filename, 'a'))
+    let toWrite = '';
+    return function (str) {
+        if (toWrite) {
+            toWrite += str;
+        } else {
+            toWrite = str;
+            setTimeout(flush, 1000);
         }
-    });
+    };
 
-    return handle.write;
+    function flush() {
+        if (toWrite) _fs.open(filename, 'a', 438, onFileOpen);
+    }
+
+    function onFileOpen(err, fd) {
+        next(err);
+
+        function next(err) {
+            if (err) {
+                toWrite = '';
+                return onError(err);
+            }
+            if (toWrite) {
+                _fs.write(fd, toWrite, null, 'utf8', next);
+                toWrite = '';
+            } else {
+                _fs.close(fd, onError);
+            }
+        }
+    }
+
+    function onError(err) {
+        if (err) console.log('logger::filenameWriter: write failed:' + err.message);
+    }
 }
 
 
 function fdWriter(fd) {
-    return bufferedWriter(fd).write
+    let toWrite = '';
+    return function (str) {
+        if (toWrite) {
+            toWrite += str;
+        } else {
+            toWrite = str;
+            setTimeout(flush, 1000);
+        }
+    };
+
+    function flush() {
+        if (toWrite) {
+            _fs.write(fd, toWrite, null, 'utf8', onError);
+            toWrite = '';
+        }
+    }
+
+    function onError(err) {
+        if (err) console.log('logger::filenameWriter: write failed:' + err.message);
+    }
 }
 
 function streamWriter(stream) {
     return function (str) {
         stream.write(str);
-    }
-}
-
-function bufferedWriter(fd) {
-    let buffer = '';
-
-    return {
-        setFd(_fd) {
-            fd = _fd
-        },
-        write(str){
-            if (buffer) {
-                buffer += str;
-            } else {
-                buffer = str;
-                setTimeout(write, 300)
-            }
-        }
-    };
-
-    function write() {
-        _fs.write(fd, buffer, null, 'utf8', function (err) {
-            if (err) { // write failed
-                console.log('logger::bufferedWriter: write failed:' + err.message);
-            }
-            buffer = '';
-        });
     }
 }
 
