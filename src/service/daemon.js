@@ -41,9 +41,7 @@ const actions = {
                 workers: program.workers.length,
                 startup: program.startup,
                 restarted: program.restarted,
-                reloaded: program.reloaded,
                 lastRestart: program.lastRestart,
-                lastReload: program.lastReload,
                 schedulers: Object.keys(program.schedulers)
             }
         })
@@ -155,40 +153,20 @@ function startProgram(dir) {
         workers,
         startup: Date.now(),
         restarted,
-        reloaded: 0,
-        lastReload: 0,
         lastRestart: 0,
         stopped: false,
         schedulers: {},
         action: manifest && manifest.action,
         timestamp: timeStamp,
+        scheduler: manifest && manifest.scheduler || 'auto',
         fds: []
     };
     updateLog();
 
     if (timeStamp) {
         option.stdout = option.stderr = 'pipe';
-        let makeWriter = function (color, name) {
-            let fd = 0;
-            if (program[name]) {
-                fd = file.open(program[name], 'a');
-                program.fds.push(fd);
-            }
-
-            return function (data) {
-                let lineHead = `\n\x1b[3${color}m[#${this.pid} ${formatTime(Date.now())}]\x1b[0m `;
-                data = data.toString().replace(/\r?\n$/, '');
-                let buf = lineHead + data.toString().replace(/\r?\n/g, lineHead);
-                buf = buf.substr(1) + '\n';
-                if (fd) {
-                    fs.write(fd, buf, null, 'utf8', noop);
-                } else {
-                    process[name].write(buf);
-                }
-            }
-        };
-        onPipeData1 = makeWriter('2', 'stdout');
-        onPipeData2 = makeWriter('1', 'stderr');
+        onPipeData1 = makeWriter(program, '2', 'stdout');
+        onPipeData2 = makeWriter(program, '1', 'stderr');
     }
 
     for (let i = 0; i < workerCount; i++) {
@@ -233,6 +211,28 @@ function startProgram(dir) {
         }
     }
 
+}
+
+function makeWriter(program, color, name) {
+    let writer;
+    if (program[name]) {
+        const fd = file.open(program[name], 'a');
+        program.fds.push(fd);
+        writer = function (buf) {
+            fs.write(fd, buf, null, 'utf8', noop);
+        }
+    } else {
+        writer = program[name].write.bind(program[name])
+    }
+
+    return function (data) {
+        let lineHead = `\n\x1b[3${color}m[#${this.pid} ${formatTime(Date.now())}]\x1b[0m `;
+        data = data.toString();
+        if (data[data.length - 1] === '\n') {
+            data = data.substr(0, data.length - (data[data.length - 2] === '\r' ? 2 : 1));
+        }
+        writer(lineHead.substr(1) + data.replace(/\r?\n/g, lineHead) + '\n');
+    }
 }
 
 function resumeJobs() {

@@ -231,7 +231,10 @@ function workerOnMessage(message) {
             return;
         }
 
-        let Scheduler = message.addressType === 'udp4' || message.addressType === 'udp6' ? SharedHandle : defaultHandle;
+        let Scheduler =
+            message.addressType === 'udp4' || message.addressType === 'udp6' ||
+            worker.program.scheduler === 'none' ? SharedHandle :
+                worker.program.scheduler === 'rr' ? RoundRobinHandle : defaultHandle;
 
         console.log(`${datetime()} scheduler.js::new scheduler: key[${key}] class[${Scheduler.name}]`);
         if (message.fd < 0 && message.port < 0) { // unix domain socket
