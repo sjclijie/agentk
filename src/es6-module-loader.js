@@ -126,18 +126,18 @@ function defineModule(module, source, option) {
 }
 
 function compile(source, option) {
-    console.time('parse ' + option.filename);
+    //console.time('parse ' + option.filename);
     let ast = esprima.parse(source, parseOptions);
-    console.timeEnd('parse ' + option.filename);
+    //console.timeEnd('parse ' + option.filename);
 
-    console.time('transform');
+    //console.time('transform');
     ast = transform(ast, transformOptions);
-    console.timeEnd('transform');
+    //console.timeEnd('transform');
 
-    console.time('build');
+    //console.time('build');
     const target = build(ast);
-    console.timeEnd('build');
-    fs.writeFileSync('out/' + option.filename.replace(/\W+/g, '_') + '.js', target);
+    //console.timeEnd('build');
+    //fs.writeFileSync('out/' + option.filename.replace(/\W+/g, '_') + '.js', target);
     option.exports = Object.keys(ast.exports);
     return target;
 }
