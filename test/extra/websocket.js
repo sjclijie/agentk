@@ -13,6 +13,9 @@ let server = ws.listen(881, function (req) {
                 ws.send((0, eval)(msg.substr(5)) + '')
             } else if (msg.substr(0, 6) === 'print ') {
                 console.log(msg.substr(6));
+                ws.send('done');
+            } else if (msg === 'ABRT') {
+                ws.close();
             }
             //
         }

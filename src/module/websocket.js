@@ -1,7 +1,8 @@
 import * as http from 'http';
 import {sha1} from 'crypto';
 
-const _http = require('http');
+const _http = require('http'),
+    _zlib = require('zlib');
 
 const parsers = require('_http_common').parsers;
 const kREQUEST = process.binding('http_parser').HTTPParser.REQUEST;
@@ -9,21 +10,64 @@ const kREQUEST = process.binding('http_parser').HTTPParser.REQUEST;
 const EventEmitter = require('events');
 const unique_key = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11';
 
-const ABORT = new Buffer([]);
+const CLOSE = new (require('buffer').SlowBuffer)([0x88, 0x00]),
+    ABORT = new (require('buffer').SlowBuffer)([0x88, 0x02, 0xEA, 0x03]);
 
 class WebSocket extends EventEmitter {
-    constructor(socket) {
+    constructor(socket, options) {
         super();
         const self = this;
 
         self._socket = socket;
-        let closed = self._closed = false;
+        self._writer = socket;
+        self._closed = false;
 
         let bufLen = 0, buf = null, pos = 0;
 
-        let reader = msgReader();
+        const reader = msgReader();
+        const useDeflate = self._deflate = options.useDeflate;
+
+        let inflater;
+        if (useDeflate) {
+            inflater = _zlib.createInflateRaw();
+            inflater.on('data', function (data) {
+                console.log('on inflated', data);
+                reader.next(data);
+            });
+
+            let deflater = self._deflater = _zlib.createDeflateRaw();
+            deflater.on('data', function (data) {
+                console.log('on deflated', data)
+            })
+        }
+
+        self._push = send;
+
+        const header = new (require('buffer').SlowBuffer)(10);
+
+        function send(opcode, payload) {
+            if (self._closed) return;
+            let headerLen, payloadLen = payload.length;
+            header[0] = opcode | 0x80;
+            if (payloadLen > 65535) {
+                headerLen = 10;
+                header[1] = 127;
+                header.writeUInt32BE(payloadLen / 0x10000000 | 0, 2, true);
+                header.writeUInt32BE(payloadLen | 0, 6, true);
+            } else if (payloadLen > 125) {
+                headerLen = 4;
+                header[1] = 126;
+                header.writeUInt16BE(payloadLen | 0, 2, true);
+            } else {
+                headerLen = 2;
+                header[1] = payloadLen;
+            }
+            socket.write(header.slice(0, headerLen));
+            socket.write(payload);
+        }
+
         socket.on('data', function (_buf) {
-            if (closed) return;
+            if (self._closed) return;
             if (bufLen === pos) { // empty
                 buf = _buf;
             } else {
@@ -46,8 +90,8 @@ class WebSocket extends EventEmitter {
         });
 
         function onclose() {
-            if (closed) return;
-            self._closed = closed = true;
+            if (self._closed) return;
+            self._closed = true;
             self._socket = null;
             self.emit('close');
         }
@@ -55,13 +99,16 @@ class WebSocket extends EventEmitter {
         function* msgReader() {
             for (; ;) {
                 while (bufLen < pos + 6) yield 0;
-                let tmp = buf.readUInt16LE(pos, true),
+                let tmp = buf[pos],
                     opcode = tmp & 0xf,
-                    hasMask = tmp >> 15 & 1,
-                    payloadLen = tmp >> 8 & 0x7f;
+                    bits = tmp >> 4 & 7,
+                    fin = tmp >> 7 & 1;
+                tmp = buf[pos + 1];
+                let payloadLen = tmp & 0x7f,
+                    hasMask = tmp >> 7 & 1;
                 console.log('RECV', buf, tmp, opcode, hasMask, payloadLen);
                 if (!hasMask) { // must close socket
-                    socket.end(ABORT);
+                    socket.end('\x88\x02\xea\x03', 'binary');
                     onclose();
                     return
                 }
@@ -79,28 +126,33 @@ class WebSocket extends EventEmitter {
                 // read mask
                 const mask = buf.slice(pos, pos + 4);
                 pos += 4;
-                console.log('payload and mask', payloadLen, mask);
                 while (bufLen < pos + payloadLen) yield 0;
+                let payload = buf.slice(pos, pos + payloadLen);
+                pos += payloadLen;
+
                 for (let i = 0; i < payloadLen; i++) {
-                    buf[i + pos] ^= mask[i & 3]
+                    payload[i] ^= mask[i & 3]
                 }
-                console.log('payload', buf.slice(pos, pos + payloadLen));
+                console.log('fin=' + fin, 'bits=' + bits, 'payload=' + payloadLen, payload, 'mask=', mask);
+                if (useDeflate && bits & 4) {
+                    inflater.write(payload);
+                    inflater.write(new Buffer([0x00, 0x00, 0xff, 0xff]));
+                    while (!(payload = yield 0));
+                    console.log('inflated', payload);
+                }
                 let data;
                 switch (opcode) {
                     case 1: // text
-                        data = buf.toString('utf8', pos, pos + payloadLen);
-                        pos += payloadLen;
+                        data = payload.toString('utf8');
                         break;
                     case 8: // close
-                        data = buf.readUInt16BE(pos, true);
-                        onclose(data);
+                        onclose();
                         socket.destroy();
                         return;
                 }
                 self.emit('message', data);
             }
         }
-
     }
 
     send(msg) {
@@ -111,30 +163,16 @@ class WebSocket extends EventEmitter {
             payload = new Buffer(msg.length * 3);
             payload = payload.slice(0, payload.write(msg));
         } // else
+        this._push(opcode, payload);
+    }
 
-        let payloadLen = payload.length, bufLen = payloadLen + 2;
-        if (payloadLen > 65535) {
-            bufLen += 8
-        } else if (payloadLen > 125) {
-            bufLen += 2
-        }
-        let buf = new Buffer(bufLen), pos = 2;
-        buf[0] = opcode | 0x80;
-        if (payloadLen > 65535) {
-            buf[1] = 127;
-            buf.writeUInt32BE(payloadLen / 0x10000000 | 0, 2, true);
-            buf.writeUInt32BE(payloadLen | 0, 6, true);
-            pos = 10;
-        } else if (payloadLen > 125) {
-            buf[1] = 126;
-            buf.writeUInt16BE(payloadLen | 0, 2, true);
-            pos = 4;
-        } else {
-            buf[1] = payloadLen;
-        }
-        payload.copy(buf, pos);
-        console.log('SEND ', buf);
-        this._socket.write(buf);
+    close(fail) {
+        if (this._closed) throw new Error('websocket closed');
+        this._socket.write(fail ? '\x88\x02\xea\x03' : '\x88\x00', 'binary');
+        this._socket.destroySoon();
+        this._socket = null;
+        this._closed = true;
+        this.emit('close');
     }
 }
 
@@ -171,8 +209,23 @@ export class WsRequest extends http.Request {
         let socket = this._socket;
         this._socket = this._timer = socket.request = null;
         let key = this.headers.get('sec-websocket-key');
-        socket.write('HTTP/1.1 101 Switch Protocol\r\nUpgrade: WebSocket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: ' + sha1(new Buffer(key + unique_key), 'base64') + '\r\n\r\n', 'binary');
-        return new WebSocket(socket);
+
+        const extensions = this.headers.getAll('Sec-WebSocket-Extensions').join(',');
+
+        const headers = [
+            'HTTP/1.1 101 Switch Protocol',
+            'Upgrade: WebSocket',
+            'Connection: Upgrade',
+            'Sec-WebSocket-Accept: ' + sha1(key + unique_key, 'base64')
+        ];
+
+        const useDeflate = /permessage-deflate/.test(extensions) && false;
+        if (useDeflate) {
+            headers.push('Sec-WebSocket-Extensions: permessage-deflate; client_max_window_bits=15')
+        }
+        console.log(headers.join('\r\n') + '\r\n');
+        socket.write(headers.join('\r\n') + '\r\n\r\n', 'binary');
+        return new WebSocket(socket, {useDeflate});
     }
 
     reject(status = 400, message = null) {

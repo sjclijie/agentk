@@ -16,6 +16,16 @@
         };
         ws.onmessage = function (msg) {
             console.log('recv', msg, msg.data);
+            if (msg.data === 'done') {
+                ws.send('ABRT');
+            }
+        };
+        ws.onclose = function () {
+            console.log('ws closed');
+        };
+
+        ws.onerror = function () {
+            console.error('ws onerror', arguments);
         }
     })()
 </script>

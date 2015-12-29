@@ -10,6 +10,13 @@ export function gzip(buffer) {
     return co.sync(ozlib.gzip, buffer);
 }
 
+export function deflate(buffer) {
+    return co.sync(ozlib.deflateRaw, buffer);
+}
+
+export function inflate(buffer) {
+    return co.sync(ozlib.inflateRaw, buffer);
+}
 
 /**
  * transforms a stream into a gzipped stream
