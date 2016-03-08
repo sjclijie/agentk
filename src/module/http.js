@@ -5,7 +5,6 @@
  */
 
 import * as zlib from 'zlib';
-import {read as stream_read} from 'stream'
 
 const ohttp = require('http'),
     ohttps = require('https'),
@@ -13,11 +12,14 @@ const ohttp = require('http'),
     ofs = require('fs'),
     oquerystring = require('querystring');
 
+const $slice = [].slice;
+
 function* headersIterator(headers, cb) {
     let entries = headers._entries;
     for (let key in entries) {
-        for (let arr = entries[key], i = 1, L = arr.length; i < L; i++) {
-            yield cb(arr[i], key);
+        let entry = entries[key], name = entry.name;
+        for (let i = 0, L = entry.length; i < L; i++) {
+            yield cb(entry[i], name);
         }
     }
 }
@@ -49,12 +51,11 @@ export class Headers {
      */
     append(name, value) {
         name = '' + name;
-        value = '' + value;
-        let key = name.toLowerCase();
-        if (key in this._entries) {
-            this._entries[key].push(value);
+        let key = name.toLowerCase(), entry = this._entries[key];
+        if (entry) {
+            entry[entry.length++] = '' + value;
         } else {
-            this._entries[key] = [name, value];
+            this._entries[key] = {name, 0: '' + value, length: 1};
         }
     }
 
@@ -66,7 +67,7 @@ export class Headers {
      */
     set(name, value) {
         name = '' + name;
-        this._entries[name.toLowerCase()] = [name, '' + value];
+        this._entries[name.toLowerCase()] = {name, 0: '' + value, length: 1};
     }
 
     /**
@@ -90,9 +91,9 @@ export class Headers {
     forEach(cb) {
         let entries = this._entries;
         for (let key in entries) {
-            let arr = entries[key];
-            for (let i = 1, L = arr.length; i < L; i++) {
-                cb(arr[i], key, this);
+            let entry = entries[key], name = entry.name;
+            for (let i = 0, L = entry.length; i < L; i++) {
+                cb(entry[i], name, this);
             }
         }
     }
@@ -106,8 +107,8 @@ export class Headers {
      * @returns {null|string}
      */
     get(name) {
-        let key = ('' + name).toLowerCase();
-        return key in this._entries ? this._entries[key][1] : null;
+        let entry = this._entries[('' + name).toLowerCase()];
+        return entry ? entry[0] : null;
     }
 
     /**
@@ -117,8 +118,8 @@ export class Headers {
      * @returns {Array}
      */
     getAll(name) {
-        let key = ('' + name).toLowerCase();
-        return key in this._entries ? this._entries[key].slice(1) : [];
+        let entry = this._entries[('' + name).toLowerCase()];
+        return entry ? $slice.call(entry) : [];
     }
 
     /**
@@ -245,6 +246,16 @@ export class Body {
         // start stream reading
         let body = this, stream = this._stream;
         body._stream = null;
+
+        const enc = this.headers && this.headers.get('content-encoding');
+        if (enc) {
+            if (enc === 'gzip') {
+                stream = zlib.gunzipTransform(stream);
+            } else if (enc === 'deflate') {
+                stream = zlib.inflateTransform(stream);
+            }
+            this.headers.delete('content-encoding');
+        }
         return this._payload = new Promise(function (resolve, reject) {
             let bufs = [];
             stream.on('data', function (buf) {
@@ -319,17 +330,9 @@ export class Request extends Body {
         super(options && options.body);
 
         this._url = url;
-        this._method = options && 'method' in options ? '' + options['method'] : 'GET';
+        this.method = options && 'method' in options ? '' + options['method'] : 'GET';
         this._headers = options && 'headers' in options && typeof options.headers === 'object' ?
             options.headers instanceof Headers ? options.headers : new Headers(options.headers) : new Headers();
-    }
-
-    /**
-     *
-     * @returns {string} request method, e.g., `"GET"` `"POST"`
-     */
-    get method() {
-        return this._method
     }
 
     /**
@@ -337,7 +340,7 @@ export class Request extends Body {
      * @returns {string} request uri, like `"http://www.example.com/test?foo=bar"`
      */
     get url() {
-        return this._url
+        return this.hasOwnProperty('host') ? this.scheme + '//' + this.host + this.pathname + (this.search || '') : this._url
     }
 
     /**
@@ -399,16 +402,13 @@ export class Request extends Body {
         return this.originalPathname
     }
 
-    //noinspection InfiniteRecursionJS
     /**
      *
      * @param {String} pathname
      */
     set pathname(pathname) {
-        Object.defineProperty(this, 'pathname', {
-            writable: true,
-            value: pathname
-        })
+        parseUrl(this); // call parseUrl in case that current pathname is overwritten
+        this.pathname = pathname;
     }
 
     //noinspection InfiniteRecursionJS
@@ -418,6 +418,15 @@ export class Request extends Body {
     get search() {
         parseUrl(this);
         return this.search
+    }
+
+    /**
+     *
+     * @param {String} search
+     */
+    set search(search) {
+        parseUrl(this); // call parseUrl in case that current search is overwritten
+        this.search = search;
     }
 
     //noinspection InfiniteRecursionJS
@@ -569,12 +578,13 @@ export class Response extends Body {
  */
 export const agent = new ohttp.Agent();
 
-function groupHeaders(obj, headers) {
-    const entries = obj._headers._entries;
+function groupHeaders(obj) {
+    const headers = {__proto__: null}, entries = obj._headers._entries;
     for (let key in entries) {
         let arr = entries[key];
-        headers[arr[0]] = arr.length === 2 ? arr[1] : arr.slice(1);
+        headers[arr.name] = arr.length === 1 ? arr[0] : $slice.call(arr);
     }
+
     return headers;
 }
 
@@ -660,7 +670,7 @@ export function _handler(cb) {
             }
 
             function writeHeaders() {
-                response.writeHead(resp.status, resp.statusText, groupHeaders(resp, {}));
+                response.writeHead(resp.status, resp.statusText, groupHeaders(resp));
             }
         }).then(null, onerror);
         function onerror(err) {
@@ -697,79 +707,74 @@ export let client_ua = `AgentK/${process.versions.agentk} NodeJS/${process.versi
 export function fetch(url, options) {
     const req = typeof url === 'object' && url instanceof Request ? url : new Request(url, options);
     const delay = options && options.timeout || 3000;
-    let proxy = options.proxy, headers = {}, https;
+    let http_host, https;
+    let _agent = agent;
 
-    if (proxy) {
-        https = false;
-        let auth;
-        if (typeof proxy === 'string') {
-            proxy = ourl.parse('http://' + proxy);
-            auth = proxy.auth;
-        } else {
-            if ('user' in proxy) {
-                auth = proxy.user + ':' + proxy.password;
-            }
-        }
+    let parsedUrl = ourl.parse(req._url);
+    https = parsedUrl.protocol === 'https:';
+    if (https) _agent = new ohttps.Agent(options);
+    if (parsedUrl.protocol === 'unix:') {
+        http_host = 'localhost';
         options = {
-            path: req.url,
-            host: proxy.hostname,
-            port: proxy.port
-        };
-        headers.host = proxy.host;
-        if (auth) {
-            headers['Proxy-Authorization'] = 'Basic ' + new Buffer(auth).toString('base64');
+            socketPath: parsedUrl.pathname,
+            path: '/' + (parsedUrl.search || '')
         }
     } else {
-        let parsedUrl = ourl.parse(req._url);
-        https = parsedUrl.protocol === 'https:';
-        if (parsedUrl.protocol === 'unix:') {
-            headers.host = 'localhost';
-            options = {
-                socketPath: parsedUrl.pathname,
-                path: '/' + (parsedUrl.search || '')
-            }
-        } else {
-            headers.host = parsedUrl.host;
-            options = {
-                host: parsedUrl.hostname,
-                port: parsedUrl.port || (parsedUrl.protocol === 'https:' ? 443 : 80),
-                path: parsedUrl.path
-            }
+        http_host = parsedUrl.host;
+        options = {
+            host: parsedUrl.hostname,
+            port: parsedUrl.port || (parsedUrl.protocol === 'https:' ? 443 : 80),
+            path: parsedUrl.path
         }
     }
 
-    let _agent = agent;
 
-    options.method = req._method;
-    options.headers = groupHeaders(req, headers);
-    options.agent = https ? new ohttps.Agent(options) : _agent;
+    const method = options.method = req.method;
+    let headers = options.headers = groupHeaders(req);
+    options.agent = _agent;
+    if (!headers.Host && !headers.host) headers.host = http_host;
 
-    return new Promise(function (resolve, reject) {
-        let timer = setTimeout(ontimeout, delay);
-        const treq = req.stream.pipe((https ? ohttps : ohttp).request(options, function (tres) {
-            clearTimeout(timer);
-            timer = null;
-            let headers = new Headers();
-            for (let arr = tres.rawHeaders, i = 0, L = arr.length; i < L; i += 2) {
-                headers.append(arr[i], arr[i + 1]);
+    if (method === 'GET' ||
+        method === 'HEAD' ||
+        method === 'DELETE' ||
+        method === 'OPTIONS') { // no body
+        return composeRequest();
+    } else if (req._buffer) {
+        return composeRequest(req._buffer);
+    } else {
+        return req.buffer().then(composeRequest);
+    }
+
+    function composeRequest(buf) {
+        return new Promise(function (resolve, reject) {
+            let timer = setTimeout(ontimeout, delay);
+            buf && (options.headers['Content-Length'] = buf.length);
+            const treq = (https ? ohttps : ohttp).request(options, function (tres) {
+                clearTimeout(timer);
+                timer = null;
+                let headers = new Headers();
+                for (let arr = tres.rawHeaders, i = 0, L = arr.length; i < L; i += 2) {
+                    headers.append(arr[i], arr[i + 1]);
+                }
+                resolve(new Response(tres, {
+                    status: tres.statusCode,
+                    statusText: tres.statusMessage,
+                    headers: headers
+                }))
+            }).on('error', reject);
+            treq.end(buf);
+
+            function ontimeout() {
+                reject({errno: "ETIMEOUT", message: `http::fetch: Request timeout (${req.url})`});
+                timer = null;
+                try {
+                    treq.abort();
+                    treq.socket.destroy();
+                } catch (e) {
+                }
             }
-            resolve(new Response(tres, {
-                status: tres.statusCode,
-                statusText: tres.statusMessage,
-                headers: headers
-            }))
-        }).on('error', reject));
-
-        function ontimeout() {
-            reject({errno: "ETIMEOUT", message: `http::fetch: Request timeout (${req.url})`});
-            timer = null;
-            try {
-                treq.abort();
-                treq.socket.destroy();
-            } catch (e) {
-            }
-        }
-    })
+        })
+    }
 }
 
 
@@ -838,6 +843,7 @@ function parseUrl(req) {
         }, originalPathname: {
             value: url.pathname
         }, search: {
+            writable: true,
             value: url.search
         }, query: {
             value: url.query

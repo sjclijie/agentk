@@ -1,230 +1,407 @@
-var assert = require('assert');
+const assert = require('assert'), assertEqual = assert.equal;
 
-//// arrow functions
-assert.deepEqual([1, 2, 3, 4].map(x => x * x), [1, 4, 9, 16]);
+// ≤‚ ‘‘ÀÀ„∑˚”≈œ»º∂
+assertEqual((1 + 2) * 3, 9);
+assertEqual(1 + (2 * 3), 7);
+assertEqual(2 + 3 << 4, 80);
+assertEqual(2 + (3 << 4), 50);
 
-//// object properties
-let obj = {
-    assert, test() {
+// ≤‚ ‘∫Ø ˝¡¢º¥¡ø
+(function (s) {
+    assertEqual(s, 1234);
+    return;
+    throw new Error('should not be here')
+})(1234);
+
+void function (t) {
+    assertEqual(t, 2345)
+}(2345);
+
+// ≤‚ ‘return
+assertEqual(function () {
+    return 512 + 105 << 1
+}(), 1234);
+
+// ≤‚ ‘”Ô∑®Ω·ππ
+(function () {
+    function* test(x) {
+        yield x * x;
+        yield x, x + 1;
+        yield (x, x + 1);
+        yield x = 14;
+        yield* [x];
+    }
+
+    const obj = test(12);
+    assertEqual(obj.next().value, 144);
+    assertEqual(obj.next().value, 12);
+    assertEqual(obj.next().value, 13);
+    assertEqual(obj.next().value, 14);
+    assertEqual(obj.next().value, 14);
+
+
+    // ≤‚ ‘if
+    if (true) {
+        assert.ok(true);
+    } else {
+        throw new Error('should not be here')
+    }
+    if (false) {
+        throw new Error('should not be here')
+    } else if (true) {
+        assert.ok(true)
+    } else {
+        throw new Error('should not be here')
+    }
+    let i = 3, arr = [];
+    while (i--) {
+        arr.push(i);
+    }
+    for (i = 8; i > 5; i--) arr.push(i);
+    assert.deepEqual(arr, [2, 1, 0, 8, 7, 6]);
+    arr.length = 0;
+    for (let j = 4; j--;) {
+        arr.push(j * j);
+    }
+    assert.deepEqual(arr, [9, 4, 1, 0]);
+    for (i of arr.splice(0, 4)) arr.push(i + 1);
+    assert.deepEqual(arr, [10, 5, 2, 1]);
+
+    i = 0;
+    test: for (let j of arr) {
+        i += j;
+        continue test;
+    }
+    assertEqual(i, 18);
+
+    do {
+        i--;
+    } while (i > 12);
+    assertEqual(i, 12);
+
+    switch (i) {
+        case 12:
+            break;
+        default:
+            throw new Error('should not be here')
+    }
+
+    assertEqual((i = 0) ? 1 : 2, 2);
+    assertEqual(i, 0);
+
+    assert.deepEqual((x=>({x}))(123), {x: 123});
+
+    (function () {
+    }).call();
+    (function () {
+    }), 0;
+    (function () {
+    }).name.length;
+    (function () {
+    }) + '' + '' + '';
+
+
+    assertEqual(new (function () {
+        return {
+            x: function (x) {
+                this.foo = x + 3
+            }
+        }
+    }().x)(123).foo, 126);
+
+    for (let key in {foo: 0}) {
+        assert.strictEqual(key, 'foo');
+        return;
+    }
+    throw new Error('should not be here')
+})();
+
+// ≤‚ ‘var
+~function () {
+    var x, y, z = 3, w = 4, u = z + w;
+    assertEqual(u, 7);
+    if (!x) {
+        ~function () {
+            const z = 4, w = 6, u = z * w;
+            assertEqual(u, 24);
+        }();
+    } else {
+        throw new Error('should not be here')
+    }
+}();
+
+// ≤‚ ‘new
+new function test() {
+    assert.ok(this instanceof test);
+};
+assertEqual(new (function () {
+    return function (xxx) {
+        this.xxx = xxx;
+    }
+}())(123)['xxx'], 123);
+
+// ≤‚ ‘◊÷∑˚¥Æƒ£∞Â
+assertEqual(
+    `a${1 + 2} ${`` + 4}`,
+    'a3 4'
+);
+
+// ≤‚ ‘class
+class Test {
+    base_foo(a) {
+        return a + '; Test::base_foo@' + this.id
+    }
+}
+
+class MyTest extends Test {
+    constructor(id) {
+        super(5678);
+        this.id = id;
+        this.X = 1234;
+    }
+
+    foo() {
+        return this.constructor.className + '::' + super.base_foo('foo');
+    }
+
+    get abc() {
+        return this.id << 1;
+    }
+
+    set abc(abc) {
+        this.id = abc >> 1;
+    }
+
+    get [0]() {
+        return (this.id + '')[0]
+    }
+
+    static get className() {
+        return 'MyTest'
+    }
+
+    static getParentClass() {
+        return this.prototype.__proto__.constructor;
+    }
+}
+
+const test = new MyTest(1234);
+
+assertEqual(test.foo(), 'MyTest::foo; Test::base_foo@1234');
+assertEqual(test.abc, 2468);
+test.abc = 48;
+assertEqual(test[0], '2');
+assertEqual(MyTest.getParentClass(), Test);
+
+const Test2 = class extends Test {
+    constructor(id) {
+        super();
+        this.id = id;
+    }
+
+    foo() {
+        return 'anonymous::' + super.base_foo('foo');
+    }
+};
+
+assertEqual(new Test2(33).foo(), 'anonymous::foo; Test::base_foo@33');
+
+// ≤‚ ‘shorthand
+assertEqual({test}.test.id, 24);
+assertEqual({
+    test() {
         return 1234
     }
-};
+}.test(), 1234);
+assertEqual({
+    "foo bar"() {
+        return 1234
+    }
+}["foo bar"](), 1234);
 
-assert.strictEqual(obj.assert, assert);
-assert.strictEqual(obj.test(), 1234);
+// ≤‚ ‘¡¢º¥¡ø
+//noinspection BadExpressionStatementJS
+(function () {
+    //noinspection BadExpressionStatementJS
+    ({test})
+});
 
-//// Rest arguments
-function test(a, b, ...c) {
+// ≤‚ ‘rest
+function withRest(a, b, ...c) {
     return c
 }
+assert.deepEqual(withRest(), []);
+assert.deepEqual(withRest(1, 2, 3), [3]);
 
-assert.deepEqual(test(), []);
-assert.deepEqual(test(1, 2, 3), [3]);
-assert.deepEqual(function (a, b, ...c) {
-    return c
-}(1, 2, 3), [3]);
+((a, ...b) => {
+    assertEqual(b[1], 3)
+})(1, 2, 3);
 
-//// Testing classes
-export class Test {
-    constructor() {
-        this.name = void 0;
-    }
-
-    test() {
-        this.hello('test')
-    }
-
-    hello(src) {
-        console.log('hello, %s %s', this.name, src);
-    }
-
-    get foo() {
-        console.log('getting foo');
-        return this.name;
-    }
-
-    set ["foo"](x) {
-        console.log('setting foo', x);
-    }
-
-    static bar() {
-        console.log('bar called with', this);
-    }
-
-    static ["baz"]() {
-        return "baz"
-    }
-
-
-    [Symbol.iterator]() {
-
+class WithRest {
+    static a(...c) {
+        return c[0] + c[1]
     }
 }
+assert.deepEqual(WithRest.a(1, 2), 3);
 
+assertEqual(function (a, b = 1) {
+}.length, 1);
+assertEqual(function (a, b = 1, ...c) {
+}.length, 1);
+assertEqual(function (a, ...c) {
+}.length, 1);
 
-export default class MyTest extends Test {
-    static beforeCons() {
-        return 'haha';
-    }
-
-    constructor(a) {
-        super(a);
-        this.name = a
-    }
-
-    foobar() {
-        super.test();
-        super.hello('foobar');
-    }
-
-    get xxx() {
-        return super.XXX
-    }
+// ≤‚ ‘default
+function withDefault(a, b = 1234, c = a + b) {
+    return a * b + c;
 }
+assertEqual(withDefault(2), 3704);
+assertEqual(withDefault(2, 3), 11);
 
-let abc = new MyTest('abc');
-abc.foobar();
-void abc.foo;
-abc.foo = 0;
-
-Test.prototype.XXX = 123;
-assert.strictEqual(MyTest.beforeCons(), 'haha');
-assert.strictEqual(abc.xxx, 123);
-
-Test.bar();
-assert.strictEqual(Test.baz(), "baz");
-
-var assert = require('assert');
-var slice = [].slice;
-
-function withDefault(a, b = 1, d = a + b, ...c) {
-    return {a, b, c, d}
+function withRestAndDefault(a, b = 1234, ...c) {
+    return a * b + c.length
 }
-asserts(withDefault);
-asserts(function (a, b = 1, d = a + b, ...c) {
-    return {a, b, c, d}
-});
-
-withDefault = (a, b = 1, d = a + b, ...c) => {
-    return {a, b, c, d}
-};
-asserts(withDefault);
-asserts((a, b = 1, d = a + b, ...c) => {
-    return {a, b, c, d}
-});
-
-function withOutRest(a, b = 1, d = a + b) {
-    return {a, b, d}
-}
-asserts2(withOutRest);
-asserts2(function (a, b = 1, d = a + b) {
-    return {a, b, d}
-});
-
-withOutRest = (a, b = 1, d = a + b) => {
-    return {a, b, d}
-};
-asserts2(withOutRest);
-asserts2((a, b = 1, d = a + b) => {
-    return {a, b, d}
-});
-
-let nonBlock = (a, b = 1, d = a + b, ...c)=> ({a, b, c, d});
-asserts(nonBlock);
-asserts((a, b = 1, d = a + b, ...c)=> ({a, b, c, d}));
-
-let simpleNonBlock = (a, b = 1, d = a + b, ...c) => a + b + d + (c[0] || 4);
-
-assert.strictEqual(simpleNonBlock(1), 8);
-assert.strictEqual(simpleNonBlock(1, 2), 10);
-
-// test rest
-function rest(a, b, d, ...c) {
-    if (b === undefined)b = 1;
-    if (d === undefined)d = a + b;
-    return {a, b, c, d}
-}
-asserts(rest);
-
-rest = (a, b, d, ...c) => {
-    if (b === undefined)b = 1;
-    if (d === undefined)d = a + b;
-    return {a, b, c, d}
-};
-asserts(rest);
-
-var restNonBlock = (a, b, d, ...c) => ({
-    a,
-    b: b === undefined ? 1 : b,
-    d: d === undefined ? b === undefined ? a + 1 : a + b : d,
-    c
-});
-
-asserts(restNonBlock);
+assertEqual(withRestAndDefault(2), 2468);
+assertEqual(withRestAndDefault(2, 3), 6);
+assertEqual(withRestAndDefault(2, 3, 4), 7);
 
 function restOneParam(...c) {
-    return {a: c[0], b: c[1] || 1, d: c[2] || (c[1] || 1) + c[0], c: c.slice(3)}
+    return c
+}
+assertEqual(restOneParam(1234, 5678).join(), '1234,5678');
+
+
+// ≤‚ ‘ƒ£øÈexport
+export {test,WithRest, withDefault as _withDefault}
+export let y = 0, z = 1, w = 2;
+export default function () {
+
 }
 
-asserts(restOneParam);
+// ≤‚ ‘ƒ£øÈimport
+import 'syntax.js';
+import X, * as m1 from 'syntax.js';
+import X, {test as _test, y as _y} from 'syntax.js';
 
-restOneParam = (...c) => {
-    return {a: c[0], b: c[1] || 1, d: c[2] || (c[1] || 1) + c[0], c: c.slice(3)}
+setTimeout(function () {
+    assertEqual(X, module[moduleDefault]);
+    assertEqual(test.X, 1234);
+    assertEqual(m1.z, z);
+    m1.y = 4567;
+    assertEqual(y, 4567);
+    _y = 5678;
+    assertEqual(m1.y, 5678);
+
+    assertEqual(_test, test);
+
+    // Ω‚ππ∏≥÷µ–ﬁ∏ƒ“˝»Î±‰¡ø
+    ({abc: _y} = _test);
+
+});
+
+// ≤‚ ‘±Ì¥Ô Ω–Ú¡–
+w = (1 + 2, 3 + 4);
+assertEqual(w, 7);
+
+// ≤‚ ‘Ω‚ππ∏≥÷µ
+let abc, xyz;
+({abc, xyz = 22} = test);
+assertEqual(abc, 48);
+assertEqual(xyz, 22);
+assert.deepEqual([abc] = ['abc'], ['abc']);
+assertEqual(abc, 'abc');
+({0: abc} = 'abc');
+assertEqual(abc, 'a');
+[{length:abc}] = 'def';
+assertEqual(abc, 1);
+[w, , abc] = 'def';
+assertEqual(abc, 'f');
+[w, ...abc] = [0, 1, 2, 3];
+assert.deepEqual(abc, [1, 2, 3]);
+[test.abc] = [34];
+assertEqual(test.id, 17);
+
+(function () {
+    let {0: d, 1: e, 2: f, length} = 'DEF', g = 'G';
+    assert.deepEqual({d, e, f, g, length}, {d: 'D', e: 'E', f: 'F', g: 'G', length: 3});
+    return d + e + f;
+})();
+
+(function ({0: a, 1: b}, [c, d] = 'cd') {
+    assertEqual(a, 'a');
+    assertEqual(b, 'b');
+    assertEqual(c, 'c');
+    assertEqual(d, 'd');
+})('ab');
+
+(function ({0: a, 1: b}, [c, d] = 'cd') {
+    assertEqual(a, 'a');
+    assertEqual(b, 'b');
+    assertEqual(c, 'C');
+    assertEqual(d, 'D');
+})('ab', 'CD');
+
+(function ({a = 1}) {
+    assertEqual(a, 1);
+})({});
+
+(function ({a = 1}) {
+    assertEqual(a, 2);
+})({a: 2});
+
+(function ({a = 1} = {a: 3}) {
+    assertEqual(a, 3);
+})();
+
+// ≤‚ ‘º˝Õ∑∫Ø ˝
+const arrow = x => {
+    return x + 1
 };
+assertEqual(arrow(12), 13);
+assertEqual((() => {
+    return 13
+})(), 13);
+assertEqual(((a, b, c) => {
+}).length, 3);
+assertEqual((x => x + 1)(13), 14);
+assertEqual(((x = 14) => x + 1)(), 15);
+assertEqual(((a, b = 2, c = a + b) => a * b - c)(3), 1);
+assertEqual((({x}) => x + 1)({x: 15}), 16);
+assertEqual((({x} = {x: 16}) => x + 1)(), 17);
+assertEqual((([x = 17]) => x + 1)([]), 18);
+assertEqual((([x, , ...y]) => x + y[2])([1, 2, 3, 4, 5]), 6);
 
-asserts(restOneParam);
+(function () {
+    let {a, b, c:{d}, e:[f, {g}]} = {
+        a: 1, b: 2, c: {d: 3}, e: [4, {g: 5}]
+    };
 
-var restOneParamNonBlock = (...c) => ({a: c[0], b: c[1] || 1, d: c[2] || (c[1] || 1) + c[0], c: c.slice(3)});
+    let [h,{i,j:k}] = [6, {i: 7, j: 8}];
+    assert.deepEqual([a, b, d, f, g, h, i, k], [1, 2, 3, 4, 5, 6, 7, 8]);
+    a = {};
+    [a.b, , b] = 'foo bar baz'.split(' ');
+    ({bar: a.c} = {bar: 'bar'});
 
-asserts(restOneParamNonBlock);
+    assert.deepEqual({a, b}, {a: {b: 'foo', c: 'bar'}, b: 'baz'});
+    let [l,,m] = [3, 4, 5];
+    assert.deepEqual([l, m], [3, 5]);
 
-var restOneParamSimpleNonBlock = (...c) => c[0];
+    var test = 'foo';
+    var {[test]: foo} = {foo: 'bar'}, abcd = test + foo;
+    assertEqual(abcd, 'foobar');
 
-assert.strictEqual(restOneParamSimpleNonBlock(12), 12);
+    for (let {z} of [{z: 0}]) {
+        assertEqual(z, 0);
+    }
+    for (let {z} of [{z: 1}]) assertEqual(z, 1);
+    for (let {z = 2} of [{}]) assertEqual(z, 2);
 
-function asserts(method) {
-    assert.deepEqual(method(2), {a: 2, b: 1, c: [], d: 3});
-    assert.deepEqual(method(2, void 0), {a: 2, b: 1, c: [], d: 3});
-    assert.deepEqual(method(2, 4), {a: 2, b: 4, c: [], d: 6});
-    assert.deepEqual(method(2, 4, 5), {a: 2, b: 4, c: [], d: 5});
-    assert.deepEqual(method(2, 4, 5, 3, 8), {a: 2, b: 4, c: [3, 8], d: 5});
-}
-function asserts2(method) {
-    assert.deepEqual(method(2), {a: 2, b: 1, d: 3});
-    assert.deepEqual(method(2, void 0), {a: 2, b: 1, d: 3});
-    assert.deepEqual(method(2, 4), {a: 2, b: 4, d: 6});
-    assert.deepEqual(method(2, 4, 5), {a: 2, b: 4, d: 5});
-    assert.deepEqual(method(2, 4, 5, 3, 8), {a: 2, b: 4, d: 5});
-}
+    // yet not supported:
 
-function firstIsDefault(option = {foo: 'bar'}) {
-    return option.foo
-}
 
-assert.strictEqual(firstIsDefault(), 'bar');
-
-firstIsDefault = (option = {foo: 'bar'}, foo = option.foo) => {
-    return foo
-};
-assert.strictEqual(firstIsDefault(), 'bar');
-var firstIsDefaultNonBlock = (option = {foo: 'bar'}, foo = option.foo) => foo;
-assert.strictEqual(firstIsDefaultNonBlock(), 'bar');
-
-function firstIsDefaultWithRest(option = {foo: 'bar'}, ...extra) {
-    return extra[0] + option.foo
-}
-assert.strictEqual(firstIsDefaultWithRest(), 'undefinedbar');
-assert.strictEqual(firstIsDefaultWithRest(undefined, 'foo'), 'foobar');
-
-let {a, b, c:{d}, e:[f, {g}]} = {
-    a: 1, b: 2, c: {d: 3}, e: [4, {g: 5}]
-};
-
-let [h,{i,j:k}] = [6, {i: 7, j: 8}];
-assert.deepEqual([a, b, d, f, g, h, i, k], [1, 2, 3, 4, 5, 6, 7, 8]);
-a = {};
-[a.b,,b] = 'foo bar baz'.split(' ');
-
-assert.deepEqual({a, b}, {a: {b: 'foo'}, b: 'baz'});
-let [l,,m] = [3, 4, 5];
-assert.deepEqual([l, m], [3, 5]);
+    //try {
+    //    throw new Error();
+    //} catch({stack}) {
+    //
+    //}
+})();

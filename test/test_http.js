@@ -11,9 +11,9 @@ test_headers.test('constructor', function () {
     assert_entries(null, {});
     assert_entries(true, {});
     assert_entries({}, {});
-    assert_entries({a: 0}, {a: ['a', '0']});
-    assert_entries({A: 1}, {a: ['A', '1']});
-    assert_entries({a: 0, A: 1}, {a: ['a', '0', '1']});
+    assert_entries({a: 0}, {a: {name: 'a', 0: '0', length: 1}});
+    assert_entries({A: 1}, {a: {name: 'A', 0: '1', length: 1}});
+    assert_entries({a: 0, A: 1}, {a: {name: 'a', 0: '0', 1: '1', length: 2}});
 
     function assert_entries(param, val) {
         let headers = new Headers(param), entries = headers._entries;
@@ -343,13 +343,6 @@ let server = listen(0, function (req) {
         co.sleep(100);
         return Response.error(200);
     }
-    if (req.hostname === 'www.example.com') {
-        return Response.json({
-            method: req.method,
-            url: req.url,
-            auth: req.headers.get('proxy-authorization')
-        });
-    }
 
 }), port = server.address().port;
 
@@ -363,19 +356,6 @@ test_fetch.test('timeout', function () {
         return;
     }
     throw new Error('should not be here')
-});
-
-test_fetch.test('proxy', function () {
-    let resp = co.yield(fetch(`http://www.example.com/foo`, {
-        proxy: 'user:pass@localhost:' + port
-    }));
-
-    assert(resp.ok);
-    assert.deepEqual(co.yield(resp.json()), {
-        method: 'GET',
-        url: 'http://www.example.com/foo',
-        auth: 'Basic ' + new Buffer('user:pass').toString('base64')
-    });
 });
 
 server.close();

@@ -31,9 +31,11 @@ export function fork(module, options = {}) {
     if (options.directory) {
         opts.cwd = options.directory
     }
+    let outFd = 0, errFd = 0;
+
     opts.stdio = [0,
-        options.stdout ? fs.openSync(options.stdout, 'a') : 1,
-        options.stderr ? fs.openSync(options.stderr, 'a') : 2
+        options.stdout ? options.stdout === 'pipe' ? 'pipe' : outFd = fs.openSync(options.stdout, 'a') : 1,
+        options.stderr ? options.stderr === 'pipe' ? 'pipe' : errFd = fs.openSync(options.stderr, 'a') : 2
     ];
 
     if (options.ipc) {
@@ -45,7 +47,11 @@ export function fork(module, options = {}) {
     let args = process.execArgv.concat([module]);
     if (options.args) args = args.concat(options.args);
 
-    return cp.spawn(process.execPath, args, opts);
+    let child = cp.spawn(process.execPath, args, opts);
+
+    if (outFd) fs.closeSync(outFd);
+    if (errFd) fs.closeSync(errFd);
+    return child;
 }
 
 /**

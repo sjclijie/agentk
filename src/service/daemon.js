@@ -4,7 +4,7 @@ import {fork} from '../module/child_process';
 import * as scheduler from 'scheduler';
 import * as channel from '../module/channel';
 
-const path = require('path');
+const path = require('path'), fs = require('fs');
 
 const timeOff = new Date().getTimezoneOffset() * 60e3;
 
@@ -63,7 +63,12 @@ const actions = {
             }
         }
 
-
+        for (let fd of program.fds) {
+            try {
+                file.close(fd);
+            } catch (e) {
+            }
+        }
         return true;
     },
     restart(dir) {
@@ -115,7 +120,7 @@ function startProgram(dir) {
         option.args.push('load', module);
     }
 
-    let workDir;
+    let workDir, timeStamp, onPipeData1, onPipeData2;
 
     if (manifest) {
         option.args.push('run', dir);
@@ -135,14 +140,15 @@ function startProgram(dir) {
         if ('workers' in manifest) {
             workerCount = +manifest.workers;
         }
+        timeStamp = !!manifest.timestamp;
     } else {
         workDir = path.dirname(dir)
     }
 
 
-    let workers = [], restarted = [];
+    const workers = [], restarted = [];
 
-    let program = programs[dir] = {
+    const program = programs[dir] = {
         stdout: option.stdout || null,
         stderr: option.stderr || null,
         directory: workDir,
@@ -154,9 +160,36 @@ function startProgram(dir) {
         lastRestart: 0,
         stopped: false,
         schedulers: {},
-        action: manifest && manifest.action
+        action: manifest && manifest.action,
+        timestamp: timeStamp,
+        fds: []
     };
     updateLog();
+
+    if (timeStamp) {
+        option.stdout = option.stderr = 'pipe';
+        let makeWriter = function (color, name) {
+            let fd = 0;
+            if (program[name]) {
+                fd = file.open(program[name], 'a');
+                program.fds.push(fd);
+            }
+
+            return function (data) {
+                let lineHead = `\n\x1b[3${color}m[#${this.pid} ${formatTime(Date.now())}]\x1b[0m `;
+                data = data.toString().replace(/\r?\n$/, '');
+                let buf = lineHead + data.toString().replace(/\r?\n/g, lineHead);
+                buf = buf.substr(1) + '\n';
+                if (fd) {
+                    fs.write(fd, buf, null, 'utf8', noop);
+                } else {
+                    process[name].write(buf);
+                }
+            }
+        };
+        onPipeData1 = makeWriter('2', 'stdout');
+        onPipeData2 = makeWriter('1', 'stderr');
+    }
 
     for (let i = 0; i < workerCount; i++) {
         restarted[i] = -1;
@@ -191,9 +224,15 @@ function startProgram(dir) {
             worker.program = program;
             worker.on('exit', onExit);
             worker.on('message', onMessage);
+            if (timeStamp) {
+                worker.stdout.pid = worker.stderr.pid = worker.pid;
+                worker.stdout.on('data', onPipeData1);
+                worker.stderr.on('data', onPipeData2);
+            }
             scheduler.onWorker(worker);
         }
     }
+
 }
 
 function resumeJobs() {
@@ -230,7 +269,8 @@ function updateLog() {
         return {
             dir: dir,
             stdout: program.stdout,
-            stderr: program.stderr
+            stderr: program.stderr,
+            ts: program.timestamp
         }
     });
     file.write('programs', JSON.stringify(arr));
@@ -310,4 +350,7 @@ function trigger(msg) {
         throw new Error('command not found: ' + action);
     }
     return actions[action](data);
+}
+
+function noop() {
 }

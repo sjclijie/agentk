@@ -47,7 +47,7 @@ function parseTypename(name) {
     return parts.join('|');
 }
 
-export default function (outDir, format) {
+export function doc(outDir, format) {
     process.chdir('src/module');
     //console.log(outDir, format);
 

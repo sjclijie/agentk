@@ -1,6 +1,6 @@
 import * as http from 'http';
 
-let passed = 0, total = 0, ms = 0;
+let passed = 0, total = 0, ms = 0, files = 0, err = false;
 
 const assert = require('assert'),
     ohttp = require('http'),
@@ -12,17 +12,19 @@ const assert = require('assert'),
  * @param {string} file pathname of a test script file
  */
 export function run(file) {
-    console.log('run', file);
-    let start = process.hrtime();
+    files++;
+    const start = process.hrtime();
+    const lastTotal = total, lastPassed = passed;
     try {
         void include(file)[moduleDefault];
     } catch (e) {
-        console.error('failed running script %s: %s', file, e.message);
-        passed--;
-        console.log(e.stack);
+        console.log(`\x1b[30;41m:(\x1b[0m \x1b[33m${file} \x1b[0m failed outside test case: ${e.stack || e.message || e}`);
+        err = '\x1b[36m' + file + '\x1b[0m: \x1b[31m' + e + '\x1b[0m';
     }
-    let end = process.hrtime(start);
-    ms += end[0] * 1000 + end[1] / 1e6;
+    const end = process.hrtime(start), cost = end[0] * 1000 + end[1] / 1e6;
+
+    console.log(`\x1b[36m${file} \x1b[32m${'.'.repeat(passed - lastPassed)}\x1b[31m${'.'.repeat(total - lastTotal - passed + lastPassed)} \x1b[0m (${cost.toFixed(2)}ms)\n`);
+    ms += cost;
 }
 
 
@@ -38,14 +40,15 @@ export class Test {
     }
 
     test(title, cb) {
-        passed++;
         total++;
         try {
-            cb.call(this)
+            cb.call(this);
         } catch (e) {
-            console.error(`${this.name}::${title} failed: ${e.stack || e.message || e}`);
-            passed--;
+            console.log(`\x1b[30;41m:(\x1b[0m \x1b[33m${this.name} \x1b[35m${title}\x1b[0m ${e.stack || e.message || e}`);
+            return;
         }
+        passed++;
+        //console.log(`\x1b[30;42m:)\x1b[0m \x1b[33m${this.name} \x1b[35m${title}\x1b[0m`)
     }
 }
 
@@ -88,5 +91,8 @@ export class IntegrationTest extends Test {
 }
 
 export function summary() {
-    console.log('\x1b[32m%d/%d tests passed (%sms)\x1b[0m', passed, total, ms.toFixed(2));
+    console.log(`\x1b[32m${passed}\x1b[0m/\x1b[33m${total}\x1b[0m tests in ${files} file(s). (${ms.toFixed(2)}ms)`);
+    if (err) {
+        console.log('\x1b[33mThere seems to be an error in ' + err);
+    }
 }

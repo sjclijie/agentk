@@ -1,3 +1,42 @@
+import {Syntax,Expression,Statement,build} from 'javascript.js';
+
+const id = Expression.id, raw = Expression.raw, decl = Statement.decl, block = Statement.Block;
+
+const $pathname = id('pathname'),
+    $_ = id('_'),
+    $req = id('req'),
+    $args = id('args'),
+    $undefined = id('undefined'),
+    $completions = id('completions');
+
+function pushAll(from, to) {
+    to.push.apply(to, from);
+}
+
+function doWhile0(stmts) {
+    return {
+        type: Syntax.DoWhileStatement,
+        body: block(stmts),
+        test: raw(0)
+    }
+}
+
+const stmts = [], params = [], comp_init = decl('const', $completions, raw('[]')), comp_run = raw('for(let i = completions.length; i--;) _ = completions[i](req, _)').toStatement(), ast = {
+    type: Syntax.Program,
+    body: [Expression.func(params, [
+        decl('const', $undefined, raw('void 0')),
+        Statement.returns(Expression.func([$req, $args], [
+            raw('"use strict"').toStatement(),
+            decl('let', $_, null, $pathname, $req.member($pathname)),
+            raw('function tryCatch(handle, cb) {try{handle(req, pathname, args)}catch(e) {_ = cb.apply(req, [req, e])}} req.rewrite = function(p, r) {const m = p.exec(pathname); if(m) req.pathname = pathname = r.replace(/\\$(\\d+|\\$)/g, function(p, n) {return n === "$" ? "$" : m[n] || ""})}').toStatement(),
+            comp_init,
+            doWhile0(stmts),
+            comp_run,
+            Statement.returns($_)
+        ]))]).toStatement()
+    ]
+};
+
 export default class Router {
     /**
      *
@@ -8,180 +47,211 @@ export default class Router {
     constructor(cb) {
         if (!(this instanceof Router))
             return new Router(cb);
-        this.callers = [];
-
-        if (cb) {
-            this.callers.push({handle: cb, prefix: '', suffix: ''})
-        }
-        this.compile = router_compile;
-    }
-
-    add(handle) {
-        this.compile = router_compile;
-        this.callers.push(handle)
+        this.entries = [];
+        if (cb) this.all(cb);
     }
 
     all(cb) {
-        this.add({handle: cb, prefix: '', suffix: ''})
+        this.entries.push({type: 'all', handle: cb})
     }
 
     exact(url, cb) {
-        this.add({
-            handle: cb,
-            prefix: 'if(pathname === ' + JSON.stringify(url) + ') {\n',
-            suffix: '}\n'
-        });
+        this.entries.push({type: 'exact', pathname: url, handle: cb});
     }
 
     prefix(prefix, cb) {
-        let ret = new Router(cb);
         if (prefix[prefix.length - 1] !== '/') {
             prefix += '/';
         }
-        let len = prefix.length, $0 = JSON.stringify(prefix);
-        this.add({
-            handle: ret,
-            prefix: `if(pathname.substr(0, ${len}) === ${$0}) {\n  const $0 = pathname;\n  pathname = req.pathname = pathname.substr(${len - 1});\n`,
-            suffix: '  pathname = req.pathname = $0\n}'
-        });
+        const ret = new Router(cb);
+        this.entries.push({type: 'prefix', prefix: prefix, handle: ret});
         return ret;
     }
 
     match(pattern, cb) {
-        let handle = new Router(cb);
-        this.add({
-            handle,
-            prefix: 'const $0 = ' + pattern + '.exec(pathname);\nif($0) {\n  const $1 = args;\n  $0[0] = req;\n  args = $0;\n',
-            suffix: '  args = $1;\n}'
-        });
-
-        return handle;
-    }
-
-    test(tester) {
-        let handle = new Router();
-        this.add({
-            handle,
-            prefix: 'if($0.apply(req, args)) {\n',
-            suffix: '}',
-            args: [tester]
-        });
-
-        return handle;
-    }
-
-    catcher(cb) {
-        let ret = new Router();
-        this.add({
-            handle: ret,
-            prefix: 'tryCatch(function (req, pathname, args) {do {\n',
-            suffix: '} while(0);}, $0); if(_ !== Z) break;\n',
-            args: [cb]
-        });
+        const ret = new Router(cb);
+        this.entries.push({type: 'match', pattern: pattern, handle: ret});
         return ret;
     }
 
+    catcher(cb) {
+        const ret = new Router();
+        this.entries.push({type: 'catcher', cb: cb, handle: ret});
+        return ret;
+    }
+
+    //noinspection InfiniteRecursionJS
     apply(req, args) {
-        this.compile();
-        return this._compiled.apply(req, args);
+        this._compile();
+        return this.apply(req, args);
     }
 
     complete(cb) {
-        this.compile = router_compile;
         if (this.completions) {
             this.completions.push(cb);
         } else {
             this.completions = [cb];
         }
     }
-}
 
-function router_compile() {
-    let handle = $compile(this, 0, 0, 0);
+    _compile() {
+        let nextLocal = 0, completionLen = 0, hasCompletion = false;
 
-    let code = handle.code;
-    // optimize matches
-    code = code.replace(/const _(\d+) = pathname;\n  pathname = (req\.pathname = pathname.substr\(\d+\);\n(?:\$invoke\(\$\d+\)\n)+)  pathname = req\.pathname = _\1/g, '$2  req.pathname = pathname');
-    // optimize exact
-    code = code.replace(/(if\(pathname === "\/.*?")\) \{\n\$invoke\((\$\d+)\)\n\}/g, '$1 && (_ = $2.apply(req, args)) !== Z) break;');
-    // optimize match
-    code = code.replace(/const _(\d+) = args;\n  _(\d+)\[0\] = req;\n  args = _\2;\n\$invoke\((\$\d+)\)\n  args = _\1;/g, '_$2[0] = req;\n  if((_ = $3.apply(req, _$2)) !== Z) break;');
-    // replace invokes
-    code = code.replace(/\$invoke\((\$\d+)\)/g, 'if((_ = $1.apply(req, args)) !== Z) break;');
+        const externals = [];
 
-    this.compile = Boolean;
-    let args = handle.args;
-    let argnames = '';
-    for (let i = 0; i < handle.first_arg; i++) {
-        argnames += '$' + i + ','
-    }
-    argnames += 'slice';
-    args.push(args.slice);
-    code = '"use strict";\nreturn function (req) {\n'
-        + 'let args = slice.call(arguments), _, pathname = req.pathname, completions = [];\n'
-        + 'req.rewrite = function(pattern, repl) {const m = pattern.exec(pathname);if(m){pathname = req.pathname = repl.replace(/\\$(\\$|\\d+)/g,function(_,n){return m[n]})}};\n'
-        + 'function tryCatch(method, catcher) { try {method.call(req, req, pathname, args)} catch(e) {_ = catcher.apply(req, [req, e])} }\n'
-        + 'do{' + code + '}while(0);\nfor(let i = completions.length; i--;) _ = completions[i](req, _);\nreturn _}';
-    //require('fs').writeFile('router.js', 'function test(' + argnames + ',Z){' + code + '}');
-    this._compiled = new Function(argnames + ',Z', code).apply(null, args);
-}
+        compile(this, stmts);
+        comp_init.type = hasCompletion ? Syntax.VariableDeclaration : Syntax.EmptyStatement;
+        comp_run.type = hasCompletion ? Syntax.ExpressionStatement : Syntax.EmptyStatement;
+        //require('fs').writeFileSync('ast.json', JSON.stringify(ast, null, 2));
+        const script = build(ast);
+        //require('fs').writeFileSync('out.js', script);
 
-function $compile(cb, first_arg, first_xarg, completions) {
-    if (typeof  cb === 'function') {
-        return {
-            code: '$invoke($' + first_arg + ')\n',
-            args: [cb],
-            first_arg: first_arg + 1,
-            first_xarg: first_xarg
-        }
-    }
+        this.apply = (0, eval)(script).apply(null, externals);
 
+        stmts.length = params.length = 0;
 
-    let args = [], code = '', compLen = cb.completions ? cb.completions.length : 0;
-    if (compLen) {
-        args = cb.completions.slice();
-        for (let i = 0; i < compLen; i++) {
-            code += ',$' + first_arg++;
-        }
-        code = 'completions.push(' + code.substr(1) + ');'
-    }
-    for (let caller of cb.callers) {
-        //console.log(caller);
-        let argc = caller.args ? caller.args.length : 0, maxExtras = -1;
-        var prefix = caller.prefix.replace(/\$(\d)\b/g, replacement),
-            suffix = caller.suffix.replace(/\$(\d)\b/g, replacement);
-        let handle = $compile(caller.handle, first_arg + argc, first_xarg + maxExtras + 1, completions + compLen);
-
-        code += prefix + handle.code + suffix;
-
-
-        function replacement(m, u) {
-            u = u | 0;
-            if (u >= argc) { // extra arg
-                u -= argc;
-                if (u > maxExtras) {
-                    maxExtras = u;
-                }
-                return '_' + (first_xarg + u);
+        function compile(handle, stmts) {
+            if (!handle || !handle.apply) return;
+            if (!handle.entries) {
+                const If = Statement.If(
+                    $_.assign(newExternal(handle).member('apply').call([$req, $args])).binary('!==', $undefined),
+                    Statement.Break
+                );
+                If.isSimpleCall = true;
+                stmts.push(If);
+                return;
             }
-            return '$' + (first_arg + u)
+
+            const completions = handle.completions;
+            if (completions) {
+                hasCompletion = true;
+                stmts.push(id('completions.push').call(completions.map(newExternal)).toStatement());
+                completionLen += completions.length;
+            }
+
+            for (let entry of handle.entries) {
+                switch (entry.type) {
+                    case 'catcher': // {cb, handle}
+                    {
+                        const body = [];
+
+                        compile(entry.handle, body);
+
+                        stmts.push(
+                            id('tryCatch').call([
+                                Expression.func([$req, $pathname, $args], [doWhile0(body)]),
+                                newExternal(entry.cb)
+                            ]).toStatement(),
+                            Statement.If(
+                                $_.binary('!==', $undefined),
+                                Statement.Break
+                            )
+                        );
+                        break;
+                    }
+                    case 'prefix': // {prefix, handle}
+                    {
+                        const body = [];
+                        compile(entry.handle, body);
+
+                        stmts.push(Statement.If(
+                            id('pathname.substr').call([raw(0), raw(entry.prefix.length)]).binary(
+                                '===',
+                                raw(JSON.stringify(entry.prefix))
+                            ),
+                            block(body)
+                        ));
+                        const $req_pathname = id('req.pathname');
+
+                        const trim_pathname = $req_pathname.assign(id('pathname.substr').call([raw(entry.prefix.length - 1)]));
+                        if (body.length === 1 && body[0].isSimpleCall) {
+                            body.unshift(trim_pathname.toStatement());
+                            body.push($req_pathname.assign($pathname).toStatement());
+                        } else {
+                            const $0 = newLocal($pathname);
+                            body.unshift(
+                                decl('const', $0.id, $0.init),
+                                $pathname.assign(trim_pathname).toStatement()
+                            );
+                            body.push($pathname.assign($req_pathname.assign($0.id)).toStatement());
+                        }
+                        break;
+                    }
+                    case 'match': // {pattern, handle}
+                    {
+                        const $0 = newLocal(id(entry.pattern + '.exec').call([$pathname]));
+                        const body = [];
+                        compile(entry.handle, body);
+
+                        const assign_req = $0.id.member(raw(0), true).assign($req);
+
+                        if (body.length === 1 && body[0].isSimpleCall) {
+                            const stmt = body[0];
+                            stmt.test.left.right.arguments[1] = $0.id;
+                            stmt.test = $0.id.binary('&&', {
+                                type: Syntax.SequenceExpression,
+                                expressions: [assign_req, stmt.test]
+                            });
+                            stmts.push(decl('const', $0.id, $0.init), stmt);
+                        } else {
+                            const $1 = newLocal($args);
+                            body.unshift(
+                                decl('const', $1.id, $1.init),
+                                assign_req.toStatement(),
+                                $args.assign($0.id).toStatement()
+                            );
+                            body.push($args.assign($1.id).toStatement());
+                            stmts.push(
+                                decl('const', $0.id, $0.init),
+                                Statement.If($0.id, block(body))
+                            );
+                        }
+
+
+                        break;
+                    }
+                    case 'exact': // {pathname, handle}
+                    {
+                        const body = [];
+                        compile(entry.handle, body);
+                        const test = $pathname.binary('===', raw(JSON.stringify(entry.pathname)));
+
+                        if (body.length === 1 && body[0].isSimpleCall) {
+                            const stmt = body[0];
+                            stmt.test = test.binary('&&', stmt.test);
+                            stmts.push(stmt);
+                        } else {
+                            stmts.push(Statement.If(
+                                $pathname.binary('===', raw(JSON.stringify(entry.pathname))),
+                                block(body)
+                            ));
+                        }
+                        break;
+                    }
+                    case 'all':
+                        compile(entry.handle, stmts);
+                        break;
+                }
+            }
+
+            if (completions) stmts.push(id('completions.length').assign(raw(completionLen -= completions.length)).toStatement())
+
         }
 
-        if (argc) {
-            args = args.concat(caller.args, handle.args);
-        } else {
-            args = args.concat(handle.args);
+        function newLocal(init) {
+            return {
+                type: Syntax.VariableDeclarator,
+                id: id('_' + nextLocal++),
+                init: init
+            };
         }
-        first_arg = handle.first_arg;
-        first_xarg = handle.first_xarg;
-    }
-    if (compLen) {
-        code += 'completions.length=' + completions + ';';
-    }
-    return {
-        code: code,
-        args: args,
-        first_arg: first_arg,
-        first_xarg: first_xarg
+
+        function newExternal(value) {
+            const arg = id('$' + externals.length);
+            externals.push(value);
+            params.push(arg);
+            return arg;
+        }
+
     }
 }

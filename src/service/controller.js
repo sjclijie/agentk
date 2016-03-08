@@ -15,7 +15,7 @@ export function start() {
     getData(tryCallService('start', dir));
 }
 
-export default function (cmd) {
+export function fallback(cmd) {
     getData(callService(cmd, dir));
 }
 

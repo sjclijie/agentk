@@ -75,4 +75,6 @@ if (process.mainModule === module) {
     } else if (target === 'load') {
         exports.load(require('path').resolve(path)).done();
     }
+} else {
+    process.mainModule = module;
 }
