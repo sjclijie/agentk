@@ -155,7 +155,7 @@ class RoundRobinHandle extends Handle {
                 self.send(worker, undefined, null, handle, {act: 'newconn', seq: seq});
             } catch (err) { // worker maybe dead
                 console.error(datetime() + ' scheduler.js: handle dispatch failed: ' + (err.stack || err.message || err));
-                delete worker.handles[key];
+                // delete worker.handles[key];
                 onConnection(0, handle);
                 return;
             }
