@@ -89,3 +89,127 @@ export function iterator(incoming) {
     };
 }
 
+function defer() {
+    let resolved = null, rejected = null, resolver = {
+        resolve(value) {
+            this.resolve = this.reject = Boolean;
+            resolved = {value};
+        },
+        reject(value) {
+            this.resolve = this.reject = Boolean;
+            rejected = {value};
+        }
+    };
+    const ret = new Promise(function (resolve, reject) {
+        if (resolved) {
+            resolve(resolved.value)
+        } else if (rejected) {
+            reject(rejected.value)
+        } else {
+            resolver.resolve = resolve;
+            resolver.reject = reject;
+        }
+    });
+    ret.resolver = resolver;
+    return ret;
+}
+
+const SlowBuffer = require('buffer').SlowBuffer;
+
+export class Input {
+    constructor(stream) {
+        let available = 0;
+        let buf = this._buf = new Buffer(0);
+        const pending = [], self = this;
+
+        stream.on('data', function (data) {
+            // console.log('recv', data.length, available, data);
+            const unread = self._buf;
+            if (!unread.length) { // no bytes left
+                buf = self._buf = data;
+                available = 0;
+            } else {
+                let bufEnd = buf.length - available;
+                if (available < data.length) {
+                    const required = unread.length + data.length,
+                        newCapacity = required < 4096 ? 4096 : 1 << 32 - Math.clz32(required),
+                        newBuf = new SlowBuffer(newCapacity);
+                    unread.copy(newBuf, 0);
+                    bufEnd = unread.length;
+                    buf = newBuf;
+                    available = newCapacity - bufEnd;
+                }
+                data.copy(buf, bufEnd);
+                self._buf = buf.slice(bufEnd - unread.length, bufEnd + data.length);
+                available -= data.length;
+            }
+            for (; ;) {
+                if (!pending.length) {
+                    stream.pause();
+                    break;
+                }
+                const resolver = pending[0];
+
+                if (self._buf.length < resolver.required) {
+                    break;
+                }
+                pending.shift();
+                resolver.resolve();
+            }
+        }).once('error', onerror).once('close', function () {
+            onerror(new Error('socket closed'))
+        });
+        stream.pause();
+
+        function onerror(err) {
+            for (let resolver of pending) {
+                pending.reject(err);
+                self._buf = {
+                    get length() {
+                        throw new Error('socket closed')
+                    }
+                }
+            }
+            pending.length = 0;
+        }
+
+        this._read = function (resolver) {
+            pending.push(resolver);
+            pending.length === 1 && stream.resume();
+        }
+    }
+
+    available() {
+        return this._buf.length;
+    }
+
+    read(length) {
+        let buf = this._buf;
+        if (buf.length < length) {
+            const resolver = Promise.defer();
+            resolver.required = length;
+            this._read(resolver);
+            co.yield(resolver.promise);
+        }
+        buf = this._buf;
+        this._buf = buf.slice(length);
+        return buf.slice(0, length);
+    }
+
+    readLine() {
+        for (let start = 0; ;) {
+            const buf = this._buf;
+            const idx = buf.length && Array.prototype.indexOf.call(buf, 10, start) + 1;
+            if (!idx) {
+                start = buf.length;
+                const resolver = Promise.defer();
+                resolver.required = start + 1;
+                this._read(resolver);
+                co.yield(resolver.promise);
+                continue;
+            }
+            this._buf = buf.slice(idx);
+            return buf.slice(0, idx)
+        }
+    }
+}

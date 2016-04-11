@@ -25,7 +25,8 @@ export const mimeTypes = {
     jpeg: 'image/jpeg',
     js: 'text/javascript',
     json: 'application/json',
-    png: 'image/png'
+    png: 'image/png',
+    xml: 'application/xml'
 };
 
 import LRUCache from 'lru_cache';

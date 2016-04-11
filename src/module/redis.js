@@ -2,7 +2,8 @@
  * @title Redis Client
  */
 
-const _net = require('net');
+import ConnectionPool from 'connection_pool';
+
 const SlowBuffer = require('buffer').SlowBuffer;
 const CONNECT = 'connect', AUTH = 'auth', CONNECTED = 'connected', FREE = 'free', ERROR = 'error';
 
@@ -10,6 +11,8 @@ const DRAIN = Symbol('drain');
 const search = [].indexOf;
 
 const assert = require('assert');
+
+import {Input} from 'stream';
 
 class Context {
     append(key, val) {
@@ -122,148 +125,90 @@ class Context {
 
 
 class Connection extends Context {
-    constructor(socket, release) {
+    constructor(socket) {
+        if (socket._conn) throw new Error('socket occupied');
         super();
 
         this.socket = socket;
-        this._close = release;
         socket._conn = this;
-
-        const pending = this.pending = [];
-
-        let bufLen = 0, buf = null, pos = 0;
-
-        let reader = msgReader();
-
-        this._ondata = function (_buf) {
-            if (bufLen === pos) { // empty
-                buf = _buf;
-            } else {
-                buf = Buffer.concat([pos ? buf.slice(pos) : buf, _buf]);
-            }
-            pos = 0;
-            bufLen = buf.length;
-            //console.log('RECV ', JSON.stringify(buf + ''));
-            try {
-                reader.next();
-            } catch (e) {
-                socket.emit('error', e);
-            }
-        };
-
-        function* msgReader() {
-            for (; ;) {
-                let ends;
-                while (bufLen < 3 + pos || (ends = search.call(buf, 13, pos + 1)) === -1 || ends === bufLen - 1) {
-                    yield 0; // drain
-                }
-                assert(buf[ends + 1] === 10); // \r\n
-                let cmd = buf[pos], msg = buf.toString('binary', pos + 1, ends);
-                pos = ends + 2;
-                switch (cmd) {
-                    case 0x2B: // +
-                        onData({message: msg});
-                        continue;
-                    case 0x3a: // :
-                        onData(+msg);
-                        continue;
-                    case 0x2D: // -
-                        onError(msg);
-                        continue;
-                    case 0x24: // $
-                        onData(yield* stringReader(+msg));
-                        continue;
-                    case 0x2a: // *
-                    {
-                        let ret = [];
-                        for (let i = 0, n = +msg; i < n; i++) {
-                            assert(buf[pos] === 0x24); // $
-                            while (bufLen < 3 + pos || (ends = search.call(buf, 13, pos + 1)) === -1 || ends === bufLen - 1) {
-                                yield 0; // drain
-                            }
-                            assert(buf[ends + 1] === 10);
-
-                            msg = buf.toString('binary', pos + 1, ends);
-                            pos = ends + 2;
-                            ret[i] = yield* stringReader(+msg);
-                        }
-                        onData(ret)
-                    }
-                }
-            }
-        }
-
-        function* stringReader(strLen) {
-            assert(strLen === strLen);
-            if (strLen === -1) {
-                return null
-            }
-            let strEnd;
-            while ((strEnd = pos + strLen) > bufLen) {
-                yield 0;
-            }
-            assert(buf[strEnd] === 13 && buf[strEnd + 1] === 10); // CRLF
-            let ret = buf.toString('utf8', pos, strEnd);
-            pos = strEnd + 2;
-            return ret
-        }
-
-        function onData(data) {
-            pending.shift().resolve(data)
-        }
-
-        function onError(msg) {
-            pending.shift().reject(new Error(msg))
-        }
-    }
-
-    _onerror(err) {
-        co.removeResource(this);
-        this._close = Boolean;
-        const pending = this.pending;
-        while (pending.length) {
-            pending.pop().reject(err);
-        }
+        co.addResource(this);
     }
 
     auth(password) {
-        const self = this;
-        this.pending.push({
-            resolve: function () {
-                self._close()
-            }, reject: function (err) {
-                self.socket.destroy(err);
-            }
-        });
-        this._send(['AUTH', password]);
+        return this._query(['AUTH', password]);
     }
 
     _query(args) {
-        const self = this;
-        return co.promise(function (resolve, reject) {
-            self.pending.push({resolve, reject});
-            self._send(args);
-        })
-    }
+        const socket = this.socket;
 
-    _send(args) {
+        // begin write
         let buf = '*' + args.length + '\r\n$' + args[0].length + '\r\n' + args[0] + '\r\n';
         for (let i = 1; i < args.length; i++) { // TODO utf8 encode
             let argn = utf8Encode(args[i]);
             buf += '$' + argn.length + '\r\n' + argn + '\r\n'
         }
-        //console.log('SEND', JSON.stringify(buf));
-        this.socket.write(buf, 'binary')
+        // console.log('SEND', args);
+        socket.write(buf, 'binary');
+
+        // begin read
+        const input = socket._input || (socket._input = new Input(socket));
+        const head = input.readLine();
+        assert(head[head.length - 2] === 13); // \r\n
+
+        const cmd = head[0], msg = head.toString('binary', 1, head.length - 2);
+        switch (cmd) {
+            case 0x2B: // +
+                return {message: msg};
+            case 0x3a: // :
+                return +msg;
+            case 0x2D: // -
+                throw new Error(msg);
+            case 0x24: // $
+                return readString(+msg);
+            case 0x2a: // *
+            {
+                const ret = [];
+                for (let i = 0, n = +msg; i < n; i++) {
+                    const stringHead = input.readLine();
+                    assert(stringHead[0] === 0x24 && stringHead[stringHead.length - 2] === 13 && stringHead[stringHead.length - 1] === 10); // $
+                    ret[i] = readString(+stringHead.toString('binary', 1, stringHead.length - 2))
+
+                }
+                return ret;
+            }
+        }
+
+        function readString(length) {
+            if (length === -1) return null;
+            const buf = input.read(length + 2);
+            assert(buf[length] === 13 && buf[length + 1] === 10);
+            return buf.toString('utf8', 0, length);
+        }
     }
 
     release() {
         co.removeResource(this);
         this._close();
     }
+
+    _close() {
+        const socket = this.socket;
+        this.socket = socket._conn = null;
+        socket._release();
+    }
 }
 
-let
-    encodeBufLen = 4096,
+
+function redis_close() {
+    const conn = this._conn;
+    if (!conn) return;
+    const err = new Error('connection closed');
+    for (let pending of conn.pending.splice(0)) {
+        pending.reject(err);
+    }
+}
+
+let encodeBufLen = 4096,
     encodeBuf = new SlowBuffer(encodeBufLen), specialChars = /[^\x00-\x7f]/;
 
 function utf8Encode(str) {
@@ -279,120 +224,35 @@ function utf8Encode(str) {
     return encodeBuf.toString('binary', 0, encodeBuf.write(str))
 }
 
-export class Pool extends Context {
-    constructor(port = 6379, host = '127.0.0.1', password = null, connections = 10) {
+
+export class Pooled extends Context {
+    constructor(pool, password = null) {
         super();
 
-        const option = {host, port};
-        const freeList = [];
-        const pending = [];
-
-        let conns = 0, connecting = 0;
-
-        const onSocketConnected = password ? function () {
-            //console.log('connected', this);
-            this._state = AUTH;
-            this.on('data', onSocketData).on('close', onSocketClose);
-
-            new Connection(this, release).auth(password);
-        } : function () {
-            this._state = CONNECTED;
-            this.on('data', onSocketData);
-
-            freeList.push(this);
-            autoConnect();
+        this.getConnection = password ? function (key) {
+            let socket = pool.getConnection(key)
+            let conn = new Connection(socket);
+            if (!socket._authed) {
+                socket.once('close', redis_close);
+                try {
+                    conn.auth(password);
+                } catch (e) {
+                    socket.destroy();
+                    throw e;
+                }
+                socket._authed = true;
+            }
+            return conn;
+        } : function (key) {
+            let socket = pool.getConnection(key);
+            let conn = new Connection(socket);
+            return conn;
         };
 
-        function autoConnect() {
-            //console.log('autoConnect: pending=%d free=%d conns=%d connecting=%d', pending.length, freeList.length, conns, connecting);
-            while (pending.length) {
-                if (freeList.length) {
-                    pending.shift().resolve(new Connection(freeList.shift(), release))
-                } else if (conns < connections && connecting < pending.length) {
-                    conns++; // total connections no more than pool size
-                    connecting++; // do not create connections more than pending requests
-                    const socket = _net.connect(option, onSocketConnected).once('error', onSocketError);
-                    socket._state = CONNECT;
-                } else { // the pool is full, wait for a connection released
-                    break
-                }
-            }
-        }
-
-        function onSocketData(buf) {
-            const conn = this._conn;
-            if (conn) conn._ondata(buf)
-        }
-
-        function onSocketClose() {
-            //console.log('closed', this);
-            if (this._state !== ERROR)
-                this.emit('error', new Error('connection closed'));
-        }
-
-        function onSocketError(err) {
-            console.error(339, err);
-            if (this._state === CONNECT || this._state === AUTH) { // first connect
-                connecting--;
-            } else { // remove from freeList
-                for (let i = freeList.length; i--;) {
-                    if (freeList[i] === this) {
-                        freeList.splice(i, 1);
-                        break;
-                    }
-                }
-            }
-            this._state = ERROR;
-            const conn = this._conn;
-            if (conn) {
-                conn._onerror(err);
-            }
-            conns--; // handle
-            if (!conns) {
-                // no more connections, reject all pending requests
-                while (pending.length) {
-                    pending.pop().reject(err)
-                }
-            }
-            //console.log('conns %d connecting %d free %d', conns, connecting, freeList.length);
-        }
-
-
-        function release() {
-            assert(this instanceof Connection);
-            let socket = this.socket;
-            if (socket._state === CONNECT || socket._state === AUTH) { // first connect
-                connecting--;
-                socket._state = CONNECTED;
-            }
-            socket._conn = null;
-
-            this._close = Boolean;
-            freeList.push(socket);
-            autoConnect();
-        }
-
-        this.getConnection = function () {
-            let ret;
-            if (freeList.length) {
-                ret = new Connection(freeList.shift(), release);
-            } else {
-                ret = co.promise(function (resolve, reject) {
-                    if (freeList.length) {
-                        resolve(new Connection(freeList.shift(), release));
-                    } else {
-                        pending.push({resolve, reject});
-                        autoConnect();
-                    }
-                })
-            }
-            co.addResource(ret);
-            return ret;
-        };
     }
 
     _query(arr) {
-        const conn = this.getConnection();
+        const conn = this.getConnection(arr[1]);
         const ret = conn._query(arr);
         conn.release();
         return ret;
@@ -407,5 +267,9 @@ export function pool(url) {
     if (url in pools) return pools[url];
 
     let parsed = _url.parse(url, true);
-    return pools[url] = new Pool(parsed.port || undefined, parsed.hostname || undefined, parsed.auth, parsed.query.connections);
+
+    return pools[url] = new Pooled(
+        new ConnectionPool([`${parsed.hostname || '127.0.0.1'}:${parsed.port || 6379}`], parsed.query.connections),
+        parsed.auth
+    );
 }

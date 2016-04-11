@@ -6,16 +6,16 @@ let pool = redis.pool('redis://test@localhost?connections=4');
 let rnd = Math.random() + '';
 
 pool.set('a', 123);
-pool.increase('a');
+assert.strictEqual(pool.increase('a'), 124);
 assert.strictEqual(pool.get('a'), '124');
 
-pool.decrease('a');
+assert.strictEqual(pool.decrease('a'), 123);
 assert.strictEqual(pool.get('a'), "123");
 
-pool.decreaseBy('a', 3);
+assert.strictEqual(pool.decreaseBy('a', 3), 120);
 assert.strictEqual(pool.get('a'), "120");
 
-pool.increaseBy('a', 5);
+assert.strictEqual(pool.increaseBy('a', 5), 125);
 assert.strictEqual(pool.get('a'), '125');
 
 let conn = pool.getConnection();
@@ -43,7 +43,7 @@ const randomStr = new Buffer(randomBuf.toString('utf16le')).toString();
 
 conn.hset('obj', 'test2', randomStr);
 
-const randomRet = conn.hget('obj', 'test2');
+assert.strictEqual(conn.hget('obj', 'test2'), randomStr);
 
 assert.strictEqual(conn.hget('obj', 'test'), rnd);
 assert.strictEqual(conn.hget('obj', 'testsdfadfadf'), null);
@@ -57,29 +57,15 @@ assert.deepEqual(conn.hgetAll('obj'), {test: rnd, test2: randomStr});
 
 let nextID = 0;
 
-setInterval(function () {
-    let id = nextID++;
-    co.run(function () {
-        let conn = pool.getConnection();
-        console.log(id, Date.now() + ': got new connection', conn.socket._state);
-        co.yield([
-            co.run(function () {
-                assert.deepEqual(conn.hmget('obj', ['test', 'test2']), [rnd, randomStr]);
-            }),
-            co.run(function () {
-                assert.deepEqual(conn.hmget('obj', ['test', 'test2']), [rnd, randomStr]);
-            }),
-            co.run(function () {
-                assert.deepEqual(conn.hmget('obj', ['test', 'test2']), [rnd, randomStr]);
-            }),
-            co.run(function () {
-                assert.deepEqual(conn.hmget('obj', ['test', 'test2']), [rnd, randomStr]);
-            })
-        ]);
-
-        co.sleep(50);
-        conn.release();
-    }).then(null, function (err) {
-        console.error(id, err.stack);
-    });
-}, 100);
+for (let i = 0; i < 4; i++) {
+    co.run(function (n) {
+        for (; ;) {
+            let id = nextID++;
+            let conn = pool.getConnection();
+            console.log(n, id, Date.now() + ': got new connection');
+            assert.deepEqual(conn.hmget('obj', ['test', 'test2']), [rnd, randomStr]);
+            conn.release();
+            co.sleep(3);
+        }
+    }, i).done()
+}

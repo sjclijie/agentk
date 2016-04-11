@@ -1,23 +1,27 @@
 import * as ws from '../../src/module/websocket.js';
 
 let server = ws.listen(881, function (req) {
-    //console.log('ws:', req.method, req.pathname, req.headers._entries);
-    if (req.pathname === '/foo/bar/baz') {
+    console.log('ws:', req.method, req.pathname);
+    if (req.pathname !== '/foo/bar') {
         return req.reject();
     }
     let ws = req.accept();
-    ws.on('message', function (msg) {
-        //console.log('RECV', buffer);
-        if (typeof msg === 'string') {
-            if (msg.substr(0, 5) === 'eval ') {
-                ws.send((0, eval)(msg.substr(5)) + '')
-            } else if (msg.substr(0, 6) === 'print ') {
-                console.log(msg.substr(6));
+    ws.send('hello world');
+
+    ws.on('message', function (msg, type) {
+        console.log('RECV', type, msg);
+        if (type === 'text') {
+            if (msg === 'close') {
+                ws.close();
+            } else if (msg.substr(0, 5) === 'eval ') {
+                ws.send((0, eval)(msg.substr(5)));
             }
-            //
+        } else if (type === 'buffer') {
+            ws.send(require('util').inspect(msg));
         }
-    }).on('close', function () {
-        console.log('ws closed')
+
+    }).on('close', function (code, reason) {
+        console.log('ws closed', code, reason)
     })
 });
 

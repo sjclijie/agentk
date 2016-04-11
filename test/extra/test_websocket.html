@@ -7,16 +7,96 @@
 <body>
 <script>
     (function () {
-        var ws = new WebSocket('ws://localhost:881/foo/bar');
-        ws.onopen = function () {
-            ws.send('eval Math.random()');
-            setTimeout(function () {
-                ws.send('print ' + navigator.userAgent.repeat(10));
-            })
-        };
-        ws.onmessage = function (msg) {
-            console.log('recv', msg, msg.data);
+        "use strict";
+        "".repeat || (String.prototype.repeat = function (n) {
+            return Array(n + 1).join("" + this)
+        });
+
+
+        function assert(test, message) {
+            if (!test) throw new Error(message);
         }
+
+        const longMessage = "*".repeat(32768 + Math.random() * 5122 | 0);
+
+        const steps = [{
+            description: 'send eval',
+            data: 'eval Math.random()',
+            resolve: function (msg) {
+                const n = +msg.data;
+                assert(n >= 0 && n < 1);
+            }
+        }, {
+            description: 'send eval again',
+            data: 'eval Math.random()',
+            resolve: function (msg) {
+                const n = +msg.data;
+                assert(n >= 0 && n < 1);
+            }
+        }, {
+            description: 'send long message',
+            data: 'eval ' + JSON.stringify(longMessage) + '.length',
+            resolve: function (msg) {
+                assert(+msg.data === longMessage.length);
+            }
+        }, {
+            description: 'recv long message',
+            data: 'eval "*".repeat(' + longMessage.length + ')',
+            resolve: function (msg) {
+                assert(msg.data === longMessage);
+            }
+        }, {
+            description: 'send buffer',
+            data: new Uint8Array([0xca, 0xfe, 0xba, 0xbe, 0xde, 0xad, 0xbe, 0xef]).buffer,
+            resolve: function (msg) {
+                assert(msg.data === '<Buffer ca fe ba be de ad be ef>');
+            }
+        }, {
+            description: 'receive buffer',
+            data: 'eval new Buffer("hello world~~")',
+            resolve: function (msg) {
+                const reader = new FileReader();
+                reader.onload = function () {
+                    console.log(this.result);
+                    assert(this.result === 'hello world~~');
+                    next();
+                };
+                reader.readAsText(msg.data);
+                return true;
+            }
+        }, {
+            description: 'throws exception',
+            data: 'eval 0()',
+            resolve: function (msg) {
+                assert(msg.type === 'close');
+//                assert(msg.code === 1011);
+                console.log(msg.code, msg.reason);
+            }
+        }];
+
+        let ws = new WebSocket('ws://localhost:881/foo/bar');
+
+        let step = -1, resolve = function (msg) {
+            assert(msg.data === 'hello world');
+        };
+
+        function next() {
+            step++;
+            const obj = steps[step];
+            if (!obj) {
+                ws.close(1000, 'bye');
+                return console.log('all done');
+            }
+            console.log('run step ', step, obj.description);
+            ws.send(obj.data);
+            resolve = obj.resolve;
+        }
+
+
+        ws.onmessage = ws.onclose = function (msg) {
+            console.log('RECV', msg.type, msg.data);
+            resolve(msg) || next();
+        };
     })()
 </script>
 </body>

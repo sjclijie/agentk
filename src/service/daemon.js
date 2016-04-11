@@ -281,10 +281,6 @@ function formatTime(t) {
     return dt.substr(0, 10) + ' ' + dt.substr(11, 8);
 }
 
-function tens(num) {
-    return (num < 10 ? '0' : '') + num;
-}
-
 function onServiceRequest(req) {
     console.log(`${formatTime(Date.now())} daemon.js: ${req.method} ${req.url}`);
     let action = req.url.substr(req.url.indexOf('?') + 1);

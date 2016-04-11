@@ -235,35 +235,16 @@ export class Body {
      * @returns {Promise} a promise that yields the request payload as a Buffer
      */
     buffer() {
-        let payload = this._payload;
-        if (payload) {
-            return payload;
-        }
-        let buffer = this._buffer;
-        if (buffer) {
-            return this._payload = Promise.resolve(buffer);
-        }
-        // start stream reading
-        let body = this, stream = this._stream;
-        body._stream = null;
-
-        const enc = this.headers && this.headers.get('content-encoding');
-        if (enc) {
-            if (enc === 'gzip') {
-                stream = zlib.gunzipTransform(stream);
-            } else if (enc === 'deflate') {
-                stream = zlib.inflateTransform(stream);
+        if (!this._payload) {
+            if (this._buffer) {
+                // construct payload from buffer
+                this._payload = Promise.resolve(this._buffer)
+            } else {
+                // start stream reading
+                void this.stream;
             }
-            this.headers.delete('content-encoding');
         }
-        return this._payload = new Promise(function (resolve, reject) {
-            let bufs = [];
-            stream.on('data', function (buf) {
-                bufs.push(buf)
-            }).once('end', function () {
-                resolve(body._buffer = Buffer.concat(bufs))
-            }).once('error', reject)
-        });
+        return this._payload;
     }
 
     /**
@@ -272,9 +253,26 @@ export class Body {
      */
     get stream() {
         let stream = this._stream;
-
         if (stream) { // start stream reading
-            this.buffer()
+            this._stream = null;
+            const enc = this.headers && this.headers.get('content-encoding');
+            if (enc) {
+                if (enc === 'gzip') {
+                    stream = zlib.gunzipTransform(stream);
+                } else if (enc === 'deflate') {
+                    stream = zlib.inflateTransform(stream);
+                }
+                this.headers.delete('content-encoding');
+            }
+            const self = this;
+            this._payload = new Promise(function (resolve, reject) {
+                let bufs = [];
+                stream.on('data', function (buf) {
+                    bufs.push(buf)
+                }).once('end', function () {
+                    resolve(self._buffer = Buffer.concat(bufs))
+                }).once('error', reject)
+            });
         } else {
             let buffer = this._buffer, payload = this._payload;
             stream = new stream_Readable();
@@ -676,7 +674,7 @@ export function _handler(cb) {
         function onerror(err) {
             response.writeHead(500);
             response.end(err.message);
-            console.error(err.stack || err.message);
+            console.error(new Date(), 'http::handler: uncaught exception', err.stack || err.message || err);
         }
     };
 

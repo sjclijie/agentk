@@ -32,6 +32,7 @@ global.include = function (name) {
     })
 };
 
+
 /**
  * @param {String} name full path of the module name
  * @param {String} __dirname full path of the module name
@@ -55,7 +56,7 @@ function include(name, __dirname) {
 
     if (fs.existsSync(name)) {
         try {
-            let source = fs.readFileSync(name, 'utf8');
+            let source = fs.readFileSync(name);
             let module = {}, ret = definedModules[name] = Promise.resolve(module);
             defineModule(module, source, {filename: name});
             return ret;
@@ -69,7 +70,7 @@ function include(name, __dirname) {
         ensureParentDir(name);
         fs.writeFileSync(name, buffer);
         let module = {};
-        defineModule(module, buffer.toString(), {filename: name});
+        defineModule(module, buffer, {filename: name});
         return module;
     })
 }
@@ -120,12 +121,39 @@ function resolveModulePath(dir) {
     return resolvedPaths[dir] = paths
 }
 
-function defineModule(module, source, option) {
+// returns: [exports, script]
+const compile = function () {
+    let cache;
+    try {
+        cache = _load('node-shared-cache', {paths: module.paths.concat(resolveModulePath(process.cwd()))})
+    } catch (e) {
+        return compile;
+    }
+
+    // make a 8MB memory cache
+    let compiled = new cache.Cache('ak_compiled', 8 << 20, cache.SIZE_2K);
+
+    const crypto = require('crypto');
+    return function (buffer) {
+        const hash = crypto.createHash('sha1').update(buffer).digest('base64').slice(0, -1);
+        return compiled[hash] || (compiled[hash] = compile(buffer))
+    }
+    function compile(buffer) {
+        let ast = esprima.parse(buffer, parseOptions);
+
+        ast = transform(ast, transformOptions);
+        const script = build(ast, buildOptions);
+        return [Object.keys(ast.exports), script]
+    }
+}();
+
+function defineModule(module, buffer, option) {
     const __filename = option.filename,
         __dirname = option.dir = path.dirname(__filename);
-    let result = compile(source, option);
+    let compiled = compile(buffer);
+    option.exports = compiled[0];
     //console.log(option.filename, result);
-    let ctor = vm.runInThisContext(result, option);
+    let ctor = vm.runInThisContext(compiled[1], option);
 
     module[loadProgress] = co.run(function () {
         initModule(module, option.exports);
@@ -140,21 +168,4 @@ function defineModule(module, source, option) {
         }, __filename, __dirname, moduleDefault, loadProgress);
         return module;
     });
-}
-
-function compile(source, option) {
-    //console.time('parse ' + option.filename);
-    let ast = esprima.parse(source, parseOptions);
-    //console.timeEnd('parse ' + option.filename);
-
-    //console.time('transform');
-    ast = transform(ast, transformOptions);
-    //console.timeEnd('transform');
-
-    //console.time('build');
-    const target = build(ast, buildOptions);
-    //console.timeEnd('build');
-    //fs.writeFileSync(option.filename.replace(/\W+/g, '_') + '.js', target);
-    option.exports = Object.keys(ast.exports);
-    return target;
 }

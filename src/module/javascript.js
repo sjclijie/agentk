@@ -74,9 +74,16 @@ export class Expression {
         return expr;
     }
 
-    call(args) {
+    call(member, args) {
+        let callee;
+        if (typeof member === 'string') {
+            callee = this.member(member);
+        } else {
+            callee = this;
+            args = member;
+        }
         let expr = new Expression(Syntax.CallExpression);
-        expr.callee = this;
+        expr.callee = callee;
         expr.arguments = args;
         return expr;
     }
@@ -89,6 +96,30 @@ export class Expression {
         return expr;
     }
 
+    binary(operator, right) {
+        let expr = new Expression(Syntax.BinaryExpression);
+        expr.left = this;
+        expr.operator = operator;
+        expr.right = right;
+        return expr;
+    }
+
+    unary(operator, prefix = true) {
+        let expr = new Expression(Syntax.UnaryExpression);
+        expr.operator = operator;
+        expr.argument = this;
+        expr.prefix = prefix;
+        return expr;
+    }
+
+    cond(consequent, alternate) {
+        let expr = new Expression(Syntax.ConditionalExpression);
+        expr.test = this;
+        expr.consequent = consequent;
+        expr.alternate = alternate;
+        return expr;
+    }
+
     static id(string) {
         let expr = new Expression(Syntax.Identifier);
         expr.name = string;
@@ -98,22 +129,6 @@ export class Expression {
     static raw(string) {
         let expr = new Expression(Syntax.Literal);
         expr.raw = '' + string;
-        return expr;
-    }
-
-    static unary(operator, argument, prefix = true) {
-        let expr = new Expression(Syntax.UnaryExpression);
-        expr.operator = operator;
-        expr.argument = argument;
-        expr.prefix = prefix;
-        return expr;
-    }
-
-    static binary(left, operator, right) {
-        let expr = new Expression(Syntax.BinaryExpression);
-        expr.left = left;
-        expr.operator = operator;
-        expr.right = right;
         return expr;
     }
 
