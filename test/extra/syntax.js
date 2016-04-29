@@ -1,12 +1,12 @@
 const assert = require('assert'), assertEqual = assert.equal;
 
-// ²âÊÔÔËËã·ûÓÅÏÈ¼¶
+// æµ‹è¯•è¿ç®—ç¬¦ä¼˜å…ˆçº§
 assertEqual((1 + 2) * 3, 9);
 assertEqual(1 + (2 * 3), 7);
 assertEqual(2 + 3 << 4, 80);
 assertEqual(2 + (3 << 4), 50);
 
-// ²âÊÔº¯ÊıÁ¢¼´Á¿
+// æµ‹è¯•å‡½æ•°ç«‹å³é‡
 (function (s) {
     assertEqual(s, 1234);
     return;
@@ -17,12 +17,12 @@ void function (t) {
     assertEqual(t, 2345)
 }(2345);
 
-// ²âÊÔreturn
+// æµ‹è¯•return
 assertEqual(function () {
     return 512 + 105 << 1
 }(), 1234);
 
-// ²âÊÔÓï·¨½á¹¹
+// æµ‹è¯•è¯­æ³•ç»“æ„
 (function () {
     function* test(x) {
         yield x * x;
@@ -40,7 +40,7 @@ assertEqual(function () {
     assertEqual(obj.next().value, 14);
 
 
-    // ²âÊÔif
+    // æµ‹è¯•if
     if (true) {
         assert.ok(true);
     } else {
@@ -116,7 +116,7 @@ assertEqual(function () {
     throw new Error('should not be here')
 })();
 
-// ²âÊÔvar
+// æµ‹è¯•var
 ~function () {
     var x, y, z = 3, w = 4, u = z + w;
     assertEqual(u, 7);
@@ -130,7 +130,7 @@ assertEqual(function () {
     }
 }();
 
-// ²âÊÔnew
+// æµ‹è¯•new
 new function test() {
     assert.ok(this instanceof test);
 };
@@ -140,13 +140,13 @@ assertEqual(new (function () {
     }
 }())(123)['xxx'], 123);
 
-// ²âÊÔ×Ö·û´®Ä£°å
+// æµ‹è¯•å­—ç¬¦ä¸²æ¨¡æ¿
 assertEqual(
     `a${1 + 2} ${`` + 4}`,
     'a3 4'
 );
 
-// ²âÊÔclass
+// æµ‹è¯•class
 class Test {
     base_foo(a) {
         return a + '; Test::base_foo@' + this.id
@@ -206,7 +206,7 @@ const Test2 = class extends Test {
 
 assertEqual(new Test2(33).foo(), 'anonymous::foo; Test::base_foo@33');
 
-// ²âÊÔshorthand
+// æµ‹è¯•shorthand
 assertEqual({test}.test.id, 24);
 assertEqual({
     test() {
@@ -219,14 +219,14 @@ assertEqual({
     }
 }["foo bar"](), 1234);
 
-// ²âÊÔÁ¢¼´Á¿
+// æµ‹è¯•ç«‹å³é‡
 //noinspection BadExpressionStatementJS
 (function () {
     //noinspection BadExpressionStatementJS
     ({test})
 });
 
-// ²âÊÔrest
+// æµ‹è¯•rest
 function withRest(a, b, ...c) {
     return c
 }
@@ -251,7 +251,7 @@ assertEqual(function (a, b = 1, ...c) {
 assertEqual(function (a, ...c) {
 }.length, 1);
 
-// ²âÊÔdefault
+// æµ‹è¯•default
 function withDefault(a, b = 1234, c = a + b) {
     return a * b + c;
 }
@@ -271,17 +271,17 @@ function restOneParam(...c) {
 assertEqual(restOneParam(1234, 5678).join(), '1234,5678');
 
 
-// ²âÊÔÄ£¿éexport
+// æµ‹è¯•æ¨¡å—export
 export {test,WithRest, withDefault as _withDefault}
 export let y = 0, z = 1, w = 2;
 export default function () {
 
 }
 
-// ²âÊÔÄ£¿éimport
+// æµ‹è¯•æ¨¡å—import
 import 'syntax.js';
 import X, * as m1 from 'syntax.js';
-import X, {test as _test, y as _y} from 'syntax.js';
+import X2, {test as _test, y as _y} from 'syntax.js';
 
 setTimeout(function () {
     assertEqual(X, module[moduleDefault]);
@@ -294,16 +294,16 @@ setTimeout(function () {
 
     assertEqual(_test, test);
 
-    // ½â¹¹¸³ÖµĞŞ¸ÄÒıÈë±äÁ¿
+    // è§£æ„èµ‹å€¼ä¿®æ”¹å¼•å…¥å˜é‡
     ({abc: _y} = _test);
 
 });
 
-// ²âÊÔ±í´ïÊ½ĞòÁĞ
+// æµ‹è¯•è¡¨è¾¾å¼åºåˆ—
 w = (1 + 2, 3 + 4);
 assertEqual(w, 7);
 
-// ²âÊÔ½â¹¹¸³Öµ
+// æµ‹è¯•è§£æ„èµ‹å€¼
 let abc, xyz;
 ({abc, xyz = 22} = test);
 assertEqual(abc, 48);
@@ -353,7 +353,7 @@ assertEqual(test.id, 17);
     assertEqual(a, 3);
 })();
 
-// ²âÊÔ¼ıÍ·º¯Êı
+// æµ‹è¯•ç®­å¤´å‡½æ•°
 const arrow = x => {
     return x + 1
 };

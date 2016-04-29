@@ -4,6 +4,7 @@ const Syntax = require('./esprima').Syntax;
 const newlines = '\n'.repeat(128), whitespaces = ' '.repeat(128);
 
 let line = 1, column = 0, buf = '', toIndent = null;
+const inspect = require('util').inspect;
 
 
 function returns() {
@@ -159,7 +160,7 @@ function onStmt(stmt) {
                 appendStart('debugger', stmt);
                 break;
             default:
-                console.log('on statement', stmt);
+                console.error('on statement ' + inspect(stmt, {depth: 10}));
                 throw new Error('unhandled statement type ' + stmt.type);
         }
         append(';');

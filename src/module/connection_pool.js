@@ -3,9 +3,6 @@
  */
 
 const _net = require('net');
-import * as crypto from 'crypto'
-
-const crc32 = crypto.crc32;
 
 /**
  *
@@ -49,14 +46,38 @@ export default class ConnectionPool {
     }
 
     getConnection(key) {
-        const server = key ? findServer(this.servers, crc32(key)) : this.servers[0];
-        return server.factory();
+        return findServer(this.servers, key).factory();
     }
 }
 
+const crc_table = new Uint32Array(256);
+
+for (var i = 0; i < 256; i++) {
+    var c = i;
+    for (var j = 0; j < 8; j++) {
+        var cr = c & 1;
+        c = c >> 1 & 0x7FFFFFFF;
+        if (cr) {
+            c ^= 0xedb88320;
+        }
+    }
+    crc_table[i] = c;
+}
+
+function crc32(input) {
+    input = new Buffer(input, 'binary');
+
+    var initial = -1;
+    for (var i = 0, end = input.length; i < end; i++) {
+        initial = crc_table[initial & 0xFF ^ input[i]] ^ (initial >> 8 & 0xFFFFFF);
+    }
+    return initial;
+}
 
 // 二分查找
-function findServer(servers, hash) {
+function findServer(servers, key) {
+    if (!key) return servers[0];
+    var hash = crc32(key);
     let a = 0, b = servers.length - 1;
     while (a <= b) {
         const mid = a + b >> 1, server = servers[mid], diff = server.hash - hash;

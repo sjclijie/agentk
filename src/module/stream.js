@@ -163,7 +163,7 @@ export class Input {
 
         function onerror(err) {
             for (let resolver of pending) {
-                pending.reject(err);
+                resolver.reject(err);
                 self._buf = {
                     get length() {
                         throw new Error('socket closed')
@@ -173,9 +173,12 @@ export class Input {
             pending.length = 0;
         }
 
-        this._read = function (resolver) {
+        this._wait = function (length) {
+            const resolver = Promise.defer();
+            resolver.required = length;
             pending.push(resolver);
             pending.length === 1 && stream.resume();
+            co.yield(resolver.promise);
         }
     }
 
@@ -186,10 +189,7 @@ export class Input {
     read(length) {
         let buf = this._buf;
         if (buf.length < length) {
-            const resolver = Promise.defer();
-            resolver.required = length;
-            this._read(resolver);
-            co.yield(resolver.promise);
+            this._wait(length);
         }
         buf = this._buf;
         this._buf = buf.slice(length);
@@ -202,10 +202,7 @@ export class Input {
             const idx = buf.length && Array.prototype.indexOf.call(buf, 10, start) + 1;
             if (!idx) {
                 start = buf.length;
-                const resolver = Promise.defer();
-                resolver.required = start + 1;
-                this._read(resolver);
-                co.yield(resolver.promise);
+                this._wait(start + 1);
                 continue;
             }
             this._buf = buf.slice(idx);

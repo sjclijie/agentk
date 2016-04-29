@@ -16,15 +16,10 @@ const build = require('./javascript/builder');
 const transform = require('./javascript/transformer');
 const moduleDefault = Symbol('module default'), loadProgress = Symbol('load progress');
 const co = require('./co');
-const short_names = {};
 
 const definedModules = {}; // name: Primise(module)
 
 exports.cache = definedModules;
-
-exports.register = function (short_name, _path, __dirname) {
-    short_names[short_name] = path.resolve(__dirname || '/', _path)
-}
 
 global.include = function (name) {
     return include(name).then(function (module) {
@@ -35,22 +30,11 @@ global.include = function (name) {
 
 /**
  * @param {String} name full path of the module name
- * @param {String} __dirname full path of the module name
  * @returns {Promise} a promise that resolves the module
  */
-function include(name, __dirname) {
+function include(name) {
     if (!/\.(\w+)$/.test(name)) {
         name += '.js';
-    }
-    if (name[0] === '@') {
-        const idx = name.indexOf('/'), short_name = short_names[idx + 1 ? name.substr(1, idx - 1) : name.substr(1)];
-        if (short_name) {
-            name = idx + 1 ? short_name + name.substr(idx) : short_name;
-        } else {
-            throw new Error(name + ': short name not registered')
-        }
-    } else if (__dirname) {
-        name = path.resolve(__dirname, name);
     }
     if (name in definedModules) return definedModules[name];
 
@@ -123,15 +107,14 @@ function resolveModulePath(dir) {
 
 // returns: [exports, script]
 const compile = function () {
-    let cache;
+    let compiled;
     try {
-        cache = _load('node-shared-cache', {paths: module.paths.concat(resolveModulePath(process.cwd()))})
+        let cache = _load('node-shared-cache', {paths: module.paths.concat(resolveModulePath(process.cwd()))})
+        // make a 8MB memory cache
+        compiled = new cache.Cache('ak_compiled', 8 << 20, cache.SIZE_2K);
     } catch (e) {
         return compile;
     }
-
-    // make a 8MB memory cache
-    let compiled = new cache.Cache('ak_compiled', 8 << 20, cache.SIZE_2K);
 
     const crypto = require('crypto');
     return function (buffer) {
@@ -150,7 +133,12 @@ const compile = function () {
 function defineModule(module, buffer, option) {
     const __filename = option.filename,
         __dirname = option.dir = path.dirname(__filename);
-    let compiled = compile(buffer);
+    let compiled;
+    try {
+        compiled = compile(buffer);
+    } catch (e) {
+        throw new Error('failed parsing ' + __filename + ': ' + e.message)
+    }
     option.exports = compiled[0];
     //console.log(option.filename, result);
     let ctor = vm.runInThisContext(compiled[1], option);
@@ -164,7 +152,7 @@ function defineModule(module, buffer, option) {
         ctor(module, co, function (path) {
             return _load(path, option)
         }, function (name) {
-            return co.yield(include(name, __dirname))
+            return co.yield(include(path.resolve(__dirname, name)))
         }, __filename, __dirname, moduleDefault, loadProgress);
         return module;
     });

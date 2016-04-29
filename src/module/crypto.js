@@ -75,31 +75,3 @@ function _cipher(cipher, input, padding) {
         buf2.length ? Buffer.concat([buf1, buf2]) : buf1
         : buf2;
 }
-
-const crc_table = new Uint32Array(256);
-
-for (var i = 0; i < 256; i++) {
-    var c = i;
-    for (var j = 0; j < 8; j++) {
-        var cr = c & 1;
-        c = c >> 1 & 0x7FFFFFFF;
-        if (cr) {
-            c ^= 0xedb88320;
-        }
-    }
-    crc_table[i] = c;
-}
-
-
-function hash_crc32(buf, initial) {
-    for (let i = 0, end = buf.length; i < end; i++) {
-        initial = crc_table[initial & 0xFF ^ buf[i]] ^ (initial >> 8 & 0xFFFFFF);
-    }
-    return initial;
-}
-
-export function crc32(input, encoding) {
-    if (typeof input === 'string')
-        input = new Buffer(input, encoding || 'utf8');
-    return hash_crc32(input, -1)
-}

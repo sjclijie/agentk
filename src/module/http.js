@@ -75,7 +75,7 @@ export class Headers {
      *
      * @param {string} name
      */
-    ["delete"] (name) {
+    ["delete"](name) {
         let key = ('' + name).toLowerCase();
         if (key in this._entries) {
             delete this._entries[key]
@@ -360,11 +360,29 @@ export class Request extends Body {
 
     //noinspection InfiniteRecursionJS
     /**
+     * @param {String} scheme
+     */
+    set scheme(scheme) {
+        parseUrl(this);
+        this.scheme = scheme;
+    }
+
+    //noinspection InfiniteRecursionJS
+    /**
      * @returns {String} request host, like `"www.example.com:80"`
      */
     get host() {
         parseUrl(this);
         return this.host;
+    }
+
+    //noinspection InfiniteRecursionJS
+    /**
+     * @param {String} host
+     */
+    set host(host) {
+        parseUrl(this);
+        this.host = host;
     }
 
     //noinspection InfiniteRecursionJS
@@ -400,8 +418,8 @@ export class Request extends Body {
         return this.originalPathname
     }
 
+    //noinspection InfiniteRecursionJS
     /**
-     *
      * @param {String} pathname
      */
     set pathname(pathname) {
@@ -418,8 +436,8 @@ export class Request extends Body {
         return this.search
     }
 
+    //noinspection InfiniteRecursionJS
     /**
-     *
      * @param {String} search
      */
     set search(search) {
@@ -708,7 +726,8 @@ export function fetch(url, options) {
     let http_host, https;
     let _agent = agent;
 
-    let parsedUrl = ourl.parse(req._url);
+
+    let parsedUrl = ourl.parse(req.url);
     https = parsedUrl.protocol === 'https:';
     if (https) _agent = new ohttps.Agent(options);
     if (parsedUrl.protocol === 'unix:') {
@@ -775,14 +794,6 @@ export function fetch(url, options) {
     }
 }
 
-
-function handleRequestOptions(options) {
-    const headers = options.headers || (options.headers = {});
-    'User-Agent' in headers || (headers['User-Agent'] = client_ua);
-    'agent' in options || (options.agent = agent);
-
-}
-
 /**
  * Build a http query string from a key-value map
  *
@@ -828,8 +839,10 @@ function parseUrl(req) {
     let url = ourl.parse(req._url, true);
     Object.defineProperties(req, {
         scheme: {
+            writable: true,
             value: url.protocol
         }, host: {
+            writable: true,
             value: url.host
         }, hostname: {
             value: url.hostname
@@ -845,6 +858,11 @@ function parseUrl(req) {
             value: url.search
         }, query: {
             value: url.query
+        },
+        url: {
+            get: function () {
+                return `${this.scheme}//${this.host}${this.pathname}${this.search}`
+            }
         }
     })
 }

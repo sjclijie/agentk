@@ -37,7 +37,9 @@ exports.run = function (programDir) {
         const waits = {};
         process.on('message', function (msg) {
             if (manifest.action && msg.action === 'trigger' && msg.cmd in manifest.action) {
-                co.run(onAction, msg.cmd).done();
+                include(path.resolve(programDir, manifest.action[msg.cmd])).then(function (module) {
+                    return co.run(module[msg.cmd])
+                }).done();
             } else if (msg.ack) {
                 let cb = waits[msg.ack];
                 if (cb) {
@@ -56,9 +58,6 @@ exports.run = function (programDir) {
         };
     }
     exports.load(main).done();
-    function onAction(action) {
-        co.yield(exports.load(path.resolve(programDir, manifest.action[action])))[action]();
-    }
 };
 
 if (process.mainModule === module) {

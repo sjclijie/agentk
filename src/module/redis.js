@@ -5,10 +5,6 @@
 import ConnectionPool from 'connection_pool';
 
 const SlowBuffer = require('buffer').SlowBuffer;
-const CONNECT = 'connect', AUTH = 'auth', CONNECTED = 'connected', FREE = 'free', ERROR = 'error';
-
-const DRAIN = Symbol('drain');
-const search = [].indexOf;
 
 const assert = require('assert');
 
@@ -261,15 +257,12 @@ export class Pooled extends Context {
 
 const _url = require('url');
 
-const pools = {};
 
 export function pool(url) {
-    if (url in pools) return pools[url];
+    const {query: {connections}, auth, hostname, port} = _url.parse(url, true);
 
-    let parsed = _url.parse(url, true);
-
-    return pools[url] = new Pooled(
-        new ConnectionPool([`${parsed.hostname || '127.0.0.1'}:${parsed.port || 6379}`], parsed.query.connections),
-        parsed.auth
+    return new Pooled(
+        new ConnectionPool([`${hostname || '127.0.0.1'}:${port || 6379}`], connections),
+        auth
     );
 }
