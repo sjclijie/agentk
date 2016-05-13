@@ -1,124 +1,237 @@
+
 <!doctype html>
 <html>
 <head>
-    <title>child_process -- AgentK Documentation Generator</title>
+    <title>Wrapper for child process
+ -- AgentK document generator</title>
     <link rel="stylesheet" href="doc.css"/>
 </head>
-<body class="frames">
-<ul>
-    <li><a href="channel.html" title="cross process message gathering and dispatching system">channel</a></li>
-    <li>child_process</li>
-    <li><a href="crypto.html">crypto</a></li>
-    <li><a href="doc.html" title="AgentK documentation generator">doc</a></li>
-    <li><a href="file.html">file</a></li>
-    <li><a href="fs_cache.html" title="file system cache handler">fs_cache</a></li>
-    <li><a href="gbk.html">gbk</a></li>
-    <li><a href="http.html">http</a></li>
-    <li><a href="legacy.html" title="Legacy support module">legacy</a></li>
-    <li><a href="router.html">router</a></li>
-    <li><a href="static_file.html" title="static file request handler">static_file</a></li>
-    <li><a href="stream.html" title="utils for stream consumption">stream</a></li>
-    <li><a href="test.html">test</a></li>
-    <li><a href="view.html">view</a></li>
-    <li><a href="xml.html">xml</a></li>
-    <li><a href="zlib.html">zlib</a></li>
+<body>
+<menu>
     
-</ul>
-<div class="content">
-<h1>child_process</h1>
-
-<p>Wrapper for child process
- </p>
-
-
-
-<div class="meta-description">
+    <li>
+        <a href="channel.html" title="cross process message gathering and dispatching system
+"
+           class="">channel</a>
+    </li>
     
-</div>
-
-
-
-
-
-
-<ul>
+    <li>
+        <a href="child_process.html" title="Wrapper for child process
+"
+           class="current">child_process</a>
+    </li>
+    
+    <li>
+        <a href="connection_pool.html" title="Module connection_pool"
+           class="">connection_pool</a>
+    </li>
+    
+    <li>
+        <a href="crypto.html" title="Module crypto"
+           class="">crypto</a>
+    </li>
+    
+    <li>
+        <a href="daemon.html" title="Module daemon"
+           class="">daemon</a>
+    </li>
+    
+    <li>
+        <a href="doc.html" title="AgentK documentation generator
+"
+           class="">doc</a>
+    </li>
+    
+    <li>
+        <a href="file.html" title="Module file"
+           class="">file</a>
+    </li>
+    
+    <li>
+        <a href="fs_cache.html" title="file system cache handler
+"
+           class="">fs_cache</a>
+    </li>
+    
+    <li>
+        <a href="gbk.html" title="Module gbk"
+           class="">gbk</a>
+    </li>
+    
+    <li>
+        <a href="handlebars.html" title="Fast Handlebars Helper
+"
+           class="">handlebars</a>
+    </li>
+    
+    <li>
+        <a href="http.html" title="Module http"
+           class="">http</a>
+    </li>
+    
+    <li>
+        <a href="https.html" title="Module https"
+           class="">https</a>
+    </li>
+    
+    <li>
+        <a href="javascript.html" title="Module javascript"
+           class="">javascript</a>
+    </li>
+    
+    <li>
+        <a href="legacy.html" title="Legacy support module
+"
+           class="">legacy</a>
+    </li>
+    
+    <li>
+        <a href="logger.html" title="Logging helper
+"
+           class="">logger</a>
+    </li>
+    
+    <li>
+        <a href="lru_cache.html" title="Module lru_cache"
+           class="">lru_cache</a>
+    </li>
+    
+    <li>
+        <a href="mock.html" title="Module mock"
+           class="">mock</a>
+    </li>
+    
+    <li>
+        <a href="mysql.html" title="Module mysql"
+           class="">mysql</a>
+    </li>
+    
+    <li>
+        <a href="redis.html" title="Redis Client
+"
+           class="">redis</a>
+    </li>
+    
+    <li>
+        <a href="router.html" title="Module router"
+           class="">router</a>
+    </li>
+    
+    <li>
+        <a href="session.html" title="Module session"
+           class="">session</a>
+    </li>
+    
+    <li>
+        <a href="smtp.html" title="Module smtp"
+           class="">smtp</a>
+    </li>
+    
+    <li>
+        <a href="static_file.html" title="static file request handler
+"
+           class="">static_file</a>
+    </li>
+    
+    <li>
+        <a href="stream.html" title="utils for stream consumption
+"
+           class="">stream</a>
+    </li>
+    
+    <li>
+        <a href="test.html" title="Module test"
+           class="">test</a>
+    </li>
+    
+    <li>
+        <a href="view.html" title="Module view"
+           class="">view</a>
+    </li>
+    
+    <li>
+        <a href="websocket.html" title="Module websocket"
+           class="">websocket</a>
+    </li>
+    
+    <li>
+        <a href="wechat.html" title="Module wechat"
+           class="">wechat</a>
+    </li>
+    
+    <li>
+        <a href="xml.html" title="Module xml"
+           class="">xml</a>
+    </li>
+    
+    <li>
+        <a href="zlib.html" title="Module zlib"
+           class="">zlib</a>
+    </li>
+    
+    <li>
+        <a href="zookeeper.html" title="Module zookeeper"
+           class="">zookeeper</a>
+    </li>
+    
+</menu>
+<section>
+    <h1>Wrapper for child process
+</h1>
     
     
-    <li><a href="#fun-fork">function fork(module, options) </a></li><li><a href="#fun-exec">function exec(cmd, options) </a></li>
     
-</ul>
-
-<dl id="definitions">
-
-    <dt id="fun-fork">
-        <div>fork()</div><sub>method</sub>
-    </dt>
-    <dd>
-        <p class="proto">function fork(module, options) 
-        <p class="desc">
-            <p> Creates a new Node.JS process and runs the specific node module. See: <a href="https://nodejs.org/api/child_process.html#child_process_child_process_fork_modulepath_args_options">child_process.fork</a>
- for more information about process creation.</p>
-        </p>
-
+    
+    
+    <h2>functions</h2>
+    <dl>
         
-
-        
-
-        
-        <h4>Parameters</h4>
-        <dl>
+        <dt class="function">exec<sub>function exec(cmd, options = {})</sub></dt>
+        <dd>
             
-            <dt>module <code>string</code></dt>
+            <article><p>Runs a shell command and returns its output, throws if command failed</p></article>
             
-            <dd><p>bootstrap module path (filename or directory with a <code>package.json</code> present)</p></dd>
-            <dt><sub>optional</sub>options <code>object</code></dt>
             
-            <dd><p>optional arguments</p>
-
-<ul><li>options.directory: working directory</li><li>options.stdout: stdout file path to be forwarded</li><li>options.stderr: stderr file path to be forwarded</li><li>options.ipc: create a ipc channel (which enables <code>child_process.send</code> and <code>process.send</code>)</li><li>options.detached: child process is a new process group</li><li>options.uid: setuid</li><li>options.gid: setgid</li><li>options.env: environment variables</li><li>options.args: extra arguments</li></ul></dd>
-        </dl>
-        
-        
-        <h4>Returns<code><a href="https://nodejs.org/api/child_process.html#child_process_class_childprocess">ChildProcess</a></code></h4>
-        
-        
-    </dd>
-
-    <dt id="fun-exec">
-        <div>exec()</div><sub>method</sub>
-    </dt>
-    <dd>
-        <p class="proto">function exec(cmd, options) 
-        <p class="desc">
-            <p> Runs a shell command and returns its output, throws if command failed</p>
-        </p>
-
-        
-
-        
-
-        
-        <h4>Parameters</h4>
-        <dl>
             
-            <dt>cmd <code>string</code></dt>
+            <h3>parameters</h3>
             
-            <dd><p>command string to be executed</p></dd>
-            <dt><sub>optional</sub>options <code>object</code></dt>
+            <h4>cmd <sub>:<span class="primitive">string</span></sub></h4>
+            <article><p>command string to be executed</p></article>
             
-            <dd><p>optional arguments</p>
+            <h4>options <sub>:<span class="primitive">object</span></sub></h4>
+            <article><p>optional arguments</p>
 
-<ul><li>options.uid: setuid</li><li>options.gid: setgid</li><li>options.env: environment variables</li></ul></dd>
-        </dl>
+<ul><li>options.uid: setuid</li><li>options.gid: setgid</li><li>options.env: environment variables</li></ul></article>
+            
+            
+        </dd>
         
-        
-        <h4>Returns<code>Array</code></h4>
-        <p><code>[stdout, stderr]</code></p>
-        
-    </dd>
+        <dt class="function">fork<sub>function fork(module, options = {})</sub></dt>
+        <dd>
+            
+            <article><p>Creates a new Node.JS process and runs the specific node module. See: <a href="https://nodejs.org/api/child_process.html#child_process_child_process_fork_modulepath_args_options">child_process.fork</a>
+for more information about process creation.</p></article>
+            
+            
+            
+            <h3>parameters</h3>
+            
+            <h4>module <sub>:<span class="primitive">string</span></sub></h4>
+            <article><p>bootstrap module path (filename or directory with a <code>package.json</code> present)</p></article>
+            
+            <h4>options <sub>:<span class="primitive">object</span></sub></h4>
+            <article><p>optional arguments</p>
 
-</dl>
+<ul><li>options.directory: working directory</li><li>options.stdout: stdout file path to be forwarded</li><li>options.stderr: stderr file path to be forwarded</li><li>options.ipc: create a ipc channel (which enables <code>child_process.send</code> and <code>process.send</code>)</li><li>options.detached: child process is a new process group</li><li>options.uid: setuid</li><li>options.gid: setgid</li><li>options.env: environment variables</li><li>options.args: extra arguments</li></ul></article>
+            
+            
+        </dd>
+        
+    </dl>
+    
 
-</div>
+    
+
+</section>
 </body>
 </html>

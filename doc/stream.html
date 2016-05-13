@@ -1,124 +1,294 @@
+
 <!doctype html>
 <html>
 <head>
-    <title>stream -- AgentK Documentation Generator</title>
+    <title>utils for stream consumption
+ -- AgentK document generator</title>
     <link rel="stylesheet" href="doc.css"/>
 </head>
-<body class="frames">
-<ul>
-    <li><a href="channel.html" title="cross process message gathering and dispatching system">channel</a></li>
-    <li><a href="child_process.html" title="Wrapper for child process">child_process</a></li>
-    <li><a href="crypto.html">crypto</a></li>
-    <li><a href="doc.html" title="AgentK documentation generator">doc</a></li>
-    <li><a href="file.html">file</a></li>
-    <li><a href="fs_cache.html" title="file system cache handler">fs_cache</a></li>
-    <li><a href="gbk.html">gbk</a></li>
-    <li><a href="http.html">http</a></li>
-    <li><a href="legacy.html" title="Legacy support module">legacy</a></li>
-    <li><a href="router.html">router</a></li>
-    <li><a href="static_file.html" title="static file request handler">static_file</a></li>
-    <li>stream</li>
-    <li><a href="test.html">test</a></li>
-    <li><a href="view.html">view</a></li>
-    <li><a href="xml.html">xml</a></li>
-    <li><a href="zlib.html">zlib</a></li>
+<body>
+<menu>
     
-</ul>
-<div class="content">
-<h1>stream</h1>
-
-<p>utils for stream consumption
- </p>
-
-
-
-<div class="meta-description">
+    <li>
+        <a href="channel.html" title="cross process message gathering and dispatching system
+"
+           class="">channel</a>
+    </li>
     
-</div>
-
-
-
-
-
-
-<ul>
+    <li>
+        <a href="child_process.html" title="Wrapper for child process
+"
+           class="">child_process</a>
+    </li>
+    
+    <li>
+        <a href="connection_pool.html" title="Module connection_pool"
+           class="">connection_pool</a>
+    </li>
+    
+    <li>
+        <a href="crypto.html" title="Module crypto"
+           class="">crypto</a>
+    </li>
+    
+    <li>
+        <a href="daemon.html" title="Module daemon"
+           class="">daemon</a>
+    </li>
+    
+    <li>
+        <a href="doc.html" title="AgentK documentation generator
+"
+           class="">doc</a>
+    </li>
+    
+    <li>
+        <a href="file.html" title="Module file"
+           class="">file</a>
+    </li>
+    
+    <li>
+        <a href="fs_cache.html" title="file system cache handler
+"
+           class="">fs_cache</a>
+    </li>
+    
+    <li>
+        <a href="gbk.html" title="Module gbk"
+           class="">gbk</a>
+    </li>
+    
+    <li>
+        <a href="handlebars.html" title="Fast Handlebars Helper
+"
+           class="">handlebars</a>
+    </li>
+    
+    <li>
+        <a href="http.html" title="Module http"
+           class="">http</a>
+    </li>
+    
+    <li>
+        <a href="https.html" title="Module https"
+           class="">https</a>
+    </li>
+    
+    <li>
+        <a href="javascript.html" title="Module javascript"
+           class="">javascript</a>
+    </li>
+    
+    <li>
+        <a href="legacy.html" title="Legacy support module
+"
+           class="">legacy</a>
+    </li>
+    
+    <li>
+        <a href="logger.html" title="Logging helper
+"
+           class="">logger</a>
+    </li>
+    
+    <li>
+        <a href="lru_cache.html" title="Module lru_cache"
+           class="">lru_cache</a>
+    </li>
+    
+    <li>
+        <a href="mock.html" title="Module mock"
+           class="">mock</a>
+    </li>
+    
+    <li>
+        <a href="mysql.html" title="Module mysql"
+           class="">mysql</a>
+    </li>
+    
+    <li>
+        <a href="redis.html" title="Redis Client
+"
+           class="">redis</a>
+    </li>
+    
+    <li>
+        <a href="router.html" title="Module router"
+           class="">router</a>
+    </li>
+    
+    <li>
+        <a href="session.html" title="Module session"
+           class="">session</a>
+    </li>
+    
+    <li>
+        <a href="smtp.html" title="Module smtp"
+           class="">smtp</a>
+    </li>
+    
+    <li>
+        <a href="static_file.html" title="static file request handler
+"
+           class="">static_file</a>
+    </li>
+    
+    <li>
+        <a href="stream.html" title="utils for stream consumption
+"
+           class="current">stream</a>
+    </li>
+    
+    <li>
+        <a href="test.html" title="Module test"
+           class="">test</a>
+    </li>
+    
+    <li>
+        <a href="view.html" title="Module view"
+           class="">view</a>
+    </li>
+    
+    <li>
+        <a href="websocket.html" title="Module websocket"
+           class="">websocket</a>
+    </li>
+    
+    <li>
+        <a href="wechat.html" title="Module wechat"
+           class="">wechat</a>
+    </li>
+    
+    <li>
+        <a href="xml.html" title="Module xml"
+           class="">xml</a>
+    </li>
+    
+    <li>
+        <a href="zlib.html" title="Module zlib"
+           class="">zlib</a>
+    </li>
+    
+    <li>
+        <a href="zookeeper.html" title="Module zookeeper"
+           class="">zookeeper</a>
+    </li>
+    
+</menu>
+<section>
+    <h1>utils for stream consumption
+</h1>
     
     
-    <li><a href="#fun-read">function read(incoming) </a></li><li><a href="#fun-iterator">function iterator(incoming) </a></li>
     
-</ul>
-
-<dl id="definitions">
-
-    <dt id="fun-read">
-        <div>read()</div><sub>method</sub>
-    </dt>
-    <dd>
-        <p class="proto">function read(incoming) 
-        <p class="desc">
-            <p> Read stream&#39;s contents</p>
-        </p>
-
+    
+    
+    <h2>functions</h2>
+    <dl>
         
-
-        
-        <h4>Example</h4>
-        <pre> let incoming = http.request(...);
- let content = stream.read(incoming);
-</pre>
-        
-
-        
-        <h4>Parameters</h4>
-        <dl>
+        <dt class="function">iterator<sub>function iterator(incoming)</sub></dt>
+        <dd>
             
-            <dt>incoming <code><a href="https://nodejs.org/api/stream.html#stream_class_stream_readable">stream.Readable</a></code></dt>
+            <article><p>Create an iterator which yields when stream has contents available</p></article>
             
-            <dd><p>stream to be read</p></dd>
-        </dl>
-        
-        
-        <h4>Returns<code><a href="https://nodejs.org/api/buffer.html#buffer_class_buffer">Buffer</a></code></h4>
-        <p>contents read</p>
-        
-    </dd>
-
-    <dt id="fun-iterator">
-        <div>iterator()</div><sub>method</sub>
-    </dt>
-    <dd>
-        <p class="proto">function iterator(incoming) 
-        <p class="desc">
-            <p> Create an iterator which yields when stream has contents available</p>
-        </p>
-
-        
-
-        
-        <h4>Example</h4>
-        <pre> let incoming = ...;
- for(let buf of stream.iterator(incoming)) {
-     ...
- }
-</pre>
-        
-
-        
-        <h4>Parameters</h4>
-        <dl>
             
-            <dt>incoming <code><a href="https://nodejs.org/api/stream.html#stream_class_stream_readable">stream.Readable</a></code></dt>
+            <fieldset class="example">
+                <legend>Example</legend>
+                <code><span class="kw">let</span> incoming = ...;
+<span class="kw">for</span>(<span class="kw">let</span> buf <span class="kw">of</span> stream.iterator(incoming)) {
+    ...
+}</code>
+            </fieldset>
             
-        </dl>
+            
+            <h3>parameters</h3>
+            
+            <h4>incoming <sub>:<a href="https://nodejs.org/api/stream.html#stream_class_">stream::stream</a>::<a href="stream.html#class-Readable">stream::Readable</a></sub></h4>
+            <article></article>
+            
+            
+        </dd>
         
+        <dt class="function">read<sub>function read(incoming)</sub></dt>
+        <dd>
+            
+            <article><p>Read stream&#39;s contents</p></article>
+            
+            
+            <fieldset class="example">
+                <legend>Example</legend>
+                <code><span class="kw">let</span> incoming = http.request(...);
+<span class="kw">let</span> content = stream.read(incoming);</code>
+            </fieldset>
+            
+            
+            <h3>parameters</h3>
+            
+            <h4>incoming <sub>:<a href="https://nodejs.org/api/stream.html#stream_class_">stream::stream</a>::<a href="stream.html#class-Readable">stream::Readable</a></sub></h4>
+            <article><p>stream to be read</p></article>
+            
+            
+        </dd>
         
-        <h4>Returns<code><a href="#class-Iterator">Iterator</a></code></h4>
-        <p>iterator which can be used in for...of</p>
-        
-    </dd>
+    </dl>
+    
 
-</dl>
+    
+    <h2>classes</h2>
+    <dl>
+        
+        <dt class="function" id="class-Input">Input
+            
+        </dt>
+        <dd>
+            
+            
+            
+        </dd>
+        <dt>
+            
+            Input::constructor</dt>
+        <dd>
+            
+            
+            
+            
+            
+        </dd>
+        <dt>
+            
+            Input::available</dt>
+        <dd>
+            
+            
+            
+            
+            
+        </dd>
+        <dt>
+            
+            Input::read</dt>
+        <dd>
+            
+            
+            
+            
+            
+        </dd>
+        <dt>
+            
+            Input::readLine</dt>
+        <dd>
+            
+            
+            
+            
+            
+        </dd>
+        
+    </dl>
+    
 
-</div>
+</section>
 </body>
 </html>

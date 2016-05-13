@@ -1,1144 +1,1137 @@
+
 <!doctype html>
 <html>
 <head>
-    <title>http -- AgentK Documentation Generator</title>
+    <title>Module http -- AgentK document generator</title>
     <link rel="stylesheet" href="doc.css"/>
 </head>
-<body class="frames">
-<ul>
-    <li><a href="channel.html" title="cross process message gathering and dispatching system">channel</a></li>
-    <li><a href="child_process.html" title="Wrapper for child process">child_process</a></li>
-    <li><a href="crypto.html">crypto</a></li>
-    <li><a href="doc.html" title="AgentK documentation generator">doc</a></li>
-    <li><a href="file.html">file</a></li>
-    <li><a href="fs_cache.html" title="file system cache handler">fs_cache</a></li>
-    <li><a href="gbk.html">gbk</a></li>
-    <li>http</li>
-    <li><a href="legacy.html" title="Legacy support module">legacy</a></li>
-    <li><a href="router.html">router</a></li>
-    <li><a href="static_file.html" title="static file request handler">static_file</a></li>
-    <li><a href="stream.html" title="utils for stream consumption">stream</a></li>
-    <li><a href="test.html">test</a></li>
-    <li><a href="view.html">view</a></li>
-    <li><a href="xml.html">xml</a></li>
-    <li><a href="zlib.html">zlib</a></li>
+<body>
+<menu>
     
-</ul>
-<div class="content">
-<h1>http</h1>
-
-
-
-<div class="meta-description">
-    <p> Wrapper for http server/client API.</p>
-</div>
-
-
-
-
-
-
-<ul>
-    <li>constant <a href="#agent">agent</a>:<code><a href="https://nodejs.org/api/http.html#http_class_http_agent">http.Agent</a></code></li>
-    <li>variable <a href="#client_ua">client_ua</a>:<code>string</code></li>
-    <li><a href="#class-Headers">function Headers(headers) </a> <b>constructor</b></li><li><a href="#fun-Headers-append">function Headers::append(name, value) </a></li><li><a href="#fun-Headers-set">function Headers::set(name, value) </a></li><li><a href="#fun-Headers-["delete"]">function Headers::["delete"](name) </a></li><li><a href="#fun-Headers-forEach">function Headers::forEach(cb) </a></li><li><a href="#fun-Headers-get">function Headers::get(name) </a></li><li><a href="#fun-Headers-getAll">function Headers::getAll(name) </a></li><li><a href="#fun-Headers-has">function Headers::has(name) </a></li><li><a href="#fun-Headers-entries">function Headers::entries() </a></li><li><a href="#fun-Headers-keys">function Headers::keys() </a></li><li><a href="#fun-Headers-values">function Headers::values() </a></li><li><a href="#fun-Headers-[Symbol.iterator]">function Headers::[Symbol.iterator]() </a></li><li><a href="#class-Body">function Body(body) </a> <b>constructor</b></li><li><a href="#fun-Body-text">function Body::text() </a></li><li><a href="#fun-Body-json">function Body::json() </a></li><li><a href="#fun-Body-arrayBuffer">function Body::arrayBuffer() </a></li><li><a href="#fun-Body-buffer">function Body::buffer() </a></li><li><a href="#get-Body-stream">get Body::stream() </a></li><li><a href="#class-Request">function Request(url, options) </a> <b>constructor</b></li><li><a href="#get-Request-method">get Request::method() </a></li><li><a href="#get-Request-url">get Request::url() </a></li><li><a href="#get-Request-headers">get Request::headers() </a></li><li><a href="#get-Request-scheme">get Request::scheme() </a></li><li><a href="#get-Request-host">get Request::host() </a></li><li><a href="#get-Request-hostname">get Request::hostname() </a></li><li><a href="#get-Request-port">get Request::port() </a></li><li><a href="#get-Request-pathname">get Request::pathname() </a></li><li><a href="#set-Request-pathname">set Request::pathname(pathname) </a></li><li><a href="#get-Request-search">get Request::search() </a></li><li><a href="#get-Request-query">get Request::query() </a></li><li><a href="#get-Request-cookies">get Request::cookies() </a></li><li><a href="#class-Response">function Response(body, options) </a> <b>constructor</b></li><li><a href="#get-Response-ok">get Response::ok() </a></li><li><a href="#get-Response-headers">get Response::headers() </a></li><li><a href="#fun-Response-setCookie">function Response::setCookie(name, value, options) </a></li><li><a href="#fun-Response-error">function Response.error(status, reason) </a><b>static</b></li><li><a href="#fun-Response-json">function Response.json(obj) </a><b>static</b></li><li><a href="#fun-Response-redirect">function Response.redirect(url) </a><b>static</b></li><li><a href="#fun-Response-file">function Response.file(file) </a><b>static</b></li><li><a href="#fun-listen">function listen(port, cb, host, backlog) </a></li><li><a href="#fun-fetch">function fetch(url, options) </a></li><li><a href="#fun-buildQuery">function buildQuery(obj) </a></li><li><a href="#fun-parseQuery">function parseQuery(query) </a></li>
+    <li>
+        <a href="channel.html" title="cross process message gathering and dispatching system
+"
+           class="">channel</a>
+    </li>
     
-</ul>
-
-<dl id="definitions">
-
-    <dt id="agent">
-    <div>agent</div>
-    <sub>constant</sub>
-    </dt>
-    <dd>
-        <p class="proto">agent:<code><a href="https://nodejs.org/api/http.html#http_class_http_agent">http.Agent</a></code>
-
-        <p class="desc">
-            <p> default agent for http request. You can set
- maximum socket per host when calling request</p>
-        </p>
-
+    <li>
+        <a href="child_process.html" title="Wrapper for child process
+"
+           class="">child_process</a>
+    </li>
+    
+    <li>
+        <a href="connection_pool.html" title="Module connection_pool"
+           class="">connection_pool</a>
+    </li>
+    
+    <li>
+        <a href="crypto.html" title="Module crypto"
+           class="">crypto</a>
+    </li>
+    
+    <li>
+        <a href="daemon.html" title="Module daemon"
+           class="">daemon</a>
+    </li>
+    
+    <li>
+        <a href="doc.html" title="AgentK documentation generator
+"
+           class="">doc</a>
+    </li>
+    
+    <li>
+        <a href="file.html" title="Module file"
+           class="">file</a>
+    </li>
+    
+    <li>
+        <a href="fs_cache.html" title="file system cache handler
+"
+           class="">fs_cache</a>
+    </li>
+    
+    <li>
+        <a href="gbk.html" title="Module gbk"
+           class="">gbk</a>
+    </li>
+    
+    <li>
+        <a href="handlebars.html" title="Fast Handlebars Helper
+"
+           class="">handlebars</a>
+    </li>
+    
+    <li>
+        <a href="http.html" title="Module http"
+           class="current">http</a>
+    </li>
+    
+    <li>
+        <a href="https.html" title="Module https"
+           class="">https</a>
+    </li>
+    
+    <li>
+        <a href="javascript.html" title="Module javascript"
+           class="">javascript</a>
+    </li>
+    
+    <li>
+        <a href="legacy.html" title="Legacy support module
+"
+           class="">legacy</a>
+    </li>
+    
+    <li>
+        <a href="logger.html" title="Logging helper
+"
+           class="">logger</a>
+    </li>
+    
+    <li>
+        <a href="lru_cache.html" title="Module lru_cache"
+           class="">lru_cache</a>
+    </li>
+    
+    <li>
+        <a href="mock.html" title="Module mock"
+           class="">mock</a>
+    </li>
+    
+    <li>
+        <a href="mysql.html" title="Module mysql"
+           class="">mysql</a>
+    </li>
+    
+    <li>
+        <a href="redis.html" title="Redis Client
+"
+           class="">redis</a>
+    </li>
+    
+    <li>
+        <a href="router.html" title="Module router"
+           class="">router</a>
+    </li>
+    
+    <li>
+        <a href="session.html" title="Module session"
+           class="">session</a>
+    </li>
+    
+    <li>
+        <a href="smtp.html" title="Module smtp"
+           class="">smtp</a>
+    </li>
+    
+    <li>
+        <a href="static_file.html" title="static file request handler
+"
+           class="">static_file</a>
+    </li>
+    
+    <li>
+        <a href="stream.html" title="utils for stream consumption
+"
+           class="">stream</a>
+    </li>
+    
+    <li>
+        <a href="test.html" title="Module test"
+           class="">test</a>
+    </li>
+    
+    <li>
+        <a href="view.html" title="Module view"
+           class="">view</a>
+    </li>
+    
+    <li>
+        <a href="websocket.html" title="Module websocket"
+           class="">websocket</a>
+    </li>
+    
+    <li>
+        <a href="wechat.html" title="Module wechat"
+           class="">wechat</a>
+    </li>
+    
+    <li>
+        <a href="xml.html" title="Module xml"
+           class="">xml</a>
+    </li>
+    
+    <li>
+        <a href="zlib.html" title="Module zlib"
+           class="">zlib</a>
+    </li>
+    
+    <li>
+        <a href="zookeeper.html" title="Module zookeeper"
+           class="">zookeeper</a>
+    </li>
+    
+</menu>
+<section>
+    <h1>Module http</h1>
+    
+    <article class="description"><p>Wrapper for http server/client API.</p></article>
+    
+    
+    
+    <h2>constants</h2>
+    <dl>
         
-    </dd>
-
-    <dt id="client_ua">
-        <div>client_ua</div>
-        <sub>variable</sub>
-    </dt>
-    <dd>
-        <p class="proto">client_ua:<code>string</code>
-
-        <p class="desc">
-            <p> default User Agent for http request</p>
-        </p>
-
-        
-    </dd>
-
-    <dt id="class-Headers">
-        <div>Headers()</div><sub>class</sub>
-    </dt>
-    <dd>
-        <p class="proto">function Headers(headers) 
-        <p class="desc">
-            <p> Headers represents a set of name-value pairs which will be used in:
-  - client request object
-  - remote server response
-  - server request event</p>
-        </p>
-
-        
-
-        
-
-        
-        <h4>Parameters</h4>
-        <dl>
+        <dt class="&lt;a href=&#34;https://nodejs.org/api/http.html#http_class_http_agent&#34;&gt;http::Agent&lt;/a&gt;">agent<sub class="type"><a href="https://nodejs.org/api/http.html#http_class_http_agent">http::Agent</a></sub></dt>
+        <dd>
             
-            <dt><sub>optional</sub>headers <code>object</code></dt>
+            <article><p>default agent for http request. You can set
+maximum socket per host when calling request</p></article>
             
-            <dd><p>initial name-value map of headers
-     </p></dd>
-        </dl>
-        
-        
-    </dd>
-
-    <dt id="fun-Headers-append">
-        <div>append()</div><sub>method</sub>
-    </dt>
-    <dd>
-        <p class="proto">function Headers::append(name, value) 
-        <p class="desc">
-            <p> Appends an entry to the object.</p>
-        </p>
-
-        
-
-        
-
-        
-        <h4>Parameters</h4>
-        <dl>
             
-            <dt>name <code>string</code></dt>
+        </dd>
+        
+    </dl>
+    
+    
+    <h2>variables</h2>
+    <dl>
+        
+        <dt class="&lt;span class=&#34;primitive&#34;&gt;string&lt;/span&gt;">client_ua<sub class="type"><span class="primitive">string</span></sub></dt>
+        <dd>
             
-            <dt>value <code>string</code></dt>
+            <article><p>default User Agent for http request</p></article>
             
-        </dl>
-        
-        
-    </dd>
-
-    <dt id="fun-Headers-set">
-        <div>set()</div><sub>method</sub>
-    </dt>
-    <dd>
-        <p class="proto">function Headers::set(name, value) 
-        <p class="desc">
-            <p> Sets a header to the object.</p>
-        </p>
-
-        
-
-        
-
-        
-        <h4>Parameters</h4>
-        <dl>
             
-            <dt>name <code>string</code></dt>
+        </dd>
+        
+    </dl>
+    
+    
+    <h2>functions</h2>
+    <dl>
+        
+        <dt class="function">_handler<sub>function _handler(cb)</sub></dt>
+        <dd>
             
-            <dt>value <code>string</code></dt>
             
-        </dl>
-        
-        
-    </dd>
-
-    <dt id="fun-Headers-["delete"]">
-        <div>["delete"]()</div><sub>method</sub>
-    </dt>
-    <dd>
-        <p class="proto">function Headers::["delete"](name) 
-        <p class="desc">
-            <p> Deletes all headers named <code>name</code></p>
-        </p>
-
-        
-
-        
-
-        
-        <h4>Parameters</h4>
-        <dl>
             
-            <dt>name <code>string</code></dt>
+        </dd>
+        
+        <dt class="function">buildQuery<sub>function buildQuery(obj)</sub></dt>
+        <dd>
             
-        </dl>
-        
-        
-    </dd>
-
-    <dt id="fun-Headers-forEach">
-        <div>forEach()</div><sub>method</sub>
-    </dt>
-    <dd>
-        <p class="proto">function Headers::forEach(cb) 
-        <p class="desc">
-            <p> cb will be called with 3 arguments: value, name, and this Headers object</p>
-        </p>
-
-        
-
-        
-
-        
-        <h4>Parameters</h4>
-        <dl>
+            <article><p>Build a http query string from a key-value map</p></article>
             
-            <dt>cb <code>function</code></dt>
             
-        </dl>
-        
-        
-    </dd>
-
-    <dt id="fun-Headers-get">
-        <div>get()</div><sub>method</sub>
-    </dt>
-    <dd>
-        <p class="proto">function Headers::get(name) 
-        <p class="desc">
-            <p> Returns the value of an entry of this object, or null if none exists.</p>
-
-<p> The first will be returned if multiple entries were found.</p>
-        </p>
-
-        
-
-        
-
-        
-        <h4>Parameters</h4>
-        <dl>
+            <fieldset class="example">
+                <legend>Example</legend>
+                <code><span class="kw">let</span> body = {<span class="string">"foo"</span>: <span class="string">"bar"</span>}
+<span class="kw">let</span> payload = http.buildQuery(forms); <span class="comment">// "foo=bar"</span>
+<span class="comment">// compose a POST request</span>
+<span class="kw">let</span> response = http.request({
+    method: <span class="string">"POST"</span>,
+    host: <span class="string">"..."</span>,
+    path: <span class="string">"/api/data.php"</span>,
+    headers: {
+        <span class="string">'Content-Type'</span>: <span class="string">'application/x-www-form-urlencoded'</span>
+    }
+}, payload);</code>
+            </fieldset>
             
-            <dt>name <code>string</code></dt>
             
-        </dl>
-        
-        
-        <h4>Returns<code>null|string</code></h4>
-        
-        
-    </dd>
-
-    <dt id="fun-Headers-getAll">
-        <div>getAll()</div><sub>method</sub>
-    </dt>
-    <dd>
-        <p class="proto">function Headers::getAll(name) 
-        <p class="desc">
-            <p> Returns All values of this object with the name</p>
-        </p>
-
-        
-
-        
-
-        
-        <h4>Parameters</h4>
-        <dl>
+            <h3>parameters</h3>
             
-            <dt>name <code>string</code></dt>
+            <h4>obj <sub>:<span class="primitive">object</span></sub></h4>
+            <article><p>keys and values</p></article>
             
-        </dl>
-        
-        
-        <h4>Returns<code>Array</code></h4>
-        
-        
-    </dd>
-
-    <dt id="fun-Headers-has">
-        <div>has()</div><sub>method</sub>
-    </dt>
-    <dd>
-        <p class="proto">function Headers::has(name) 
-        <p class="desc">
-            <p> Returns whether an entry of the name exists</p>
-        </p>
-
-        
-
-        
-
-        
-        <h4>Parameters</h4>
-        <dl>
             
-            <dt>name <code>string</code></dt>
+        </dd>
+        
+        <dt class="function">fetch<sub>function fetch(url, options)</sub></dt>
+        <dd>
             
-        </dl>
-        
-        
-        <h4>Returns<code>boolean</code></h4>
-        
-        
-    </dd>
+            <article><p>Compose a http request.
+<code>fetch</code> has two prototypes:</p>
 
-    <dt id="fun-Headers-entries">
-        <div>entries()</div><sub>method</sub>
-    </dt>
-    <dd>
-        <p class="proto">function Headers::entries() 
-        <p class="desc">
-            <p> Returns an iterator that yields name-value pair of all entries</p>
-        </p>
+<ul><li>function fetch(request:<a href="#class-Request">Request</a>)</li><li>function fetch(url:string, options:object)</li></ul>
 
-        
-
-        
-
-        
-        
-        <h4>Returns<code><a href="#class-Iterator">Iterator</a></code></h4>
-        
-        
-    </dd>
-
-    <dt id="fun-Headers-keys">
-        <div>keys()</div><sub>method</sub>
-    </dt>
-    <dd>
-        <p class="proto">function Headers::keys() 
-        <p class="desc">
-            <p> Returns an iterator that yields names of all entries</p>
-        </p>
-
-        
-
-        
-
-        
-        
-        <h4>Returns<code><a href="#class-Iterator">Iterator</a></code></h4>
-        
-        
-    </dd>
-
-    <dt id="fun-Headers-values">
-        <div>values()</div><sub>method</sub>
-    </dt>
-    <dd>
-        <p class="proto">function Headers::values() 
-        <p class="desc">
-            <p> Returns an iterator that yields values of all entries</p>
-        </p>
-
-        
-
-        
-
-        
-        
-        <h4>Returns<code><a href="#class-Iterator">Iterator</a></code></h4>
-        
-        
-    </dd>
-
-    <dt id="fun-Headers-[Symbol.iterator]">
-        <div>[Symbol.iterator]()</div><sub>method</sub>
-    </dt>
-    <dd>
-        <p class="proto">function Headers::[Symbol.iterator]() 
-        <p class="desc">
-            <p> Returns an iterator that yields name-value pair of all entries</p>
-        </p>
-
-        
-
-        
-
-        
-        
-        <h4>Returns<code><a href="#class-Iterator">Iterator</a></code></h4>
-        
-        
-    </dd>
-
-    <dt id="class-Body">
-        <div>Body()</div><sub>class</sub>
-    </dt>
-    <dd>
-        <p class="proto">function Body(body) 
-        <p class="desc">
-            <p> Abstract class for http request/response entity</p>
-        </p>
-
-        
-
-        
-
-        
-        <h4>Parameters</h4>
-        <dl>
+<p>Please refer to the <a href="#class-Request">Request</a> constructor for the info of the arguments</p></article>
             
-            <dt>body <code>string|<a href="https://nodejs.org/api/buffer.html#buffer_class_buffer">Buffer</a>|ArrayBuffer|<a href="https://nodejs.org/api/stream.html#stream_class_stream_readable">stream.Readable</a></code></dt>
             
-        </dl>
-        
-        
-    </dd>
-
-    <dt id="fun-Body-text">
-        <div>text()</div><sub>method</sub>
-    </dt>
-    <dd>
-        <p class="proto">function Body::text() 
-        <p class="desc">
             
-        </p>
-
-        
-
-        
-
-        
-        
-        <h4>Returns<code>Promise</code></h4>
-        <p>a promise that yields the request payload as a string</p>
-        
-    </dd>
-
-    <dt id="fun-Body-json">
-        <div>json()</div><sub>method</sub>
-    </dt>
-    <dd>
-        <p class="proto">function Body::json() 
-        <p class="desc">
+            <h3>parameters</h3>
             
-        </p>
-
-        
-
-        
-
-        
-        
-        <h4>Returns<code>Promise</code></h4>
-        <p>a promise that yields the request payload as a JSON object</p>
-        
-    </dd>
-
-    <dt id="fun-Body-arrayBuffer">
-        <div>arrayBuffer()</div><sub>method</sub>
-    </dt>
-    <dd>
-        <p class="proto">function Body::arrayBuffer() 
-        <p class="desc">
+            <h4>url <sub>:<span class="primitive">string</span></sub></h4>
+            <article></article>
             
-        </p>
-
-        
-
-        
-
-        
-        
-        <h4>Returns<code>ArrayBuffer</code></h4>
-        <p>a promise that yields the request payload as an ArrayBuffer</p>
-        
-    </dd>
-
-    <dt id="fun-Body-buffer">
-        <div>buffer()</div><sub>method</sub>
-    </dt>
-    <dd>
-        <p class="proto">function Body::buffer() 
-        <p class="desc">
+            <h4>options <sub>:<span class="primitive">object</span></sub></h4>
+            <article></article>
             
-        </p>
-
-        
-
-        
-
-        
-        
-        <h4>Returns<code>Promise</code></h4>
-        <p>a promise that yields the request payload as a Buffer</p>
-        
-    </dd>
-
-    <dt id="get-Body-stream">
-        <div>stream()</div><sub>getter</sub>
-    </dt>
-    <dd>
-        <p class="proto">get Body::stream() 
-        <p class="desc">
             
-        </p>
-
+        </dd>
         
-
-        
-
-        
-        
-        <h4>Returns<code><a href="https://nodejs.org/api/stream.html#stream_class_stream_readable">stream.Readable</a></code></h4>
-        <p>a readable stream</p>
-        
-    </dd>
-
-    <dt id="class-Request">
-        <div>Request()</div><sub>class</sub>
-    </dt>
-    <dd>
-        <p class="proto">function Request(url, options) 
-        <p class="desc">
-            <p> A <code>Request</code> is an representation of a client request that will be sent to a remote server, or a server request
- that received from the remote client.</p>
-        </p>
-
-        
-        <h4>Parent Class</h4>
-        <p><a href="#class-Body">Body</a></p>
-        
-
-        
-        <h4>Example</h4>
-        <pre> // a normal request
- new http.Request(&#39;http://www.example.com/test?foo=bar&#39;)
- // a post request
- new http.Request(&#39;...&#39;, {
-   method: &#39;POST&#39;,
-   body: http.buildQuery({foo: &#39;bar&#39;}),
-   headers: {&#39;content-type&#39;: &#39;application/x-www-form-urlencoded&#39;}
- })
- // request to a unix domain socket
- new http.Request(&#39;unix:///foo/bar?test=foobar&#39;)
- // the server path is &#39;/foo/bar&#39; and the request url is &#39;/?test=foobar&#39;
-</pre>
-        
-
-        
-        <h4>Parameters</h4>
-        <dl>
+        <dt class="function">listen<sub>function listen(port, cb, host, backlog)</sub></dt>
+        <dd>
             
-            <dt>url <code>string</code></dt>
+            <article><p>Create a new http server, bind it to a port or socket file. A callback is supplied which accepts a
+<a href="#class-Request"><code>Request</code></a> object as parameter and returns a <a href="#class-Response"><code>Response</code></a></p>
+
+<p>There are some extra properties that can be accessed with the <code>req</code> object:</p>
+
+<ul><li>req.request <a href="https://nodejs.org/api/http.html#http_http_incomingmessage"><code>http.IncomingMessage</code></a> original request object</li><li>req.response <a href="https://nodejs.org/api/http.html#http_class_http_serverresponse"><code>http.ServerResponse</code></a> original response object</li><li>req.originalUrl <code>string</code> request&#39;s original url, should not be overwritten</li></ul></article>
             
-            <dd><p>a remote url</p></dd>
-            <dt><sub>optional</sub>options <code>object</code></dt>
             
-            <dd><p>optional arguments, which contains any of:</p>
-
-<ul><li>method <code>String</code>: request method, e.g., &quot;GET&quot; or &quot;POST&quot;</li><li>headers <code>object|Headers</code> request headers</li><li>body <code>string|Buffer|ArrayBuffer|node.stream::stream.Readable</code> request payload to be sent or received</li></ul></dd>
-        </dl>
-        
-        
-        <h4>Returns<code><a href="#class-Request">Request</a></code></h4>
-        
-        
-    </dd>
-
-    <dt id="get-Request-method">
-        <div>method()</div><sub>getter</sub>
-    </dt>
-    <dd>
-        <p class="proto">get Request::method() 
-        <p class="desc">
+            <fieldset class="example">
+                <legend>Example</legend>
+                <code>http.listen(<span class="number">8080</span>, <span class="kw">function</span>(req) {
+    <span class="kw">return</span> <span class="kw">new</span> http.Response(<span class="string">'&lt;h1&gt;Hello world&lt;/h1&gt;'</span>, {
+        status: <span class="number">200</span>,
+        headers: {
+            <span class="string">'content-type'</span>: <span class="string">'text/html'</span>
+        }
+    })
+});</code>
+            </fieldset>
             
-        </p>
-
-        
-
-        
-
-        
-        
-        <h4>Returns<code>string</code></h4>
-        <p>request method, e.g., <code>&quot;GET&quot;</code> <code>&quot;POST&quot;</code></p>
-        
-    </dd>
-
-    <dt id="get-Request-url">
-        <div>url()</div><sub>getter</sub>
-    </dt>
-    <dd>
-        <p class="proto">get Request::url() 
-        <p class="desc">
             
-        </p>
-
-        
-
-        
-
-        
-        
-        <h4>Returns<code>string</code></h4>
-        <p>request uri, like <code>&quot;http://www.example.com/test?foo=bar&quot;</code></p>
-        
-    </dd>
-
-    <dt id="get-Request-headers">
-        <div>headers()</div><sub>getter</sub>
-    </dt>
-    <dd>
-        <p class="proto">get Request::headers() 
-        <p class="desc">
+            <h3>parameters</h3>
             
-        </p>
-
-        
-
-        
-
-        
-        
-        <h4>Returns<code><a href="#class-Headers">Headers</a></code></h4>
-        <p>request headers</p>
-        
-    </dd>
-
-    <dt id="get-Request-scheme">
-        <div>scheme()</div><sub>getter</sub>
-    </dt>
-    <dd>
-        <p class="proto">get Request::scheme() 
-        
-
-        
-
-        
-
-        
-        
-        <h4>Returns<code>String</code></h4>
-        <p>request scheme, like <code>&quot;http:&quot;</code></p>
-        
-    </dd>
-
-    <dt id="get-Request-host">
-        <div>host()</div><sub>getter</sub>
-    </dt>
-    <dd>
-        <p class="proto">get Request::host() 
-        
-
-        
-
-        
-
-        
-        
-        <h4>Returns<code>String</code></h4>
-        <p>request host, like <code>&quot;www.example.com:80&quot;</code></p>
-        
-    </dd>
-
-    <dt id="get-Request-hostname">
-        <div>hostname()</div><sub>getter</sub>
-    </dt>
-    <dd>
-        <p class="proto">get Request::hostname() 
-        
-
-        
-
-        
-
-        
-        
-        <h4>Returns<code>String</code></h4>
-        <p>request hostname, like <code>&quot;www.example.com&quot;</code></p>
-        
-    </dd>
-
-    <dt id="get-Request-port">
-        <div>port()</div><sub>getter</sub>
-    </dt>
-    <dd>
-        <p class="proto">get Request::port() 
-        
-
-        
-
-        
-
-        
-        
-        <h4>Returns<code>String</code></h4>
-        <p>request port, like <code>&quot;80&quot;</code></p>
-        
-    </dd>
-
-    <dt id="get-Request-pathname">
-        <div>pathname()</div><sub>getter</sub>
-    </dt>
-    <dd>
-        <p class="proto">get Request::pathname() 
-        
-
-        
-
-        
-
-        
-        
-        <h4>Returns<code>String</code></h4>
-        <p>request pathname, like <code>&quot;/test&quot;</code></p>
-        
-    </dd>
-
-    <dt id="set-Request-pathname">
-        <div>pathname()</div><sub>setter</sub>
-    </dt>
-    <dd>
-        <p class="proto">set Request::pathname(pathname) 
-        <p class="desc">
+            <h4>port <sub>:<span class="primitive">number</span>|<span class="primitive">string</span></sub></h4>
+            <article><p>TCP port number or unix domain socket path to listen to</p></article>
             
-        </p>
-
-        
-
-        
-
-        
-        <h4>Parameters</h4>
-        <dl>
+            <h4>cb <sub>:<span class="primitive">function</span>|<a href="router.html#class-Router">router::Router</a></sub></h4>
+            <article><p>request handler callback</p></article>
             
-            <dt>pathname <code>String</code></dt>
+            <h4>host <sub>:<span class="primitive">string</span></sub></h4>
+            <article><p>hostname to listen to, only valid if port is a 0-65535 number</p></article>
             
-        </dl>
-        
-        
-    </dd>
-
-    <dt id="get-Request-search">
-        <div>search()</div><sub>getter</sub>
-    </dt>
-    <dd>
-        <p class="proto">get Request::search() 
-        
-
-        
-
-        
-
-        
-        
-        <h4>Returns<code>String</code></h4>
-        <p>request search string, like <code>&quot;?foo=bar&quot;</code></p>
-        
-    </dd>
-
-    <dt id="get-Request-query">
-        <div>query()</div><sub>getter</sub>
-    </dt>
-    <dd>
-        <p class="proto">get Request::query() 
-        
-
-        
-
-        
-
-        
-        
-        <h4>Returns<code><a href="#class-object">object</a></code></h4>
-        <p>`</p>
-        
-    </dd>
-
-    <dt id="get-Request-cookies">
-        <div>cookies()</div><sub>getter</sub>
-    </dt>
-    <dd>
-        <p class="proto">get Request::cookies() 
-        
-
-        
-
-        
-
-        
-        
-        <h4>Returns<code>object</code></h4>
-        <p>request cookies</p>
-        
-    </dd>
-
-    <dt id="class-Response">
-        <div>Response()</div><sub>class</sub>
-    </dt>
-    <dd>
-        <p class="proto">function Response(body, options) 
-        <p class="desc">
-            <p> A <code>Response</code> is an representation of a server response that will be sent to a remote client, or a client response
- that received from the remote server.</p>
-
-<p> Additional fields can be used to manuplate the response object, which are:</p>
-
-<ul><li>response.status <code>number</code>: status code of the response</li><li>response.statusText <code>number</code>: status text of the response</li></ul>
-        </p>
-
-        
-        <h4>Parent Class</h4>
-        <p><a href="#class-Body">Body</a></p>
-        
-
-        
-
-        
-        <h4>Parameters</h4>
-        <dl>
+            <h4>backlog <sub>:<span class="primitive">number</span></sub></h4>
+            <article><p>maximum requests pending to be accepted, only valid if port is a 0-65535 number</p></article>
             
-            <dt><sub>optional</sub>body <code>string|<a href="https://nodejs.org/api/buffer.html#buffer_class_buffer">Buffer</a>|ArrayBuffer|<a href="https://nodejs.org/api/stream.html#stream_class_stream_readable">stream.Readable</a></code></dt>
             
-            <dt><sub>optional</sub>options <code>object</code></dt>
+        </dd>
+        
+        <dt class="function">parseQuery<sub>function parseQuery(query)</sub></dt>
+        <dd>
             
-            <dd><p>optional arguments,  which contains any of:</p>
-
-<ul><li>status <code>number</code>: The status code for the reponse, e.g., 200.</li><li>statusText <code>string</code>: The status message associated with the staus code, e.g., OK.</li><li>headers <code>object|Headers</code>: the response headers
- </li></ul></dd>
-        </dl>
-        
-        
-    </dd>
-
-    <dt id="get-Response-ok">
-        <div>ok()</div><sub>getter</sub>
-    </dt>
-    <dd>
-        <p class="proto">get Response::ok() 
-        
-
-        
-
-        
-
-        
-        
-        <h4>Returns<code>boolean</code></h4>
-        
-        
-    </dd>
-
-    <dt id="get-Response-headers">
-        <div>headers()</div><sub>getter</sub>
-    </dt>
-    <dd>
-        <p class="proto">get Response::headers() 
-        <p class="desc">
+            <article><p>Parse a http query string into a key-value map.
+May throw error if malformed UTF-8 escape sequence found</p></article>
             
-        </p>
-
-        
-
-        
-
-        
-        
-        <h4>Returns<code><a href="#class-Headers">Headers</a></code></h4>
-        <p>response headers</p>
-        
-    </dd>
-
-    <dt id="fun-Response-setCookie">
-        <div>setCookie()</div><sub>method</sub>
-    </dt>
-    <dd>
-        <p class="proto">function Response::setCookie(name, value, options) 
-        <p class="desc">
-            <p> Adds Set-Cookie header to the response object</p>
-        </p>
-
-        
-
-        
-
-        
-        <h4>Parameters</h4>
-        <dl>
             
-            <dt>name <code>string</code></dt>
+            <fieldset class="example">
+                <legend>Example</legend>
+                <code><span class="comment">// read a request's body and parse its content</span>
+<span class="kw">let</span> payload = req.body.toString(); <span class="comment">// "foo=bar"</span>
+<span class="kw">let</span> body = http.parseQuery(payload); <span class="comment">// {"foo": "bar"}</span></code>
+            </fieldset>
             
-            <dd><p>cookie name to be set</p></dd>
-            <dt>value <code>string</code></dt>
             
-            <dd><p>cookie value to be set</p></dd>
-            <dt><sub>optional</sub>options <code>object</code></dt>
+            <h3>parameters</h3>
             
-            <dd><p>optional keys to be appended, which can contain any of <code>expires</code>, <code>domain</code>, <code>path</code> etc.
-     </p></dd>
-        </dl>
-        
-        
-    </dd>
-
-    <dt id="fun-Response-error">
-        <div>error()</div><sub>static method</sub>
-    </dt>
-    <dd>
-        <p class="proto">function Response.error(status, reason) 
-        <p class="desc">
-            <p> Creates an error response</p>
-        </p>
-
-        
-
-        
-
-        
-        <h4>Parameters</h4>
-        <dl>
+            <h4>query <sub>:<span class="primitive">string</span></sub></h4>
+            <article><p>query string to be parsed</p></article>
             
-            <dt>status <code>number</code></dt>
             
-            <dt>reason <code>Error|string|<a href="https://nodejs.org/api/buffer.html#buffer_class_buffer">Buffer</a></code></dt>
+        </dd>
+        
+    </dl>
+    
+
+    
+    <h2>classes</h2>
+    <dl>
+        
+        <dt class="function" id="class-Body">Body
             
-            <dd><p>message of the error as the response body
-     </p></dd>
-        </dl>
-        
-        
-    </dd>
-
-    <dt id="fun-Response-json">
-        <div>json()</div><sub>static method</sub>
-    </dt>
-    <dd>
-        <p class="proto">function Response.json(obj) 
-        <p class="desc">
-            <p> Creates a json response, a <code>content-type</code> header will be added to the headers</p>
-        </p>
-
-        
-
-        
-
-        
-        <h4>Parameters</h4>
-        <dl>
+        </dt>
+        <dd>
             
-            <dt>obj</dt>
+            <article><p>Abstract class for http request/response entity</p></article>
             
-            <dd><p>data to be sent</p></dd>
-        </dl>
-        
-        
-        <h4>Returns<code><a href="#class-Response">Response</a></code></h4>
-        
-        
-    </dd>
-
-    <dt id="fun-Response-redirect">
-        <div>redirect()</div><sub>static method</sub>
-    </dt>
-    <dd>
-        <p class="proto">function Response.redirect(url) 
-        <p class="desc">
-            <p> Creates a redirect response, the status will be set to 302, and a <code>location</code> header will be added</p>
-        </p>
-
-        
-
-        
-
-        
-        <h4>Parameters</h4>
-        <dl>
             
-            <dt>url <code>string</code></dt>
             
-            <dd><p>redirect url, e.g. &#39;http://www.example.com&#39; or &#39;/foo/bar&#39;</p></dd>
-        </dl>
-        
-        
-        <h4>Returns<code><a href="#class-Response">Response</a></code></h4>
-        
-        
-    </dd>
-
-    <dt id="fun-Response-file">
-        <div>file()</div><sub>static method</sub>
-    </dt>
-    <dd>
-        <p class="proto">function Response.file(file) 
-        
-
-        
-
-        
-
-        
-        
-    </dd>
-
-    <dt id="fun-listen">
-        <div>listen()</div><sub>method</sub>
-    </dt>
-    <dd>
-        <p class="proto">function listen(port, cb, host, backlog) 
-        <p class="desc">
-            <p> Create a new http server, bind it to a port or socket file. A callback is supplied which accepts a
- <a href="#class-Request"><code>Request</code></a> object as parameter and returns a <a href="#class-Response"><code>Response</code></a></p>
-
-<p> There are some extra properties that can be accessed with the <code>req</code> object:</p>
-
-<ul><li>req.request <a href="https://nodejs.org/api/http.html#http_http_incomingmessage"><code>http.IncomingMessage</code></a> original request object</li><li>req.response <a href="https://nodejs.org/api/http.html#http_class_http_serverresponse"><code>http.ServerResponse</code></a> original response object</li><li>req.originalUrl <code>string</code> request&#39;s original url, should not be overwritten</li></ul>
-        </p>
-
-        
-
-        
-        <h4>Example</h4>
-        <pre> http.listen(8080, function(req) {
-     return new http.Response(&#39;&lt;h1&gt;Hello world&lt;/h1&gt;&#39;, {
-         status: 200,
-         headers: {
-             &#39;content-type&#39;: &#39;text/html&#39;
-         }
-     })
- });
-</pre>
-        
-
-        
-        <h4>Parameters</h4>
-        <dl>
+        </dd>
+        <dt>
             
-            <dt>port <code>number|string</code></dt>
+            Body::constructor</dt>
+        <dd>
             
-            <dd><p>TCP port number or unix domain socket path to listen to</p></dd>
-            <dt>cb <code>function|<a href="router.html#class-Router">router::Router</a></code></dt>
             
-            <dd><p>request handler callback</p></dd>
-            <dt><sub>optional</sub>host <code>string</code></dt>
             
-            <dd><p>hostname to listen to, only valid if port is a 0-65535 number</p></dd>
-            <dt><sub>optional</sub>backlog <code>number</code></dt>
+            <h3>parameters</h3>
             
-            <dd><p>maximum requests pending to be accepted, only valid if port is a 0-65535 number</p></dd>
-        </dl>
-        
-        
-        <h4>Returns<code><a href="https://nodejs.org/api/http.html#http_class_http_server">http.Server</a></code></h4>
-        <p>returned after the <code>listening</code> event has been fired</p>
-        
-    </dd>
-
-    <dt id="fun-fetch">
-        <div>fetch()</div><sub>method</sub>
-    </dt>
-    <dd>
-        <p class="proto">function fetch(url, options) 
-        <p class="desc">
-            <p> Compose a http request.
- <code>fetch</code> has two prototypes:</p>
-
-<ul><li>function fetch(request:<a href="#class-Request">Request</a>)</li><li><p>function fetch(url:string, options:object)</p><p>Please refer to the <a href="#class-Request">Request</a> constructor for the info of the arguments</p></li></ul>
-        </p>
-
-        
-
-        
-
-        
-        <h4>Parameters</h4>
-        <dl>
+            <h4>body <sub>:<span class="primitive">string</span>|<a href="https://nodejs.org/api/buffer.html#buffer_class_buffer">Buffer</a>|<span class="primitive">ArrayBuffer</span>|<a href="https://nodejs.org/api/stream.html#stream_class_stream_readable">stream::Readable</a></sub></h4>
+            <article></article>
             
-            <dt>url <code>string</code></dt>
             
-            <dt>options <code>object</code></dt>
             
-        </dl>
-        
-        
-    </dd>
-
-    <dt id="fun-buildQuery">
-        <div>buildQuery()</div><sub>method</sub>
-    </dt>
-    <dd>
-        <p class="proto">function buildQuery(obj) 
-        <p class="desc">
-            <p> Build a http query string from a key-value map</p>
-        </p>
-
-        
-
-        
-        <h4>Example</h4>
-        <pre> let body = {&#34;foo&#34;: &#34;bar&#34;}
- let payload = http.buildQuery(forms); // &#34;foo=bar&#34;
- // compose a POST request
- let response = http.request({
-     method: &#34;POST&#34;,
-     host: &#34;...&#34;,
-     path: &#34;/api/data.php&#34;,
-     headers: {
-         &#39;Content-Type&#39;: &#39;application/x-www-form-urlencoded&#39;
-     }
- }, payload);
-</pre>
-        
-
-        
-        <h4>Parameters</h4>
-        <dl>
             
-            <dt>obj <code>object</code></dt>
+        </dd>
+        <dt>
             
-            <dd><p>keys and values</p></dd>
-        </dl>
-        
-        
-        <h4>Returns<code>string</code></h4>
-        <p>query string</p>
-        
-    </dd>
-
-    <dt id="fun-parseQuery">
-        <div>parseQuery()</div><sub>method</sub>
-    </dt>
-    <dd>
-        <p class="proto">function parseQuery(query) 
-        <p class="desc">
-            <p> Parse a http query string into a key-value map.
- May throw error if malformed UTF-8 escape sequence found</p>
-        </p>
-
-        
-
-        
-        <h4>Example</h4>
-        <pre> // read a request&#39;s body and parse its content
- let payload = req.body.toString(); // &#34;foo=bar&#34;
- let body = http.parseQuery(payload); // {&#34;foo&#34;: &#34;bar&#34;}
-</pre>
-        
-
-        
-        <h4>Parameters</h4>
-        <dl>
+            Body::text</dt>
+        <dd>
             
-            <dt>query <code>string</code></dt>
             
-            <dd><p>query string to be parsed</p></dd>
-        </dl>
+            
+            
+            <h3>returns <sub class="type"><span class="primitive">Promise</span>.&lt;<span class="primitive">string</span>&gt;</sub></h3>
+            <article> <p>promise that yields the request payload as a string</p></article>
+            
+            
+        </dd>
+        <dt>
+            
+            Body::json</dt>
+        <dd>
+            
+            
+            
+            
+            <h3>returns <sub class="type"><span class="primitive">Promise</span></sub></h3>
+            <article> <p>promise that yields the request payload as a JSON object</p></article>
+            
+            
+        </dd>
+        <dt>
+            
+            Body::arrayBuffer</dt>
+        <dd>
+            
+            
+            
+            
+            <h3>returns <sub class="type"><span class="primitive">Promise</span>.&lt;<span class="primitive">ArrayBuffer</span>&gt;</sub></h3>
+            <article> <p>promise that yields the request payload as an ArrayBuffer</p></article>
+            
+            
+        </dd>
+        <dt>
+            
+            Body::buffer</dt>
+        <dd>
+            
+            
+            
+            
+            <h3>returns <sub class="type"><span class="primitive">Promise</span>.&lt;<a href="https://nodejs.org/api/buffer.html#buffer_class_buffer">Buffer</a>&gt;</sub></h3>
+            <article> <p>promise that yields the request payload as a Buffer</p></article>
+            
+            
+        </dd>
+        <dt>
+            
+            <sub class="pre">get</sub>
+            
+            Body::stream</dt>
+        <dd>
+            
+            
+            
+            
+            <h3>returns <sub class="type"><a href="https://nodejs.org/api/stream.html#stream_class_stream_readable">stream::Readable</a></sub></h3>
+            <article> <p>readable stream</p></article>
+            
+            
+        </dd>
         
-        
-        <h4>Returns<code>object</code></h4>
-        <p>keys and values</p>
-        
-    </dd>
+        <dt class="function" id="class-Headers">Headers
+            
+        </dt>
+        <dd>
+            
+            
+            
+        </dd>
+        <dt>
+            
+            Headers::constructor</dt>
+        <dd>
+            
+            <article><p>Headers represents a set of _module-value pairs which will be used in:
+ - client request object
+ - remote server response
+ - server request event</p></article>
+            
+            
+            
+            <h3>parameters</h3>
+            
+            <h4>headers <sub>:<span class="primitive">object</span></sub></h4>
+            <article><p>initial _module-value map of headers</p></article>
+            
+            
+            
+            
+        </dd>
+        <dt>
+            
+            Headers::append</dt>
+        <dd>
+            
+            <article><p>Appends an entry to the object.</p></article>
+            
+            
+            
+            <h3>parameters</h3>
+            
+            <h4>name <sub>:<span class="primitive">string</span></sub></h4>
+            <article></article>
+            
+            <h4>value <sub>:<span class="primitive">string</span></sub></h4>
+            <article></article>
+            
+            
+            
+            
+        </dd>
+        <dt>
+            
+            Headers::set</dt>
+        <dd>
+            
+            <article><p>Sets a header to the object.</p></article>
+            
+            
+            
+            <h3>parameters</h3>
+            
+            <h4>name <sub>:<span class="primitive">string</span></sub></h4>
+            <article></article>
+            
+            <h4>value <sub>:<span class="primitive">string</span></sub></h4>
+            <article></article>
+            
+            
+            
+            
+        </dd>
+        <dt>
+            
+            Headers::</dt>
+        <dd>
+            
+            <article><p>Deletes all headers named <code>name</code></p></article>
+            
+            
+            
+            <h3>parameters</h3>
+            
+            <h4>name <sub>:<span class="primitive">string</span></sub></h4>
+            <article></article>
+            
+            
+            
+            
+        </dd>
+        <dt>
+            
+            Headers::forEach</dt>
+        <dd>
+            
+            <article><p>cb will be called with 3 arguments: value, _module, and this Headers object</p></article>
+            
+            
+            
+            <h3>parameters</h3>
+            
+            <h4>cb <sub>:<span class="primitive">function</span></sub></h4>
+            <article></article>
+            
+            
+            
+            
+        </dd>
+        <dt>
+            
+            Headers::get</dt>
+        <dd>
+            
+            <article><p>Returns the value of an entry of this object, or null if none exists.</p>
 
-</dl>
+<p>The first will be returned if multiple entries were found.</p></article>
+            
+            
+            
+            <h3>parameters</h3>
+            
+            <h4>name <sub>:<span class="primitive">string</span></sub></h4>
+            <article></article>
+            
+            
+            
+            <h3>returns <sub class="type"><span class="primitive">null</span>|<span class="primitive">string</span></sub></h3>
+            <article> </article>
+            
+            
+        </dd>
+        <dt>
+            
+            Headers::getAll</dt>
+        <dd>
+            
+            <article><p>Returns All values of this object with the _module</p></article>
+            
+            
+            
+            <h3>parameters</h3>
+            
+            <h4>name <sub>:<span class="primitive">string</span></sub></h4>
+            <article></article>
+            
+            
+            
+            <h3>returns <sub class="type"><span class="primitive">Array</span></sub></h3>
+            <article> </article>
+            
+            
+        </dd>
+        <dt>
+            
+            Headers::has</dt>
+        <dd>
+            
+            <article><p>Returns whether an entry of the _module exists</p></article>
+            
+            
+            
+            <h3>parameters</h3>
+            
+            <h4>name <sub>:<span class="primitive">string</span></sub></h4>
+            <article></article>
+            
+            
+            
+            <h3>returns <sub class="type"><span class="primitive">boolean</span></sub></h3>
+            <article> </article>
+            
+            
+        </dd>
+        <dt>
+            
+            Headers::entries</dt>
+        <dd>
+            
+            <article><p>Returns an iterator that yields _module-value pair of all entries</p></article>
+            
+            
+            
+            
+            <h3>returns <sub class="type"><span class="primitive">Iterator</span>.&lt;[<span class="primitive">string</span>,<span class="primitive">string</span>]&gt;</sub></h3>
+            <article> </article>
+            
+            
+        </dd>
+        <dt>
+            
+            Headers::keys</dt>
+        <dd>
+            
+            <article><p>Returns an iterator that yields names of all entries</p></article>
+            
+            
+            
+            
+            <h3>returns <sub class="type"><span class="primitive">Iterator</span>.&lt;<span class="primitive">string</span>&gt;</sub></h3>
+            <article> </article>
+            
+            
+        </dd>
+        <dt>
+            
+            Headers::values</dt>
+        <dd>
+            
+            <article><p>Returns an iterator that yields values of all entries</p></article>
+            
+            
+            
+            
+            <h3>returns <sub class="type"><span class="primitive">Iterator</span>.&lt;<span class="primitive">string</span>&gt;</sub></h3>
+            <article> </article>
+            
+            
+        </dd>
+        <dt>
+            
+            Headers::</dt>
+        <dd>
+            
+            <article><p>Returns an iterator that yields name-value pair of all entries</p></article>
+            
+            
+            
+            
+            <h3>returns <sub class="type"><span class="primitive">Iterator</span></sub></h3>
+            <article> </article>
+            
+            
+        </dd>
+        
+        <dt class="function" id="class-Request">Request
+            
+            <sub class="extends">: Body</sub>
+            
+        </dt>
+        <dd>
+            
+            <article><p>A <code>Request</code> is an representation of a client request that will be sent to a remote server, or a server request
+that received from the remote client.</p></article>
+            
+            
+            
+        </dd>
+        <dt>
+            
+            Request::constructor</dt>
+        <dd>
+            
+            
+            <fieldset class="example">
+                <legend>Example</legend>
+                <code><span class="comment">// a normal request</span>
+<span class="kw">new</span> http.Request(<span class="string">'http://www.example.com/test?foo=bar'</span>)
+<span class="comment">// a post request</span>
+<span class="kw">new</span> http.Request(<span class="string">'...'</span>, {
+  method: <span class="string">'POST'</span>,
+  body: http.buildQuery({foo: <span class="string">'bar'</span>}),
+  headers: {<span class="string">'content-type'</span>: <span class="string">'application/x-www-form-urlencoded'</span>}
+})
+<span class="comment">// request to a unix domain socket</span>
+<span class="kw">new</span> http.Request(<span class="string">'unix:///foo/bar?test=foobar'</span>)
+<span class="comment">// the server path is '/foo/bar' and the request url is '/?test=foobar'</span></code>
+            </fieldset>
+            
+            
+            <h3>parameters</h3>
+            
+            <h4>url <sub>:<span class="primitive">string</span></sub></h4>
+            <article><p>a remote url</p></article>
+            
+            <h4>options <sub>:<span class="primitive">object</span></sub></h4>
+            <article><p>optional arguments, which contains any of:</p>
 
-</div>
+<ul><li>method <code>String</code>: request method, e.g., &quot;GET&quot; or &quot;POST&quot;</li><li>headers <code>object|Headers</code> request headers</li><li>body <code>string|Buffer|ArrayBuffer|node.stream::stream.Readable</code> request payload to be sent or received</li></ul></article>
+            
+            
+            
+            
+        </dd>
+        <dt>
+            
+            <sub class="pre">get</sub>
+            
+            Request::url</dt>
+        <dd>
+            
+            
+            
+            
+            <h3>returns <sub class="type"><span class="primitive">string</span></sub></h3>
+            <article> <p>uri, like <code>&quot;http://www.example.com/test?foo=bar&quot;</code></p></article>
+            
+            
+        </dd>
+        <dt>
+            
+            <sub class="pre">get</sub>
+            
+            Request::headers</dt>
+        <dd>
+            
+            
+            
+            
+            <h3>returns <sub class="type"><a href="#class-Headers">Headers</a></sub></h3>
+            <article> <p>headers</p></article>
+            
+            
+        </dd>
+        <dt>
+            
+            <sub class="pre">get</sub>
+            
+            Request::scheme</dt>
+        <dd>
+            
+            
+            
+            
+            <h3>returns <sub class="type"><span class="primitive">String</span></sub></h3>
+            <article> <p>scheme, like <code>&quot;http:&quot;</code></p></article>
+            
+            
+        </dd>
+        <dt>
+            
+            <sub class="pre">set</sub>
+            
+            Request::scheme</dt>
+        <dd>
+            
+            
+            
+            <h3>parameters</h3>
+            
+            <h4>scheme <sub>:<span class="primitive">String</span></sub></h4>
+            <article></article>
+            
+            
+            
+            
+        </dd>
+        <dt>
+            
+            <sub class="pre">get</sub>
+            
+            Request::host</dt>
+        <dd>
+            
+            
+            
+            
+            <h3>returns <sub class="type"><span class="primitive">String</span></sub></h3>
+            <article> <p>host, like <code>&quot;www.example.com:80&quot;</code></p></article>
+            
+            
+        </dd>
+        <dt>
+            
+            <sub class="pre">set</sub>
+            
+            Request::host</dt>
+        <dd>
+            
+            
+            
+            <h3>parameters</h3>
+            
+            <h4>host <sub>:<span class="primitive">String</span></sub></h4>
+            <article></article>
+            
+            
+            
+            
+        </dd>
+        <dt>
+            
+            <sub class="pre">get</sub>
+            
+            Request::hostname</dt>
+        <dd>
+            
+            
+            
+            
+            <h3>returns <sub class="type"><span class="primitive">String</span></sub></h3>
+            <article> <p>hostname, like <code>&quot;www.example.com&quot;</code></p></article>
+            
+            
+        </dd>
+        <dt>
+            
+            <sub class="pre">get</sub>
+            
+            Request::port</dt>
+        <dd>
+            
+            
+            
+            
+            <h3>returns <sub class="type"><span class="primitive">String</span></sub></h3>
+            <article> <p>port, like <code>&quot;80&quot;</code></p></article>
+            
+            
+        </dd>
+        <dt>
+            
+            <sub class="pre">get</sub>
+            
+            Request::pathname</dt>
+        <dd>
+            
+            
+            
+            
+            <h3>returns <sub class="type"><span class="primitive">String</span></sub></h3>
+            <article> <p>pathname, like <code>&quot;/test&quot;</code></p></article>
+            
+            
+        </dd>
+        <dt>
+            
+            <sub class="pre">get</sub>
+            
+            Request::originalPathname</dt>
+        <dd>
+            
+            
+            
+            
+            
+        </dd>
+        <dt>
+            
+            <sub class="pre">set</sub>
+            
+            Request::pathname</dt>
+        <dd>
+            
+            
+            
+            <h3>parameters</h3>
+            
+            <h4>pathname <sub>:<span class="primitive">String</span></sub></h4>
+            <article></article>
+            
+            
+            
+            
+        </dd>
+        <dt>
+            
+            <sub class="pre">get</sub>
+            
+            Request::search</dt>
+        <dd>
+            
+            
+            
+            
+            <h3>returns <sub class="type"><span class="primitive">String</span></sub></h3>
+            <article> <p>search string, like <code>&quot;?foo=bar&quot;</code></p></article>
+            
+            
+        </dd>
+        <dt>
+            
+            <sub class="pre">set</sub>
+            
+            Request::search</dt>
+        <dd>
+            
+            
+            
+            <h3>parameters</h3>
+            
+            <h4>search <sub>:<span class="primitive">String</span></sub></h4>
+            <article></article>
+            
+            
+            
+            
+        </dd>
+        <dt>
+            
+            <sub class="pre">get</sub>
+            
+            Request::query</dt>
+        <dd>
+            
+            
+            
+            
+            <h3>returns <sub class="type"><span class="primitive">object</span></sub></h3>
+            <article> <p>query key-value map, like <code>{foo:&quot;bar&quot;}</code></p></article>
+            
+            
+        </dd>
+        <dt>
+            
+            <sub class="pre">get</sub>
+            
+            Request::cookies</dt>
+        <dd>
+            
+            
+            
+            
+            <h3>returns <sub class="type"><span class="primitive">object</span></sub></h3>
+            <article> <p>cookies</p></article>
+            
+            
+        </dd>
+        
+        <dt class="function" id="class-Response">Response
+            
+            <sub class="extends">: Body</sub>
+            
+        </dt>
+        <dd>
+            
+            
+            
+        </dd>
+        <dt>
+            
+            Response::constructor</dt>
+        <dd>
+            
+            <article><p>A <code>Response</code> is an representation of a server response that will be sent to a remote client, or a client response
+that received from the remote server.</p>
+
+<p>Additional fields can be used to manuplate the response object, which are:</p>
+
+<ul><li>response.status <code>number</code>: status code of the response</li><li>response.statusText <code>number</code>: status text of the response</li></ul></article>
+            
+            
+            
+            <h3>parameters</h3>
+            
+            <h4>body <sub>:<span class="primitive">string</span>|<a href="https://nodejs.org/api/buffer.html#buffer_class_buffer">Buffer</a>|<span class="primitive">ArrayBuffer</span>|<a href="https://nodejs.org/api/stream.html#stream_class_">stream::stream</a>::<a href="stream.html#class-Readable">stream::Readable</a></sub></h4>
+            <article></article>
+            
+            <h4>options <sub>:<span class="primitive">object</span></sub></h4>
+            <article><p>optional arguments,  which contains any of:</p>
+
+<ul><li>status <code>number</code>: The status code for the reponse, e.g., 200.</li><li>statusText <code>string</code>: The status message associated with the staus code, e.g., OK.</li><li>headers <code>object|Headers</code>: the response headers</li></ul></article>
+            
+            
+            
+            
+        </dd>
+        <dt>
+            
+            <sub class="pre">get</sub>
+            
+            Response::ok</dt>
+        <dd>
+            
+            
+            
+            
+            <h3>returns <sub class="type"><span class="primitive">boolean</span></sub></h3>
+            <article> </article>
+            
+            
+        </dd>
+        <dt>
+            
+            <sub class="pre">get</sub>
+            
+            Response::headers</dt>
+        <dd>
+            
+            
+            
+            
+            <h3>returns <sub class="type"><a href="#class-Headers">Headers</a></sub></h3>
+            <article> <p>headers</p></article>
+            
+            
+        </dd>
+        <dt>
+            
+            Response::setCookie</dt>
+        <dd>
+            
+            <article><p>Adds Set-Cookie header to the response object</p></article>
+            
+            
+            
+            <h3>parameters</h3>
+            
+            <h4>name <sub>:<span class="primitive">string</span></sub></h4>
+            <article><p>cookie _module to be set</p></article>
+            
+            <h4>value <sub>:<span class="primitive">string</span></sub></h4>
+            <article><p>cookie value to be set</p></article>
+            
+            <h4>options <sub>:<span class="primitive">object</span></sub></h4>
+            <article><p>optional keys to be appended, which can contain any of <code>expires</code>, <code>domain</code>, <code>path</code> etc.</p></article>
+            
+            
+            
+            
+        </dd>
+        <dt>
+            
+            <sub class="pre">static</sub>
+            
+            Response::error</dt>
+        <dd>
+            
+            <article><p>Creates an error response</p></article>
+            
+            
+            
+            <h3>parameters</h3>
+            
+            <h4>status <sub>:<span class="primitive">number</span></sub></h4>
+            <article></article>
+            
+            <h4>reason <sub>:<a href="#class-Error">Error</a>|<span class="primitive">string</span>|<a href="https://nodejs.org/api/buffer.html#buffer_class_buffer">Buffer</a></sub></h4>
+            <article><p>message of the error as the response body</p></article>
+            
+            
+            
+            
+        </dd>
+        <dt>
+            
+            <sub class="pre">static</sub>
+            
+            Response::json</dt>
+        <dd>
+            
+            <article><p>Creates a json response, a <code>content-type</code> header will be added to the headers</p></article>
+            
+            
+            
+            <h3>parameters</h3>
+            
+            <h4>obj <sub>:</sub></h4>
+            <article><p>data to be sent</p></article>
+            
+            
+            
+            <h3>returns <sub class="type"><a href="#class-Response">Response</a></sub></h3>
+            <article> </article>
+            
+            
+        </dd>
+        <dt>
+            
+            <sub class="pre">static</sub>
+            
+            Response::redirect</dt>
+        <dd>
+            
+            <article><p>Creates a redirect response, the status will be set to 302, and a <code>location</code> header will be added</p></article>
+            
+            
+            
+            <h3>parameters</h3>
+            
+            <h4>url <sub>:<span class="primitive">string</span></sub></h4>
+            <article><p>redirect url, e.g. &#39;http://www.example.com&#39; or &#39;/foo/bar&#39;</p></article>
+            
+            
+            
+            <h3>returns <sub class="type"><a href="#class-Response">Response</a></sub></h3>
+            <article> </article>
+            
+            
+        </dd>
+        <dt>
+            
+            <sub class="pre">static</sub>
+            
+            Response::file</dt>
+        <dd>
+            
+            
+            
+            
+            
+        </dd>
+        
+    </dl>
+    
+
+</section>
 </body>
 </html>

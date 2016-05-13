@@ -1,137 +1,236 @@
+
 <!doctype html>
 <html>
 <head>
-    <title>gbk -- AgentK Documentation Generator</title>
+    <title>Module gbk -- AgentK document generator</title>
     <link rel="stylesheet" href="doc.css"/>
 </head>
-<body class="frames">
-<ul>
-    <li><a href="channel.html" title="cross process message gathering and dispatching system">channel</a></li>
-    <li><a href="child_process.html" title="Wrapper for child process">child_process</a></li>
-    <li><a href="crypto.html">crypto</a></li>
-    <li><a href="doc.html" title="AgentK documentation generator">doc</a></li>
-    <li><a href="file.html">file</a></li>
-    <li><a href="fs_cache.html" title="file system cache handler">fs_cache</a></li>
-    <li>gbk</li>
-    <li><a href="http.html">http</a></li>
-    <li><a href="legacy.html" title="Legacy support module">legacy</a></li>
-    <li><a href="router.html">router</a></li>
-    <li><a href="static_file.html" title="static file request handler">static_file</a></li>
-    <li><a href="stream.html" title="utils for stream consumption">stream</a></li>
-    <li><a href="test.html">test</a></li>
-    <li><a href="view.html">view</a></li>
-    <li><a href="xml.html">xml</a></li>
-    <li><a href="zlib.html">zlib</a></li>
+<body>
+<menu>
     
-</ul>
-<div class="content">
-<h1>gbk</h1>
-
-
-
-<div class="meta-description">
-    <p> </p>
-</div>
-
-
-
-
-
-
-<ul>
+    <li>
+        <a href="channel.html" title="cross process message gathering and dispatching system
+"
+           class="">channel</a>
+    </li>
+    
+    <li>
+        <a href="child_process.html" title="Wrapper for child process
+"
+           class="">child_process</a>
+    </li>
+    
+    <li>
+        <a href="connection_pool.html" title="Module connection_pool"
+           class="">connection_pool</a>
+    </li>
+    
+    <li>
+        <a href="crypto.html" title="Module crypto"
+           class="">crypto</a>
+    </li>
+    
+    <li>
+        <a href="daemon.html" title="Module daemon"
+           class="">daemon</a>
+    </li>
+    
+    <li>
+        <a href="doc.html" title="AgentK documentation generator
+"
+           class="">doc</a>
+    </li>
+    
+    <li>
+        <a href="file.html" title="Module file"
+           class="">file</a>
+    </li>
+    
+    <li>
+        <a href="fs_cache.html" title="file system cache handler
+"
+           class="">fs_cache</a>
+    </li>
+    
+    <li>
+        <a href="gbk.html" title="Module gbk"
+           class="current">gbk</a>
+    </li>
+    
+    <li>
+        <a href="handlebars.html" title="Fast Handlebars Helper
+"
+           class="">handlebars</a>
+    </li>
+    
+    <li>
+        <a href="http.html" title="Module http"
+           class="">http</a>
+    </li>
+    
+    <li>
+        <a href="https.html" title="Module https"
+           class="">https</a>
+    </li>
+    
+    <li>
+        <a href="javascript.html" title="Module javascript"
+           class="">javascript</a>
+    </li>
+    
+    <li>
+        <a href="legacy.html" title="Legacy support module
+"
+           class="">legacy</a>
+    </li>
+    
+    <li>
+        <a href="logger.html" title="Logging helper
+"
+           class="">logger</a>
+    </li>
+    
+    <li>
+        <a href="lru_cache.html" title="Module lru_cache"
+           class="">lru_cache</a>
+    </li>
+    
+    <li>
+        <a href="mock.html" title="Module mock"
+           class="">mock</a>
+    </li>
+    
+    <li>
+        <a href="mysql.html" title="Module mysql"
+           class="">mysql</a>
+    </li>
+    
+    <li>
+        <a href="redis.html" title="Redis Client
+"
+           class="">redis</a>
+    </li>
+    
+    <li>
+        <a href="router.html" title="Module router"
+           class="">router</a>
+    </li>
+    
+    <li>
+        <a href="session.html" title="Module session"
+           class="">session</a>
+    </li>
+    
+    <li>
+        <a href="smtp.html" title="Module smtp"
+           class="">smtp</a>
+    </li>
+    
+    <li>
+        <a href="static_file.html" title="static file request handler
+"
+           class="">static_file</a>
+    </li>
+    
+    <li>
+        <a href="stream.html" title="utils for stream consumption
+"
+           class="">stream</a>
+    </li>
+    
+    <li>
+        <a href="test.html" title="Module test"
+           class="">test</a>
+    </li>
+    
+    <li>
+        <a href="view.html" title="Module view"
+           class="">view</a>
+    </li>
+    
+    <li>
+        <a href="websocket.html" title="Module websocket"
+           class="">websocket</a>
+    </li>
+    
+    <li>
+        <a href="wechat.html" title="Module wechat"
+           class="">wechat</a>
+    </li>
+    
+    <li>
+        <a href="xml.html" title="Module xml"
+           class="">xml</a>
+    </li>
+    
+    <li>
+        <a href="zlib.html" title="Module zlib"
+           class="">zlib</a>
+    </li>
+    
+    <li>
+        <a href="zookeeper.html" title="Module zookeeper"
+           class="">zookeeper</a>
+    </li>
+    
+</menu>
+<section>
+    <h1>Module gbk</h1>
     
     
-    <li><a href="#fun-write">function write(str, buf) </a></li><li><a href="#fun-encode">function encode(str) </a></li><li><a href="#fun-decode">function decode(buffer) </a></li>
     
-</ul>
-
-<dl id="definitions">
-
-    <dt id="fun-write">
-        <div>write()</div><sub>method</sub>
-    </dt>
-    <dd>
-        <p class="proto">function write(str, buf) 
-        <p class="desc">
+    
+    
+    <h2>functions</h2>
+    <dl>
+        
+        <dt class="function">decode<sub>function decode(buffer)</sub></dt>
+        <dd>
             
-        </p>
-
-        
-
-        
-
-        
-        <h4>Parameters</h4>
-        <dl>
             
-            <dt>str <code>string</code></dt>
             
-            <dt>buf <code><a href="https://nodejs.org/api/buffer.html#buffer_class_buffer">Buffer</a></code></dt>
+            <h3>parameters</h3>
             
-        </dl>
-        
-        
-        <h4>Returns<code>number</code></h4>
-        <p>number of bytes written</p>
-        
-    </dd>
-
-    <dt id="fun-encode">
-        <div>encode()</div><sub>method</sub>
-    </dt>
-    <dd>
-        <p class="proto">function encode(str) 
-        <p class="desc">
+            <h4>buffer <sub>:<a href="https://nodejs.org/api/buffer.html#buffer_class_buffer">Buffer</a></sub></h4>
+            <article></article>
             
-        </p>
-
-        
-
-        
-
-        
-        <h4>Parameters</h4>
-        <dl>
             
-            <dt>str <code>string</code></dt>
+        </dd>
+        
+        <dt class="function">encode<sub>function encode(str)</sub></dt>
+        <dd>
             
-        </dl>
-        
-        
-        <h4>Returns<code><a href="https://nodejs.org/api/buffer.html#buffer_class_buffer">Buffer</a></code></h4>
-        
-        
-    </dd>
-
-    <dt id="fun-decode">
-        <div>decode()</div><sub>method</sub>
-    </dt>
-    <dd>
-        <p class="proto">function decode(buffer) 
-        <p class="desc">
             
-        </p>
-
-        
-
-        
-
-        
-        <h4>Parameters</h4>
-        <dl>
             
-            <dt>buffer <code><a href="https://nodejs.org/api/buffer.html#buffer_class_buffer">Buffer</a></code></dt>
+            <h3>parameters</h3>
             
-        </dl>
+            <h4>str <sub>:<span class="primitive">string</span></sub></h4>
+            <article></article>
+            
+            
+        </dd>
         
+        <dt class="function">write<sub>function write(str, buf)</sub></dt>
+        <dd>
+            
+            
+            
+            <h3>parameters</h3>
+            
+            <h4>str <sub>:<span class="primitive">string</span></sub></h4>
+            <article></article>
+            
+            <h4>buf <sub>:<a href="https://nodejs.org/api/buffer.html#buffer_class_buffer">Buffer</a></sub></h4>
+            <article></article>
+            
+            
+        </dd>
         
-        <h4>Returns<code>String</code></h4>
-        
-        
-    </dd>
+    </dl>
+    
 
-</dl>
+    
 
-</div>
+</section>
 </body>
 </html>

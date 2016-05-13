@@ -1,111 +1,235 @@
+
 <!doctype html>
 <html>
 <head>
-    <title>static_file -- AgentK Documentation Generator</title>
+    <title>static file request handler
+ -- AgentK document generator</title>
     <link rel="stylesheet" href="doc.css"/>
 </head>
-<body class="frames">
-<ul>
-    <li><a href="channel.html" title="cross process message gathering and dispatching system">channel</a></li>
-    <li><a href="child_process.html" title="Wrapper for child process">child_process</a></li>
-    <li><a href="crypto.html">crypto</a></li>
-    <li><a href="doc.html" title="AgentK documentation generator">doc</a></li>
-    <li><a href="file.html">file</a></li>
-    <li><a href="fs_cache.html" title="file system cache handler">fs_cache</a></li>
-    <li><a href="gbk.html">gbk</a></li>
-    <li><a href="http.html">http</a></li>
-    <li><a href="legacy.html" title="Legacy support module">legacy</a></li>
-    <li><a href="router.html">router</a></li>
-    <li>static_file</li>
-    <li><a href="stream.html" title="utils for stream consumption">stream</a></li>
-    <li><a href="test.html">test</a></li>
-    <li><a href="view.html">view</a></li>
-    <li><a href="xml.html">xml</a></li>
-    <li><a href="zlib.html">zlib</a></li>
+<body>
+<menu>
     
-</ul>
-<div class="content">
-<h1>static_file</h1>
-
-<p>static file request handler
- </p>
-
-
-
-<div class="meta-description">
+    <li>
+        <a href="channel.html" title="cross process message gathering and dispatching system
+"
+           class="">channel</a>
+    </li>
     
-</div>
-
-
-
-
-
-
-<ul>
-    <li>constant <a href="#mimeTypes">mimeTypes</a>:<code>object</code></li>
+    <li>
+        <a href="child_process.html" title="Wrapper for child process
+"
+           class="">child_process</a>
+    </li>
     
-    <li><a href="#fun-staticFile">function staticFile(directory, option) </a></li>
-    <li>module default: <a href="#fun-staticFile">function staticFile</a></li>
-</ul>
-
-<dl id="definitions">
-
-    <dt id="mimeTypes">
-    <div>mimeTypes</div>
-    <sub>constant</sub>
-    </dt>
-    <dd>
-        <p class="proto">mimeTypes:<code>object</code>
-
-        <p class="desc">
-            <p> filename extension to mime type map</p>
-        </p>
-
+    <li>
+        <a href="connection_pool.html" title="Module connection_pool"
+           class="">connection_pool</a>
+    </li>
+    
+    <li>
+        <a href="crypto.html" title="Module crypto"
+           class="">crypto</a>
+    </li>
+    
+    <li>
+        <a href="daemon.html" title="Module daemon"
+           class="">daemon</a>
+    </li>
+    
+    <li>
+        <a href="doc.html" title="AgentK documentation generator
+"
+           class="">doc</a>
+    </li>
+    
+    <li>
+        <a href="file.html" title="Module file"
+           class="">file</a>
+    </li>
+    
+    <li>
+        <a href="fs_cache.html" title="file system cache handler
+"
+           class="">fs_cache</a>
+    </li>
+    
+    <li>
+        <a href="gbk.html" title="Module gbk"
+           class="">gbk</a>
+    </li>
+    
+    <li>
+        <a href="handlebars.html" title="Fast Handlebars Helper
+"
+           class="">handlebars</a>
+    </li>
+    
+    <li>
+        <a href="http.html" title="Module http"
+           class="">http</a>
+    </li>
+    
+    <li>
+        <a href="https.html" title="Module https"
+           class="">https</a>
+    </li>
+    
+    <li>
+        <a href="javascript.html" title="Module javascript"
+           class="">javascript</a>
+    </li>
+    
+    <li>
+        <a href="legacy.html" title="Legacy support module
+"
+           class="">legacy</a>
+    </li>
+    
+    <li>
+        <a href="logger.html" title="Logging helper
+"
+           class="">logger</a>
+    </li>
+    
+    <li>
+        <a href="lru_cache.html" title="Module lru_cache"
+           class="">lru_cache</a>
+    </li>
+    
+    <li>
+        <a href="mock.html" title="Module mock"
+           class="">mock</a>
+    </li>
+    
+    <li>
+        <a href="mysql.html" title="Module mysql"
+           class="">mysql</a>
+    </li>
+    
+    <li>
+        <a href="redis.html" title="Redis Client
+"
+           class="">redis</a>
+    </li>
+    
+    <li>
+        <a href="router.html" title="Module router"
+           class="">router</a>
+    </li>
+    
+    <li>
+        <a href="session.html" title="Module session"
+           class="">session</a>
+    </li>
+    
+    <li>
+        <a href="smtp.html" title="Module smtp"
+           class="">smtp</a>
+    </li>
+    
+    <li>
+        <a href="static_file.html" title="static file request handler
+"
+           class="current">static_file</a>
+    </li>
+    
+    <li>
+        <a href="stream.html" title="utils for stream consumption
+"
+           class="">stream</a>
+    </li>
+    
+    <li>
+        <a href="test.html" title="Module test"
+           class="">test</a>
+    </li>
+    
+    <li>
+        <a href="view.html" title="Module view"
+           class="">view</a>
+    </li>
+    
+    <li>
+        <a href="websocket.html" title="Module websocket"
+           class="">websocket</a>
+    </li>
+    
+    <li>
+        <a href="wechat.html" title="Module wechat"
+           class="">wechat</a>
+    </li>
+    
+    <li>
+        <a href="xml.html" title="Module xml"
+           class="">xml</a>
+    </li>
+    
+    <li>
+        <a href="zlib.html" title="Module zlib"
+           class="">zlib</a>
+    </li>
+    
+    <li>
+        <a href="zookeeper.html" title="Module zookeeper"
+           class="">zookeeper</a>
+    </li>
+    
+</menu>
+<section>
+    <h1>static file request handler
+</h1>
+    
+    
+    
+    <h2>constants</h2>
+    <dl>
         
-    </dd>
-
-    <dt id="fun-staticFile">
-        <div>staticFile()</div><sub>method</sub>
-    </dt>
-    <dd>
-        <p class="proto">function staticFile(directory, option) 
-        <p class="desc">
+        <dt class="&lt;span class=&#34;primitive&#34;&gt;object&lt;/span&gt;">mimeTypes<sub class="type"><span class="primitive">object</span></sub></dt>
+        <dd>
             
-        </p>
-
-        
-
-        
-        <h4>Example</h4>
-        <pre> import Router from &#39;router&#39;;
- import staticFile from &#39;static_file&#39;;
- let route = new Router();
- route.prefix(&#39;/static/&#39;, staticFile(&#39;static&#39;))
-</pre>
-        
-
-        
-        <h4>Parameters</h4>
-        <dl>
+            <article><p>filename extension to mime type map</p></article>
             
-            <dt>directory <code>string</code></dt>
             
-            <dd><p>absolute path or relative to working directory</p></dd>
-            <dt><sub>optional</sub>option <code>object</code></dt>
+        </dd>
+        
+    </dl>
+    
+    
+    
+    <h2>functions</h2>
+    <dl>
+        
+        <dt class="function">staticFile<sub>function staticFile(directory, option)</sub></dt>
+        <dd>
             
-            <dd><p>optional arguments:</p>
+            
+            <fieldset class="example">
+                <legend>Example</legend>
+                <code><span class="kw">import</span> Router <span class="kw">from</span> <span class="string">'router'</span>;
+<span class="kw">import</span> staticFile <span class="kw">from</span> <span class="string">'static_file'</span>;
+<span class="kw">let</span> route = <span class="kw">new</span> Router();
+route.prefix(<span class="string">'/static/'</span>, staticFile(<span class="string">'static'</span>))</code>
+            </fieldset>
+            
+            
+            <h3>parameters</h3>
+            
+            <h4>directory <sub>:<span class="primitive">string</span></sub></h4>
+            <article><p>absolute path or relative to working directory</p></article>
+            
+            <h4>option <sub>:<span class="primitive">object</span></sub></h4>
+            <article><p>optional arguments:</p>
 
-<ul><li>no_cache:<code>boolean</code> disable file cache, default to false</li><li>expires:<code>number</code> duration before expiration in ms, default to 0</li><li>cached:<code>number</code> file modification check iteration in ms, default to 3s</li><li>gzip:<code>boolean</code> enable gzip, default to true</li><li>gzip<em>min</em>len:<code>number</code> mininum length of file to be gzipped, default to 1K</li></ul></dd>
-        </dl>
+<ul><li>expires:<code>number</code> duration before expiration in ms, default to 0</li><li>cached:<code>number</code> file modification check iteration in ms, default to 3s</li><li>gzip:<code>boolean</code> enable gzip, default to true</li><li>gzip<em>min</em>len:<code>number</code> mininum length of file to be gzipped, default to 1K</li><li>hash_method:<code>function</code> method used to calculate etag</li><li>cache_capacity:<code>number</code> maximum of file cached, defaults to 300</li></ul></article>
+            
+            
+        </dd>
         
-        
-        <h4>Returns<code>function</code></h4>
-        <p>router handle</p>
-        
-    </dd>
+    </dl>
+    
 
-</dl>
+    
 
-</div>
+</section>
 </body>
 </html>

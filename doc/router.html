@@ -1,194 +1,299 @@
+
 <!doctype html>
 <html>
 <head>
-    <title>router -- AgentK Documentation Generator</title>
+    <title>Module router -- AgentK document generator</title>
     <link rel="stylesheet" href="doc.css"/>
 </head>
-<body class="frames">
-<ul>
-    <li><a href="channel.html" title="cross process message gathering and dispatching system">channel</a></li>
-    <li><a href="child_process.html" title="Wrapper for child process">child_process</a></li>
-    <li><a href="crypto.html">crypto</a></li>
-    <li><a href="doc.html" title="AgentK documentation generator">doc</a></li>
-    <li><a href="file.html">file</a></li>
-    <li><a href="fs_cache.html" title="file system cache handler">fs_cache</a></li>
-    <li><a href="gbk.html">gbk</a></li>
-    <li><a href="http.html">http</a></li>
-    <li><a href="legacy.html" title="Legacy support module">legacy</a></li>
-    <li>router</li>
-    <li><a href="static_file.html" title="static file request handler">static_file</a></li>
-    <li><a href="stream.html" title="utils for stream consumption">stream</a></li>
-    <li><a href="test.html">test</a></li>
-    <li><a href="view.html">view</a></li>
-    <li><a href="xml.html">xml</a></li>
-    <li><a href="zlib.html">zlib</a></li>
+<body>
+<menu>
     
-</ul>
-<div class="content">
-<h1>router</h1>
-
-
-
-
-<ul>
+    <li>
+        <a href="channel.html" title="cross process message gathering and dispatching system
+"
+           class="">channel</a>
+    </li>
+    
+    <li>
+        <a href="child_process.html" title="Wrapper for child process
+"
+           class="">child_process</a>
+    </li>
+    
+    <li>
+        <a href="connection_pool.html" title="Module connection_pool"
+           class="">connection_pool</a>
+    </li>
+    
+    <li>
+        <a href="crypto.html" title="Module crypto"
+           class="">crypto</a>
+    </li>
+    
+    <li>
+        <a href="daemon.html" title="Module daemon"
+           class="">daemon</a>
+    </li>
+    
+    <li>
+        <a href="doc.html" title="AgentK documentation generator
+"
+           class="">doc</a>
+    </li>
+    
+    <li>
+        <a href="file.html" title="Module file"
+           class="">file</a>
+    </li>
+    
+    <li>
+        <a href="fs_cache.html" title="file system cache handler
+"
+           class="">fs_cache</a>
+    </li>
+    
+    <li>
+        <a href="gbk.html" title="Module gbk"
+           class="">gbk</a>
+    </li>
+    
+    <li>
+        <a href="handlebars.html" title="Fast Handlebars Helper
+"
+           class="">handlebars</a>
+    </li>
+    
+    <li>
+        <a href="http.html" title="Module http"
+           class="">http</a>
+    </li>
+    
+    <li>
+        <a href="https.html" title="Module https"
+           class="">https</a>
+    </li>
+    
+    <li>
+        <a href="javascript.html" title="Module javascript"
+           class="">javascript</a>
+    </li>
+    
+    <li>
+        <a href="legacy.html" title="Legacy support module
+"
+           class="">legacy</a>
+    </li>
+    
+    <li>
+        <a href="logger.html" title="Logging helper
+"
+           class="">logger</a>
+    </li>
+    
+    <li>
+        <a href="lru_cache.html" title="Module lru_cache"
+           class="">lru_cache</a>
+    </li>
+    
+    <li>
+        <a href="mock.html" title="Module mock"
+           class="">mock</a>
+    </li>
+    
+    <li>
+        <a href="mysql.html" title="Module mysql"
+           class="">mysql</a>
+    </li>
+    
+    <li>
+        <a href="redis.html" title="Redis Client
+"
+           class="">redis</a>
+    </li>
+    
+    <li>
+        <a href="router.html" title="Module router"
+           class="current">router</a>
+    </li>
+    
+    <li>
+        <a href="session.html" title="Module session"
+           class="">session</a>
+    </li>
+    
+    <li>
+        <a href="smtp.html" title="Module smtp"
+           class="">smtp</a>
+    </li>
+    
+    <li>
+        <a href="static_file.html" title="static file request handler
+"
+           class="">static_file</a>
+    </li>
+    
+    <li>
+        <a href="stream.html" title="utils for stream consumption
+"
+           class="">stream</a>
+    </li>
+    
+    <li>
+        <a href="test.html" title="Module test"
+           class="">test</a>
+    </li>
+    
+    <li>
+        <a href="view.html" title="Module view"
+           class="">view</a>
+    </li>
+    
+    <li>
+        <a href="websocket.html" title="Module websocket"
+           class="">websocket</a>
+    </li>
+    
+    <li>
+        <a href="wechat.html" title="Module wechat"
+           class="">wechat</a>
+    </li>
+    
+    <li>
+        <a href="xml.html" title="Module xml"
+           class="">xml</a>
+    </li>
+    
+    <li>
+        <a href="zlib.html" title="Module zlib"
+           class="">zlib</a>
+    </li>
+    
+    <li>
+        <a href="zookeeper.html" title="Module zookeeper"
+           class="">zookeeper</a>
+    </li>
+    
+</menu>
+<section>
+    <h1>Module router</h1>
     
     
-    <li><a href="#class-Router">function Router(cb) </a> <b>constructor</b></li><li><a href="#fun-Router-add">function Router::add(handle) </a></li><li><a href="#fun-Router-all">function Router::all(cb) </a></li><li><a href="#fun-Router-exact">function Router::exact(url, cb) </a></li><li><a href="#fun-Router-prefix">function Router::prefix(prefix, cb) </a></li><li><a href="#fun-Router-match">function Router::match(pattern, cb) </a></li><li><a href="#fun-Router-catcher">function Router::catcher(cb) </a></li><li><a href="#fun-Router-apply">function Router::apply(req, args) </a></li><li><a href="#fun-Router-complete">function Router::complete(cb) </a></li>
-    <li>module default: <a href="#class-Router">class Router</a></li>
-</ul>
+    
+    
+    
 
-<dl id="definitions">
-
-    <dt id="class-Router">
-        <div>Router()</div><sub>class</sub>
-    </dt>
-    <dd>
-        <p class="proto">function Router(cb) 
-        <p class="desc">
+    
+    <h2>classes</h2>
+    <dl>
+        
+        <dt class="function" id="class-Router">Router
             
-        </p>
-
-        
-
-        
-
-        
-        <h4>Parameters</h4>
-        <dl>
+        </dt>
+        <dd>
             
-            <dt><sub>optional</sub>cb <code>function|<a href="#class-Router">Router</a></code></dt>
             
-            <dd><p>handler first called before all rules</p></dd>
-        </dl>
+            
+        </dd>
+        <dt>
+            
+            Router::constructor</dt>
+        <dd>
+            
+            
+            
+            <h3>parameters</h3>
+            
+            <h4>cb <sub>:<span class="primitive">function</span>|<a href="#class-Router">Router</a></sub></h4>
+            <article><p>handler first called before all rules</p></article>
+            
+            
+            
+            
+        </dd>
+        <dt>
+            
+            Router::all</dt>
+        <dd>
+            
+            
+            
+            
+            
+        </dd>
+        <dt>
+            
+            Router::exact</dt>
+        <dd>
+            
+            
+            
+            
+            
+        </dd>
+        <dt>
+            
+            Router::prefix</dt>
+        <dd>
+            
+            
+            
+            
+            
+        </dd>
+        <dt>
+            
+            Router::match</dt>
+        <dd>
+            
+            
+            
+            
+            
+        </dd>
+        <dt>
+            
+            Router::catcher</dt>
+        <dd>
+            
+            
+            
+            
+            
+        </dd>
+        <dt>
+            
+            Router::apply</dt>
+        <dd>
+            
+            
+            
+            
+            
+        </dd>
+        <dt>
+            
+            Router::complete</dt>
+        <dd>
+            
+            
+            
+            
+            
+        </dd>
+        <dt>
+            
+            Router::_compile</dt>
+        <dd>
+            
+            
+            
+            
+            
+        </dd>
         
-        
-        <h4>Returns<code><a href="#class-Router">Router</a></code></h4>
-        
-        
-    </dd>
+    </dl>
+    
 
-    <dt id="fun-Router-add">
-        <div>add()</div><sub>method</sub>
-    </dt>
-    <dd>
-        <p class="proto">function Router::add(handle) 
-        
-
-        
-
-        
-
-        
-        
-    </dd>
-
-    <dt id="fun-Router-all">
-        <div>all()</div><sub>method</sub>
-    </dt>
-    <dd>
-        <p class="proto">function Router::all(cb) 
-        
-
-        
-
-        
-
-        
-        
-    </dd>
-
-    <dt id="fun-Router-exact">
-        <div>exact()</div><sub>method</sub>
-    </dt>
-    <dd>
-        <p class="proto">function Router::exact(url, cb) 
-        
-
-        
-
-        
-
-        
-        
-    </dd>
-
-    <dt id="fun-Router-prefix">
-        <div>prefix()</div><sub>method</sub>
-    </dt>
-    <dd>
-        <p class="proto">function Router::prefix(prefix, cb) 
-        
-
-        
-
-        
-
-        
-        
-    </dd>
-
-    <dt id="fun-Router-match">
-        <div>match()</div><sub>method</sub>
-    </dt>
-    <dd>
-        <p class="proto">function Router::match(pattern, cb) 
-        
-
-        
-
-        
-
-        
-        
-    </dd>
-
-    <dt id="fun-Router-catcher">
-        <div>catcher()</div><sub>method</sub>
-    </dt>
-    <dd>
-        <p class="proto">function Router::catcher(cb) 
-        
-
-        
-
-        
-
-        
-        
-    </dd>
-
-    <dt id="fun-Router-apply">
-        <div>apply()</div><sub>method</sub>
-    </dt>
-    <dd>
-        <p class="proto">function Router::apply(req, args) 
-        
-
-        
-
-        
-
-        
-        
-    </dd>
-
-    <dt id="fun-Router-complete">
-        <div>complete()</div><sub>method</sub>
-    </dt>
-    <dd>
-        <p class="proto">function Router::complete(cb) 
-        
-
-        
-
-        
-
-        
-        
-    </dd>
-
-</dl>
-
-</div>
+</section>
 </body>
 </html>

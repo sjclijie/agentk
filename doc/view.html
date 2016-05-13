@@ -1,194 +1,301 @@
+
 <!doctype html>
 <html>
 <head>
-    <title>view -- AgentK Documentation Generator</title>
+    <title>Module view -- AgentK document generator</title>
     <link rel="stylesheet" href="doc.css"/>
 </head>
-<body class="frames">
-<ul>
-    <li><a href="channel.html" title="cross process message gathering and dispatching system">channel</a></li>
-    <li><a href="child_process.html" title="Wrapper for child process">child_process</a></li>
-    <li><a href="crypto.html">crypto</a></li>
-    <li><a href="doc.html" title="AgentK documentation generator">doc</a></li>
-    <li><a href="file.html">file</a></li>
-    <li><a href="fs_cache.html" title="file system cache handler">fs_cache</a></li>
-    <li><a href="gbk.html">gbk</a></li>
-    <li><a href="http.html">http</a></li>
-    <li><a href="legacy.html" title="Legacy support module">legacy</a></li>
-    <li><a href="router.html">router</a></li>
-    <li><a href="static_file.html" title="static file request handler">static_file</a></li>
-    <li><a href="stream.html" title="utils for stream consumption">stream</a></li>
-    <li><a href="test.html">test</a></li>
-    <li>view</li>
-    <li><a href="xml.html">xml</a></li>
-    <li><a href="zlib.html">zlib</a></li>
+<body>
+<menu>
     
-</ul>
-<div class="content">
-<h1>view</h1>
-
-
-
-
-<ul>
-    <li>constant <a href="#engines">engines</a>:<code>object</code></li>
-    <li>variable <a href="#path">path</a>:<code>string</code></li><li>variable <a href="#view_engine">view_engine</a>:<code>string</code></li><li>variable <a href="#module_loader">module_loader</a>:<code>function</code></li><li>variable <a href="#defaultMimeType">defaultMimeType</a>:<code>string</code></li>
-    <li><a href="#fun-render">function render(name, locals, mimeType) </a></li><li><a href="#fun-engine">function engine(compiler, options) </a></li>
+    <li>
+        <a href="channel.html" title="cross process message gathering and dispatching system
+"
+           class="">channel</a>
+    </li>
     
-</ul>
-
-<dl id="definitions">
-
-    <dt id="engines">
-    <div>engines</div>
-    <sub>constant</sub>
-    </dt>
-    <dd>
-        <p class="proto">engines:<code>object</code>
-
-        <p class="desc">
-            <p> map of view engines, user can supply a specific view engine by assigning to this object</p>
-        </p>
-
+    <li>
+        <a href="child_process.html" title="Wrapper for child process
+"
+           class="">child_process</a>
+    </li>
+    
+    <li>
+        <a href="connection_pool.html" title="Module connection_pool"
+           class="">connection_pool</a>
+    </li>
+    
+    <li>
+        <a href="crypto.html" title="Module crypto"
+           class="">crypto</a>
+    </li>
+    
+    <li>
+        <a href="daemon.html" title="Module daemon"
+           class="">daemon</a>
+    </li>
+    
+    <li>
+        <a href="doc.html" title="AgentK documentation generator
+"
+           class="">doc</a>
+    </li>
+    
+    <li>
+        <a href="file.html" title="Module file"
+           class="">file</a>
+    </li>
+    
+    <li>
+        <a href="fs_cache.html" title="file system cache handler
+"
+           class="">fs_cache</a>
+    </li>
+    
+    <li>
+        <a href="gbk.html" title="Module gbk"
+           class="">gbk</a>
+    </li>
+    
+    <li>
+        <a href="handlebars.html" title="Fast Handlebars Helper
+"
+           class="">handlebars</a>
+    </li>
+    
+    <li>
+        <a href="http.html" title="Module http"
+           class="">http</a>
+    </li>
+    
+    <li>
+        <a href="https.html" title="Module https"
+           class="">https</a>
+    </li>
+    
+    <li>
+        <a href="javascript.html" title="Module javascript"
+           class="">javascript</a>
+    </li>
+    
+    <li>
+        <a href="legacy.html" title="Legacy support module
+"
+           class="">legacy</a>
+    </li>
+    
+    <li>
+        <a href="logger.html" title="Logging helper
+"
+           class="">logger</a>
+    </li>
+    
+    <li>
+        <a href="lru_cache.html" title="Module lru_cache"
+           class="">lru_cache</a>
+    </li>
+    
+    <li>
+        <a href="mock.html" title="Module mock"
+           class="">mock</a>
+    </li>
+    
+    <li>
+        <a href="mysql.html" title="Module mysql"
+           class="">mysql</a>
+    </li>
+    
+    <li>
+        <a href="redis.html" title="Redis Client
+"
+           class="">redis</a>
+    </li>
+    
+    <li>
+        <a href="router.html" title="Module router"
+           class="">router</a>
+    </li>
+    
+    <li>
+        <a href="session.html" title="Module session"
+           class="">session</a>
+    </li>
+    
+    <li>
+        <a href="smtp.html" title="Module smtp"
+           class="">smtp</a>
+    </li>
+    
+    <li>
+        <a href="static_file.html" title="static file request handler
+"
+           class="">static_file</a>
+    </li>
+    
+    <li>
+        <a href="stream.html" title="utils for stream consumption
+"
+           class="">stream</a>
+    </li>
+    
+    <li>
+        <a href="test.html" title="Module test"
+           class="">test</a>
+    </li>
+    
+    <li>
+        <a href="view.html" title="Module view"
+           class="current">view</a>
+    </li>
+    
+    <li>
+        <a href="websocket.html" title="Module websocket"
+           class="">websocket</a>
+    </li>
+    
+    <li>
+        <a href="wechat.html" title="Module wechat"
+           class="">wechat</a>
+    </li>
+    
+    <li>
+        <a href="xml.html" title="Module xml"
+           class="">xml</a>
+    </li>
+    
+    <li>
+        <a href="zlib.html" title="Module zlib"
+           class="">zlib</a>
+    </li>
+    
+    <li>
+        <a href="zookeeper.html" title="Module zookeeper"
+           class="">zookeeper</a>
+    </li>
+    
+</menu>
+<section>
+    <h1>Module view</h1>
+    
+    
+    
+    <h2>constants</h2>
+    <dl>
         
-        <h4>Example</h4>
-        <pre> view.engines.jade = require(&#39;jade&#39;).__express;
-</pre>
+        <dt class="&lt;span class=&#34;primitive&#34;&gt;object&lt;/span&gt;">engines<sub class="type"><span class="primitive">object</span></sub></dt>
+        <dd>
+            
+            <article><p>map of view engines, user can supply a specific view engine by assigning to this object</p></article>
+            
+            
+            <fieldset class="example">
+                <legend>Example</legend>
+                <code>view.engines.jade = <span class="global">require</span>(<span class="string">'jade'</span>).__express;</code>
+            </fieldset>
+            
+        </dd>
         
-    </dd>
-
-    <dt id="path">
-        <div>path</div>
-        <sub>variable</sub>
-    </dt>
-    <dd>
-        <p class="proto">path:<code>string</code> = <code>''</code>
+    </dl>
+    
+    
+    <h2>variables</h2>
+    <dl>
+        
+        <dt class="&lt;span class=&#34;primitive&#34;&gt;string&lt;/span&gt;">defaultMimeType<sub class="type"><span class="primitive">string</span></sub></dt>
+        <dd>
+            
+            <article><p>Default mime type</p></article>
+            
+            
+        </dd>
+        
+        <dt class="&lt;span class=&#34;primitive&#34;&gt;function&lt;/span&gt;">module_loader<sub class="type"><span class="primitive">function</span></sub></dt>
+        <dd>
+            
+            <article><p>method used to load view engine by extension, default to <code>require</code>. User can supply a specific loader by assigning
+this variable</p></article>
+            
+            
+            <fieldset class="example">
+                <legend>Example</legend>
+                <code>view.module_loader = <span class="kw">function</span>(name) {
+    <span class="kw">return</span> <span class="global">require</span>(name).__express
+}</code>
+            </fieldset>
+            
+        </dd>
+        
+        <dt class="&lt;span class=&#34;primitive&#34;&gt;string&lt;/span&gt;">path<sub class="type"><span class="primitive">string</span></sub></dt>
+        <dd>
+            
+            <article><p>directory of view template files (default to current directory)</p></article>
+            
+            
+        </dd>
+        
+        <dt class="&lt;span class=&#34;primitive&#34;&gt;string&lt;/span&gt;">view_engine<sub class="type"><span class="primitive">string</span></sub></dt>
+        <dd>
+            
+            <article><p>default view engine when no extension name is supplied</p></article>
+            
+            
+        </dd>
+        
+    </dl>
+    
+    
+    <h2>functions</h2>
+    <dl>
+        
+        <dt class="function">engine<sub>function engine(compiler, options)</sub></dt>
+        <dd>
+            
+            
+            <fieldset class="example">
+                <legend>Example</legend>
+                <code><span class="kw">import</span> * <span class="kw">as</span> view <span class="kw">from</span> <span class="string">'module/view'</span>;
+view.engines.handlebars = view.engine(<span class="global">require</span>(<span class="string">'handlebars'</span>).compile)</code>
+            </fieldset>
+            
+            
+            <h3>parameters</h3>
+            
+            <h4>compiler <sub>:<span class="primitive">function</span></sub></h4>
+            <article></article>
+            
+            <h4>options <sub>:<span class="primitive">object</span></sub></h4>
+            <article></article>
+            
+            
+        </dd>
+        
+        <dt class="function">render<sub>function render(name, locals, mimeType)</sub></dt>
+        <dd>
+            
+            <article><p>render a template file into response content, returns a <code>HttpResponse</code>.
+User should specify content type if needed.</p></article>
+            
+            
+            
+            <h3>parameters</h3>
+            
+            <h4>name <sub>:<span class="primitive">string</span></sub></h4>
+            <article><p>template name, with or without extension</p></article>
+            
+            <h4>locals <sub>:<span class="primitive">object</span></sub></h4>
+            <article><p>local bindings</p></article>
+            
+            <h4>mimeType <sub>:<span class="primitive">string</span></sub></h4>
+            <article><p>custom mimeType, default to &#39;text/html&#39;</p></article>
+            
+            
+        </dd>
+        
+    </dl>
     
 
-        <p class="desc">
-            <p> directory of view template files (default to current directory)</p>
-        </p>
-
-        
-    </dd>
-
-    <dt id="view_engine">
-        <div>view_engine</div>
-        <sub>variable</sub>
-    </dt>
-    <dd>
-        <p class="proto">view_engine:<code>string</code> = <code>'ejs'</code>
     
 
-        <p class="desc">
-            <p> default view engine when no extension name is supplied</p>
-        </p>
-
-        
-    </dd>
-
-    <dt id="module_loader">
-        <div>module_loader</div>
-        <sub>variable</sub>
-    </dt>
-    <dd>
-        <p class="proto">module_loader:<code>function</code>
-
-        <p class="desc">
-            <p> method used to load view engine by extension, default to <code>require</code>. User can supply a specific loader by assigning
- this variable</p>
-        </p>
-
-        
-        <h4>Example</h4>
-        <pre> view.module_loader = function(name) {
-     return require(name).__express
- }
-</pre>
-        
-    </dd>
-
-    <dt id="defaultMimeType">
-        <div>defaultMimeType</div>
-        <sub>variable</sub>
-    </dt>
-    <dd>
-        <p class="proto">defaultMimeType:<code>string</code> = <code>'text/html'</code>
-    
-
-        <p class="desc">
-            <p> Default mime type</p>
-        </p>
-
-        
-    </dd>
-
-    <dt id="fun-render">
-        <div>render()</div><sub>method</sub>
-    </dt>
-    <dd>
-        <p class="proto">function render(name, locals, mimeType) 
-        <p class="desc">
-            <p> render a template file into response content, returns a <code>HttpResponse</code>.
- User should specify content type if needed.</p>
-        </p>
-
-        
-
-        
-
-        
-        <h4>Parameters</h4>
-        <dl>
-            
-            <dt>name <code>string</code></dt>
-            
-            <dd><p>template name, with or without extension</p></dd>
-            <dt>locals <code>object</code></dt>
-            
-            <dd><p>local bindings</p></dd>
-            <dt><sub>optional</sub>mimeType <code>string</code></dt>
-            
-            <dd><p>custom mimeType, default to &#39;text/html&#39;</p></dd>
-        </dl>
-        
-        
-        <h4>Returns<code><a href="http.html#class-Response">http::Response</a></code></h4>
-        
-        
-    </dd>
-
-    <dt id="fun-engine">
-        <div>engine()</div><sub>method</sub>
-    </dt>
-    <dd>
-        <p class="proto">function engine(compiler, options) 
-        
-
-        
-
-        
-        <h4>Example</h4>
-        <pre> import * as view from &#39;module/view&#39;;
- view.engines.handlebars = view.engine(require(&#39;handlebars&#39;).compile)
-</pre>
-        
-
-        
-        <h4>Parameters</h4>
-        <dl>
-            
-            <dt><sub>optional</sub>compiler <code>function</code></dt>
-            
-            <dt><sub>optional</sub>options <code>object</code></dt>
-            
-        </dl>
-        
-        
-    </dd>
-
-</dl>
-
-</div>
+</section>
 </body>
 </html>

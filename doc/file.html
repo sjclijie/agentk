@@ -1,253 +1,307 @@
+
 <!doctype html>
 <html>
 <head>
-    <title>file -- AgentK Documentation Generator</title>
+    <title>Module file -- AgentK document generator</title>
     <link rel="stylesheet" href="doc.css"/>
 </head>
-<body class="frames">
-<ul>
-    <li><a href="channel.html" title="cross process message gathering and dispatching system">channel</a></li>
-    <li><a href="child_process.html" title="Wrapper for child process">child_process</a></li>
-    <li><a href="crypto.html">crypto</a></li>
-    <li><a href="doc.html" title="AgentK documentation generator">doc</a></li>
-    <li>file</li>
-    <li><a href="fs_cache.html" title="file system cache handler">fs_cache</a></li>
-    <li><a href="gbk.html">gbk</a></li>
-    <li><a href="http.html">http</a></li>
-    <li><a href="legacy.html" title="Legacy support module">legacy</a></li>
-    <li><a href="router.html">router</a></li>
-    <li><a href="static_file.html" title="static file request handler">static_file</a></li>
-    <li><a href="stream.html" title="utils for stream consumption">stream</a></li>
-    <li><a href="test.html">test</a></li>
-    <li><a href="view.html">view</a></li>
-    <li><a href="xml.html">xml</a></li>
-    <li><a href="zlib.html">zlib</a></li>
+<body>
+<menu>
     
-</ul>
-<div class="content">
-<h1>file</h1>
-
-
-
-
-<ul>
+    <li>
+        <a href="channel.html" title="cross process message gathering and dispatching system
+"
+           class="">channel</a>
+    </li>
+    
+    <li>
+        <a href="child_process.html" title="Wrapper for child process
+"
+           class="">child_process</a>
+    </li>
+    
+    <li>
+        <a href="connection_pool.html" title="Module connection_pool"
+           class="">connection_pool</a>
+    </li>
+    
+    <li>
+        <a href="crypto.html" title="Module crypto"
+           class="">crypto</a>
+    </li>
+    
+    <li>
+        <a href="daemon.html" title="Module daemon"
+           class="">daemon</a>
+    </li>
+    
+    <li>
+        <a href="doc.html" title="AgentK documentation generator
+"
+           class="">doc</a>
+    </li>
+    
+    <li>
+        <a href="file.html" title="Module file"
+           class="current">file</a>
+    </li>
+    
+    <li>
+        <a href="fs_cache.html" title="file system cache handler
+"
+           class="">fs_cache</a>
+    </li>
+    
+    <li>
+        <a href="gbk.html" title="Module gbk"
+           class="">gbk</a>
+    </li>
+    
+    <li>
+        <a href="handlebars.html" title="Fast Handlebars Helper
+"
+           class="">handlebars</a>
+    </li>
+    
+    <li>
+        <a href="http.html" title="Module http"
+           class="">http</a>
+    </li>
+    
+    <li>
+        <a href="https.html" title="Module https"
+           class="">https</a>
+    </li>
+    
+    <li>
+        <a href="javascript.html" title="Module javascript"
+           class="">javascript</a>
+    </li>
+    
+    <li>
+        <a href="legacy.html" title="Legacy support module
+"
+           class="">legacy</a>
+    </li>
+    
+    <li>
+        <a href="logger.html" title="Logging helper
+"
+           class="">logger</a>
+    </li>
+    
+    <li>
+        <a href="lru_cache.html" title="Module lru_cache"
+           class="">lru_cache</a>
+    </li>
+    
+    <li>
+        <a href="mock.html" title="Module mock"
+           class="">mock</a>
+    </li>
+    
+    <li>
+        <a href="mysql.html" title="Module mysql"
+           class="">mysql</a>
+    </li>
+    
+    <li>
+        <a href="redis.html" title="Redis Client
+"
+           class="">redis</a>
+    </li>
+    
+    <li>
+        <a href="router.html" title="Module router"
+           class="">router</a>
+    </li>
+    
+    <li>
+        <a href="session.html" title="Module session"
+           class="">session</a>
+    </li>
+    
+    <li>
+        <a href="smtp.html" title="Module smtp"
+           class="">smtp</a>
+    </li>
+    
+    <li>
+        <a href="static_file.html" title="static file request handler
+"
+           class="">static_file</a>
+    </li>
+    
+    <li>
+        <a href="stream.html" title="utils for stream consumption
+"
+           class="">stream</a>
+    </li>
+    
+    <li>
+        <a href="test.html" title="Module test"
+           class="">test</a>
+    </li>
+    
+    <li>
+        <a href="view.html" title="Module view"
+           class="">view</a>
+    </li>
+    
+    <li>
+        <a href="websocket.html" title="Module websocket"
+           class="">websocket</a>
+    </li>
+    
+    <li>
+        <a href="wechat.html" title="Module wechat"
+           class="">wechat</a>
+    </li>
+    
+    <li>
+        <a href="xml.html" title="Module xml"
+           class="">xml</a>
+    </li>
+    
+    <li>
+        <a href="zlib.html" title="Module zlib"
+           class="">zlib</a>
+    </li>
+    
+    <li>
+        <a href="zookeeper.html" title="Module zookeeper"
+           class="">zookeeper</a>
+    </li>
+    
+</menu>
+<section>
+    <h1>Module file</h1>
     
     
-    <li><a href="#fun-read">function read(file) </a></li><li><a href="#fun-write">function write(file, content) </a></li><li><a href="#fun-rm">function rm(file) </a></li><li><a href="#fun-symlink">function symlink(src, dst) </a></li><li><a href="#fun-exists">function exists(file) </a></li><li><a href="#fun-mkdir">function mkdir(file) </a></li><li><a href="#fun-readdir">function readdir(file) </a></li><li><a href="#fun-isFile">function isFile(file) </a></li><li><a href="#fun-isDirectory">function isDirectory(file) </a></li><li><a href="#fun-mkdirp">function mkdirp(file) </a></li><li><a href="#fun-mkParentDir">function mkParentDir(file) </a></li><li><a href="#fun-open">function open(path, flags) </a></li><li><a href="#fun-close">function close(fd) </a></li>
     
-</ul>
-
-<dl id="definitions">
-
-    <dt id="fun-read">
-        <div>read()</div><sub>method</sub>
-    </dt>
-    <dd>
-        <p class="proto">function read(file) 
-        <p class="desc">
-            <p> reads file&#39;s content, returns a buffer containing its content. throws if any exception occurs</p>
-        </p>
-
+    
+    
+    <h2>functions</h2>
+    <dl>
         
-
-        
-
-        
-        <h4>Parameters</h4>
-        <dl>
+        <dt class="function">chmod<sub>function chmod(path, mode)</sub></dt>
+        <dd>
             
-            <dt>file <code>String</code></dt>
             
-        </dl>
+            
+        </dd>
         
+        <dt class="function">close<sub>function close(fd)</sub></dt>
+        <dd>
+            
+            
+            
+        </dd>
         
-        <h4>Returns<code><a href="https://nodejs.org/api/buffer.html#buffer_class_buffer">Buffer</a></code></h4>
+        <dt class="function">exists<sub>function exists(file)</sub></dt>
+        <dd>
+            
+            
+            
+        </dd>
         
+        <dt class="function">isDirectory<sub>function isDirectory(file)</sub></dt>
+        <dd>
+            
+            
+            
+        </dd>
         
-    </dd>
+        <dt class="function">isFile<sub>function isFile(file)</sub></dt>
+        <dd>
+            
+            
+            
+        </dd>
+        
+        <dt class="function">mkParentDir<sub>function mkParentDir(file)</sub></dt>
+        <dd>
+            
+            
+            
+        </dd>
+        
+        <dt class="function">mkdir<sub>function mkdir(file)</sub></dt>
+        <dd>
+            
+            
+            
+        </dd>
+        
+        <dt class="function">mkdirp<sub>function mkdirp(file)</sub></dt>
+        <dd>
+            
+            
+            
+        </dd>
+        
+        <dt class="function">open<sub>function open(path, flags)</sub></dt>
+        <dd>
+            
+            
+            
+        </dd>
+        
+        <dt class="function">read<sub>function read(file)</sub></dt>
+        <dd>
+            
+            <article><p>reads file&#39;s content, returns a buffer containing its content. throws if any exception occurs</p></article>
+            
+            
+            
+            <h3>parameters</h3>
+            
+            <h4>file <sub>:<span class="primitive">String</span></sub></h4>
+            <article></article>
+            
+            
+        </dd>
+        
+        <dt class="function">readdir<sub>function readdir(file)</sub></dt>
+        <dd>
+            
+            
+            
+        </dd>
+        
+        <dt class="function">rename<sub>function rename(oldPath, newPath)</sub></dt>
+        <dd>
+            
+            
+            
+        </dd>
+        
+        <dt class="function">rm<sub>function rm(file)</sub></dt>
+        <dd>
+            
+            
+            
+        </dd>
+        
+        <dt class="function">symlink<sub>function symlink(src, dst)</sub></dt>
+        <dd>
+            
+            
+            
+        </dd>
+        
+        <dt class="function">write<sub>function write(file, content)</sub></dt>
+        <dd>
+            
+            
+            
+        </dd>
+        
+    </dl>
+    
 
-    <dt id="fun-write">
-        <div>write()</div><sub>method</sub>
-    </dt>
-    <dd>
-        <p class="proto">function write(file, content) 
-        
+    
 
-        
-
-        
-
-        
-        
-    </dd>
-
-    <dt id="fun-rm">
-        <div>rm()</div><sub>method</sub>
-    </dt>
-    <dd>
-        <p class="proto">function rm(file) 
-        
-
-        
-
-        
-
-        
-        
-    </dd>
-
-    <dt id="fun-symlink">
-        <div>symlink()</div><sub>method</sub>
-    </dt>
-    <dd>
-        <p class="proto">function symlink(src, dst) 
-        
-
-        
-
-        
-
-        
-        
-    </dd>
-
-    <dt id="fun-exists">
-        <div>exists()</div><sub>method</sub>
-    </dt>
-    <dd>
-        <p class="proto">function exists(file) 
-        
-
-        
-
-        
-
-        
-        
-    </dd>
-
-    <dt id="fun-mkdir">
-        <div>mkdir()</div><sub>method</sub>
-    </dt>
-    <dd>
-        <p class="proto">function mkdir(file) 
-        
-
-        
-
-        
-
-        
-        
-    </dd>
-
-    <dt id="fun-readdir">
-        <div>readdir()</div><sub>method</sub>
-    </dt>
-    <dd>
-        <p class="proto">function readdir(file) 
-        
-
-        
-
-        
-
-        
-        
-    </dd>
-
-    <dt id="fun-isFile">
-        <div>isFile()</div><sub>method</sub>
-    </dt>
-    <dd>
-        <p class="proto">function isFile(file) 
-        
-
-        
-
-        
-
-        
-        
-    </dd>
-
-    <dt id="fun-isDirectory">
-        <div>isDirectory()</div><sub>method</sub>
-    </dt>
-    <dd>
-        <p class="proto">function isDirectory(file) 
-        
-
-        
-
-        
-
-        
-        
-    </dd>
-
-    <dt id="fun-mkdirp">
-        <div>mkdirp()</div><sub>method</sub>
-    </dt>
-    <dd>
-        <p class="proto">function mkdirp(file) 
-        
-
-        
-
-        
-
-        
-        
-    </dd>
-
-    <dt id="fun-mkParentDir">
-        <div>mkParentDir()</div><sub>method</sub>
-    </dt>
-    <dd>
-        <p class="proto">function mkParentDir(file) 
-        
-
-        
-
-        
-
-        
-        
-    </dd>
-
-    <dt id="fun-open">
-        <div>open()</div><sub>method</sub>
-    </dt>
-    <dd>
-        <p class="proto">function open(path, flags) 
-        
-
-        
-
-        
-
-        
-        
-    </dd>
-
-    <dt id="fun-close">
-        <div>close()</div><sub>method</sub>
-    </dt>
-    <dd>
-        <p class="proto">function close(fd) 
-        
-
-        
-
-        
-
-        
-        
-    </dd>
-
-</dl>
-
-</div>
+</section>
 </body>
 </html>

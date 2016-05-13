@@ -1,97 +1,222 @@
+
 <!doctype html>
 <html>
 <head>
-    <title>fs_cache -- AgentK Documentation Generator</title>
+    <title>file system cache handler
+ -- AgentK document generator</title>
     <link rel="stylesheet" href="doc.css"/>
 </head>
-<body class="frames">
-<ul>
-    <li><a href="channel.html" title="cross process message gathering and dispatching system">channel</a></li>
-    <li><a href="child_process.html" title="Wrapper for child process">child_process</a></li>
-    <li><a href="crypto.html">crypto</a></li>
-    <li><a href="doc.html" title="AgentK documentation generator">doc</a></li>
-    <li><a href="file.html">file</a></li>
-    <li>fs_cache</li>
-    <li><a href="gbk.html">gbk</a></li>
-    <li><a href="http.html">http</a></li>
-    <li><a href="legacy.html" title="Legacy support module">legacy</a></li>
-    <li><a href="router.html">router</a></li>
-    <li><a href="static_file.html" title="static file request handler">static_file</a></li>
-    <li><a href="stream.html" title="utils for stream consumption">stream</a></li>
-    <li><a href="test.html">test</a></li>
-    <li><a href="view.html">view</a></li>
-    <li><a href="xml.html">xml</a></li>
-    <li><a href="zlib.html">zlib</a></li>
+<body>
+<menu>
     
-</ul>
-<div class="content">
-<h1>fs_cache</h1>
-
-<p>file system cache handler
- </p>
-
-
-
-<div class="meta-description">
+    <li>
+        <a href="channel.html" title="cross process message gathering and dispatching system
+"
+           class="">channel</a>
+    </li>
     
-</div>
-
-
-
-
-
-
-<ul>
+    <li>
+        <a href="child_process.html" title="Wrapper for child process
+"
+           class="">child_process</a>
+    </li>
+    
+    <li>
+        <a href="connection_pool.html" title="Module connection_pool"
+           class="">connection_pool</a>
+    </li>
+    
+    <li>
+        <a href="crypto.html" title="Module crypto"
+           class="">crypto</a>
+    </li>
+    
+    <li>
+        <a href="daemon.html" title="Module daemon"
+           class="">daemon</a>
+    </li>
+    
+    <li>
+        <a href="doc.html" title="AgentK documentation generator
+"
+           class="">doc</a>
+    </li>
+    
+    <li>
+        <a href="file.html" title="Module file"
+           class="">file</a>
+    </li>
+    
+    <li>
+        <a href="fs_cache.html" title="file system cache handler
+"
+           class="current">fs_cache</a>
+    </li>
+    
+    <li>
+        <a href="gbk.html" title="Module gbk"
+           class="">gbk</a>
+    </li>
+    
+    <li>
+        <a href="handlebars.html" title="Fast Handlebars Helper
+"
+           class="">handlebars</a>
+    </li>
+    
+    <li>
+        <a href="http.html" title="Module http"
+           class="">http</a>
+    </li>
+    
+    <li>
+        <a href="https.html" title="Module https"
+           class="">https</a>
+    </li>
+    
+    <li>
+        <a href="javascript.html" title="Module javascript"
+           class="">javascript</a>
+    </li>
+    
+    <li>
+        <a href="legacy.html" title="Legacy support module
+"
+           class="">legacy</a>
+    </li>
+    
+    <li>
+        <a href="logger.html" title="Logging helper
+"
+           class="">logger</a>
+    </li>
+    
+    <li>
+        <a href="lru_cache.html" title="Module lru_cache"
+           class="">lru_cache</a>
+    </li>
+    
+    <li>
+        <a href="mock.html" title="Module mock"
+           class="">mock</a>
+    </li>
+    
+    <li>
+        <a href="mysql.html" title="Module mysql"
+           class="">mysql</a>
+    </li>
+    
+    <li>
+        <a href="redis.html" title="Redis Client
+"
+           class="">redis</a>
+    </li>
+    
+    <li>
+        <a href="router.html" title="Module router"
+           class="">router</a>
+    </li>
+    
+    <li>
+        <a href="session.html" title="Module session"
+           class="">session</a>
+    </li>
+    
+    <li>
+        <a href="smtp.html" title="Module smtp"
+           class="">smtp</a>
+    </li>
+    
+    <li>
+        <a href="static_file.html" title="static file request handler
+"
+           class="">static_file</a>
+    </li>
+    
+    <li>
+        <a href="stream.html" title="utils for stream consumption
+"
+           class="">stream</a>
+    </li>
+    
+    <li>
+        <a href="test.html" title="Module test"
+           class="">test</a>
+    </li>
+    
+    <li>
+        <a href="view.html" title="Module view"
+           class="">view</a>
+    </li>
+    
+    <li>
+        <a href="websocket.html" title="Module websocket"
+           class="">websocket</a>
+    </li>
+    
+    <li>
+        <a href="wechat.html" title="Module wechat"
+           class="">wechat</a>
+    </li>
+    
+    <li>
+        <a href="xml.html" title="Module xml"
+           class="">xml</a>
+    </li>
+    
+    <li>
+        <a href="zlib.html" title="Module zlib"
+           class="">zlib</a>
+    </li>
+    
+    <li>
+        <a href="zookeeper.html" title="Module zookeeper"
+           class="">zookeeper</a>
+    </li>
+    
+</menu>
+<section>
+    <h1>file system cache handler
+</h1>
+    
+    <article class="description"><p>This module helps read and parse file by caching the result and automatically determine whether or not the file
+content should be read and parsed again.</p></article>
     
     
-    <li><a href="#fun-fs_cache">function fs_cache(option) </a></li>
-    <li>module default: <a href="#fun-fs_cache">function fs_cache</a></li>
-</ul>
-
-<dl id="definitions">
-
-    <dt id="fun-fs_cache">
-        <div>fs_cache()</div><sub>method</sub>
-    </dt>
-    <dd>
-        <p class="proto">function fs_cache(option) 
-        <p class="desc">
+    
+    
+    
+    <h2>functions</h2>
+    <dl>
+        
+        <dt class="function">fs_cache<sub>function fs_cache(option = {cached: 3000, handler: Object})</sub></dt>
+        <dd>
             
-        </p>
-
-        
-
-        
-        <h4>Example</h4>
-        <pre> import Router from &#39;router&#39;;
- import fs_cache from &#39;fs_cache&#39;;
- let reader = fs_cache(&#39;static&#39;);
- let content = reader(&#39;js/index.js&#39;);
-</pre>
-        
-
-        
-        <h4>Parameters</h4>
-        <dl>
             
-            <dt>directory <code>string</code></dt>
+            <fieldset class="example">
+                <legend>Example</legend>
+                <code><span class="kw">import</span> Router <span class="kw">from</span> <span class="string">'router'</span>;
+<span class="kw">import</span> fs_cache <span class="kw">from</span> <span class="string">'fs_cache'</span>;
+<span class="kw">let</span> reader = fs_cache(<span class="string">'static'</span>);
+<span class="kw">let</span> content = reader(<span class="string">'js/index.js'</span>).content;</code>
+            </fieldset>
             
-            <dd><p>absolute path or relative to working directory</p></dd>
-            <dt><sub>optional</sub>option <code>object</code></dt>
             
-            <dd><p>optional arguments:</p>
+            <h3>parameters</h3>
+            
+            <h4>option <sub>:<span class="primitive">object</span></sub></h4>
+            <article><p>optional arguments:</p>
 
-<ul><li>cached:<code>number</code> file modification check iteration in ms, default to 3s</li><li>handler:<code>string</code> file content handler</li></ul></dd>
-        </dl>
+<ul><li>cached:<code>number</code> file modification check iteration in ms, default to 3s</li><li>handler:<code>function</code> file content handler</li></ul></article>
+            
+            
+        </dd>
         
-        
-        <h4>Returns<code>function</code></h4>
-        <p>reader</p>
-        
-    </dd>
+    </dl>
+    
 
-</dl>
+    
 
-</div>
+</section>
 </body>
 </html>

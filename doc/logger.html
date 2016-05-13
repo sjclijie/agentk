@@ -1,0 +1,347 @@
+
+<!doctype html>
+<html>
+<head>
+    <title>Logging helper
+ -- AgentK document generator</title>
+    <link rel="stylesheet" href="doc.css"/>
+</head>
+<body>
+<menu>
+    
+    <li>
+        <a href="channel.html" title="cross process message gathering and dispatching system
+"
+           class="">channel</a>
+    </li>
+    
+    <li>
+        <a href="child_process.html" title="Wrapper for child process
+"
+           class="">child_process</a>
+    </li>
+    
+    <li>
+        <a href="connection_pool.html" title="Module connection_pool"
+           class="">connection_pool</a>
+    </li>
+    
+    <li>
+        <a href="crypto.html" title="Module crypto"
+           class="">crypto</a>
+    </li>
+    
+    <li>
+        <a href="daemon.html" title="Module daemon"
+           class="">daemon</a>
+    </li>
+    
+    <li>
+        <a href="doc.html" title="AgentK documentation generator
+"
+           class="">doc</a>
+    </li>
+    
+    <li>
+        <a href="file.html" title="Module file"
+           class="">file</a>
+    </li>
+    
+    <li>
+        <a href="fs_cache.html" title="file system cache handler
+"
+           class="">fs_cache</a>
+    </li>
+    
+    <li>
+        <a href="gbk.html" title="Module gbk"
+           class="">gbk</a>
+    </li>
+    
+    <li>
+        <a href="handlebars.html" title="Fast Handlebars Helper
+"
+           class="">handlebars</a>
+    </li>
+    
+    <li>
+        <a href="http.html" title="Module http"
+           class="">http</a>
+    </li>
+    
+    <li>
+        <a href="https.html" title="Module https"
+           class="">https</a>
+    </li>
+    
+    <li>
+        <a href="javascript.html" title="Module javascript"
+           class="">javascript</a>
+    </li>
+    
+    <li>
+        <a href="legacy.html" title="Legacy support module
+"
+           class="">legacy</a>
+    </li>
+    
+    <li>
+        <a href="logger.html" title="Logging helper
+"
+           class="current">logger</a>
+    </li>
+    
+    <li>
+        <a href="lru_cache.html" title="Module lru_cache"
+           class="">lru_cache</a>
+    </li>
+    
+    <li>
+        <a href="mock.html" title="Module mock"
+           class="">mock</a>
+    </li>
+    
+    <li>
+        <a href="mysql.html" title="Module mysql"
+           class="">mysql</a>
+    </li>
+    
+    <li>
+        <a href="redis.html" title="Redis Client
+"
+           class="">redis</a>
+    </li>
+    
+    <li>
+        <a href="router.html" title="Module router"
+           class="">router</a>
+    </li>
+    
+    <li>
+        <a href="session.html" title="Module session"
+           class="">session</a>
+    </li>
+    
+    <li>
+        <a href="smtp.html" title="Module smtp"
+           class="">smtp</a>
+    </li>
+    
+    <li>
+        <a href="static_file.html" title="static file request handler
+"
+           class="">static_file</a>
+    </li>
+    
+    <li>
+        <a href="stream.html" title="utils for stream consumption
+"
+           class="">stream</a>
+    </li>
+    
+    <li>
+        <a href="test.html" title="Module test"
+           class="">test</a>
+    </li>
+    
+    <li>
+        <a href="view.html" title="Module view"
+           class="">view</a>
+    </li>
+    
+    <li>
+        <a href="websocket.html" title="Module websocket"
+           class="">websocket</a>
+    </li>
+    
+    <li>
+        <a href="wechat.html" title="Module wechat"
+           class="">wechat</a>
+    </li>
+    
+    <li>
+        <a href="xml.html" title="Module xml"
+           class="">xml</a>
+    </li>
+    
+    <li>
+        <a href="zlib.html" title="Module zlib"
+           class="">zlib</a>
+    </li>
+    
+    <li>
+        <a href="zookeeper.html" title="Module zookeeper"
+           class="">zookeeper</a>
+    </li>
+    
+</menu>
+<section>
+    <h1>Logging helper
+</h1>
+    
+    <article class="description"><p>Helper for log writing</p></article>
+    
+    
+    <fieldset class="example">
+        <legend>Example</legend>
+        <code><span class="kw">import</span> * <span class="kw">as</span> logger <span class="kw">from</span> <span class="string">'module/logger'</span>;
+
+logger.level = logger.INFO;
+logger.format.info = <span class="string">'[$level] $datetime $($1.method) $($1.pathname) $($2.status) $0\n'</span>
+logger.output.info = <span class="string">'log/info.log'</span>
+logger.info(<span class="string">'lorem ipsum'</span>, req, res)</code>
+    </fieldset>
+    
+    
+    <h2>constants</h2>
+    <dl>
+        
+        <dt class="number">DEBUG<sub class="type">number</sub></dt>
+        <dd>
+            
+            
+        </dd>
+        
+        <dt class="number">ERROR<sub class="type">number</sub></dt>
+        <dd>
+            
+            
+        </dd>
+        
+        <dt class="number">FATAL<sub class="type">number</sub></dt>
+        <dd>
+            
+            
+        </dd>
+        
+        <dt class="number">INFO<sub class="type">number</sub></dt>
+        <dd>
+            
+            
+        </dd>
+        
+        <dt class="number">VERBOSE<sub class="type">number</sub></dt>
+        <dd>
+            
+            
+        </dd>
+        
+        <dt class="number">WARN<sub class="type">number</sub></dt>
+        <dd>
+            
+            
+        </dd>
+        
+        <dt class="&lt;span class=&#34;primitive&#34;&gt;Object&lt;/span&gt;">format<sub class="type"><span class="primitive">Object</span></sub></dt>
+        <dd>
+            
+            <article><p>formats of each log level.
+Some variables can be used in the log format:</p>
+
+<ul><li><code>$level</code> current log level, like: <code>DEBUG INFO WARN ERROR FATAL</code></li><li><code>$datetime</code> datetime in format <code>yyyy-MM-dd HH:mm:ss</code></li><li><code>$filename</code> source file from which the logger method is called</li><li><code>$line</code> line number of the source file from which the logger method is called</li><li><code>$column</code> column number of the source file from which the logger method is called</li><li><code>$method</code> method name from which the logger method is called</li><li><code>$0</code> <code>$1</code> ... parameters to the log method</li><li><code>$(xxxx)</code> js expression evaluated to get a field from a variable</li></ul>
+
+<p>Format of the datetime parameter can be specified like: <code>$datetime{yyyy/MM/dd HH:mm:ss.SSS}</code>, tokens which can be
+used in the datetime formatter are:</p>
+
+<ul><li><code>yyyy</code> 4-digits years, like 2015</li><li><code>MM</code> 2-digits months, like 01, 02, ..., 12</li><li><code>MMM</code> 3-characters month name, like Jan, Feb, ..., Dec</li><li><code>dd</code> 2-digits date, like 01, 02, ..., 31</li><li><code>DDD</code> 3-characters day name of week, like Sun, Mon, ..., Sat</li><li><code>HH</code> 2-digits hours in 24-hours</li><li><code>mm</code> 2-digits minutes</li><li><code>ss</code> 2-digits seconds</li><li><code>SSS</code> 3-digits milliseconds</li></ul>
+
+<p>Default formats for each log levels are <code>&#39;[$level] $datetime $0\n&#39;</code>, which will print the log level, the datetime and the
+first argument.</p>
+
+<p>A log method should not be called before its format and output parameter is set up</p></article>
+            
+            
+        </dd>
+        
+        <dt class="&lt;span class=&#34;primitive&#34;&gt;Object&lt;/span&gt;">output<sub class="type"><span class="primitive">Object</span></sub></dt>
+        <dd>
+            
+            <article><p>Output targets</p>
+
+<p>specify a filename or a stream</p></article>
+            
+            
+        </dd>
+        
+    </dl>
+    
+    
+    <h2>variables</h2>
+    <dl>
+        
+        <dt class="&lt;span class=&#34;primitive&#34;&gt;number&lt;/span&gt;">level<sub class="type"><span class="primitive">number</span></sub></dt>
+        <dd>
+            
+            <article><p>current log level. The log levels that has lower priority will be ignored.</p></article>
+            
+            
+        </dd>
+        
+    </dl>
+    
+    
+    <h2>functions</h2>
+    <dl>
+        
+        <dt class="function">debug<sub>function debug()</sub></dt>
+        <dd>
+            
+            <article><p>log method that will format the arguments into a string and write them into output</p></article>
+            
+            
+            
+        </dd>
+        
+        <dt class="function">error<sub>function error()</sub></dt>
+        <dd>
+            
+            <article><p>log method that will format the arguments into a string and write them into output</p></article>
+            
+            
+            
+        </dd>
+        
+        <dt class="function">fatal<sub>function fatal()</sub></dt>
+        <dd>
+            
+            <article><p>log method that will format the arguments into a string and write them into output</p></article>
+            
+            
+            
+        </dd>
+        
+        <dt class="function">info<sub>function info()</sub></dt>
+        <dd>
+            
+            <article><p>log method that will format the arguments into a string and write them into output</p></article>
+            
+            
+            
+        </dd>
+        
+        <dt class="function">verbose<sub>function verbose()</sub></dt>
+        <dd>
+            
+            <article><p>log method that will format the arguments into a string and write them into output</p></article>
+            
+            
+            
+        </dd>
+        
+        <dt class="function">warn<sub>function warn()</sub></dt>
+        <dd>
+            
+            <article><p>log method that will format the arguments into a string and write them into output</p></article>
+            
+            
+            
+        </dd>
+        
+    </dl>
+    
+
+    
+
+</section>
+</body>
+</html>

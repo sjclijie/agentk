@@ -1,222 +1,304 @@
+
 <!doctype html>
 <html>
 <head>
-    <title>channel -- AgentK Documentation Generator</title>
+    <title>cross process message gathering and dispatching system
+ -- AgentK document generator</title>
     <link rel="stylesheet" href="doc.css"/>
 </head>
-<body class="frames">
-<ul>
-    <li>channel</li>
-    <li><a href="child_process.html" title="Wrapper for child process">child_process</a></li>
-    <li><a href="crypto.html">crypto</a></li>
-    <li><a href="doc.html" title="AgentK documentation generator">doc</a></li>
-    <li><a href="file.html">file</a></li>
-    <li><a href="fs_cache.html" title="file system cache handler">fs_cache</a></li>
-    <li><a href="gbk.html">gbk</a></li>
-    <li><a href="http.html">http</a></li>
-    <li><a href="legacy.html" title="Legacy support module">legacy</a></li>
-    <li><a href="router.html">router</a></li>
-    <li><a href="static_file.html" title="static file request handler">static_file</a></li>
-    <li><a href="stream.html" title="utils for stream consumption">stream</a></li>
-    <li><a href="test.html">test</a></li>
-    <li><a href="view.html">view</a></li>
-    <li><a href="xml.html">xml</a></li>
-    <li><a href="zlib.html">zlib</a></li>
+<body>
+<menu>
     
-</ul>
-<div class="content">
-<h1>channel</h1>
+    <li>
+        <a href="channel.html" title="cross process message gathering and dispatching system
+"
+           class="current">channel</a>
+    </li>
+    
+    <li>
+        <a href="child_process.html" title="Wrapper for child process
+"
+           class="">child_process</a>
+    </li>
+    
+    <li>
+        <a href="connection_pool.html" title="Module connection_pool"
+           class="">connection_pool</a>
+    </li>
+    
+    <li>
+        <a href="crypto.html" title="Module crypto"
+           class="">crypto</a>
+    </li>
+    
+    <li>
+        <a href="daemon.html" title="Module daemon"
+           class="">daemon</a>
+    </li>
+    
+    <li>
+        <a href="doc.html" title="AgentK documentation generator
+"
+           class="">doc</a>
+    </li>
+    
+    <li>
+        <a href="file.html" title="Module file"
+           class="">file</a>
+    </li>
+    
+    <li>
+        <a href="fs_cache.html" title="file system cache handler
+"
+           class="">fs_cache</a>
+    </li>
+    
+    <li>
+        <a href="gbk.html" title="Module gbk"
+           class="">gbk</a>
+    </li>
+    
+    <li>
+        <a href="handlebars.html" title="Fast Handlebars Helper
+"
+           class="">handlebars</a>
+    </li>
+    
+    <li>
+        <a href="http.html" title="Module http"
+           class="">http</a>
+    </li>
+    
+    <li>
+        <a href="https.html" title="Module https"
+           class="">https</a>
+    </li>
+    
+    <li>
+        <a href="javascript.html" title="Module javascript"
+           class="">javascript</a>
+    </li>
+    
+    <li>
+        <a href="legacy.html" title="Legacy support module
+"
+           class="">legacy</a>
+    </li>
+    
+    <li>
+        <a href="logger.html" title="Logging helper
+"
+           class="">logger</a>
+    </li>
+    
+    <li>
+        <a href="lru_cache.html" title="Module lru_cache"
+           class="">lru_cache</a>
+    </li>
+    
+    <li>
+        <a href="mock.html" title="Module mock"
+           class="">mock</a>
+    </li>
+    
+    <li>
+        <a href="mysql.html" title="Module mysql"
+           class="">mysql</a>
+    </li>
+    
+    <li>
+        <a href="redis.html" title="Redis Client
+"
+           class="">redis</a>
+    </li>
+    
+    <li>
+        <a href="router.html" title="Module router"
+           class="">router</a>
+    </li>
+    
+    <li>
+        <a href="session.html" title="Module session"
+           class="">session</a>
+    </li>
+    
+    <li>
+        <a href="smtp.html" title="Module smtp"
+           class="">smtp</a>
+    </li>
+    
+    <li>
+        <a href="static_file.html" title="static file request handler
+"
+           class="">static_file</a>
+    </li>
+    
+    <li>
+        <a href="stream.html" title="utils for stream consumption
+"
+           class="">stream</a>
+    </li>
+    
+    <li>
+        <a href="test.html" title="Module test"
+           class="">test</a>
+    </li>
+    
+    <li>
+        <a href="view.html" title="Module view"
+           class="">view</a>
+    </li>
+    
+    <li>
+        <a href="websocket.html" title="Module websocket"
+           class="">websocket</a>
+    </li>
+    
+    <li>
+        <a href="wechat.html" title="Module wechat"
+           class="">wechat</a>
+    </li>
+    
+    <li>
+        <a href="xml.html" title="Module xml"
+           class="">xml</a>
+    </li>
+    
+    <li>
+        <a href="zlib.html" title="Module zlib"
+           class="">zlib</a>
+    </li>
+    
+    <li>
+        <a href="zookeeper.html" title="Module zookeeper"
+           class="">zookeeper</a>
+    </li>
+    
+</menu>
+<section>
+    <h1>cross process message gathering and dispatching system
+</h1>
+    
+    <article class="description"><p>Channel can be used for cross process communication, in two modes:</p>
 
-<p>cross process message gathering and dispatching system
- </p>
-
-
-
-<div class="meta-description">
-    <p> Channel can be used for cross process communication, in two modes:</p>
-
-<ul><li>provider and query mode: a process can query all pairs for a data, with a channel name</li><li>dispatcher and listener mode: a process can dispatch a message to all pairs, with a channel name</li></ul>
-</div>
-
-
-<h4>Example</h4>
-<pre> import * as channel from &#39;../src/module/channel&#39;;
- channel.registerProvider(&#39;get_pid&#39;, function () {
-     return process.pid
- });
- channel.registerListener(&#39;notify&#39;, function (data) {
-     console.log(&#39;received notify&#39;, data)
- });
- setInterval(function () {
-     co.run(function () {
-         console.log(process.pid, channel.query(&#39;get_pid&#39;));
-         channel.dispatch(&#39;notify&#39;, Math.random())
-     }).done();
- }, 3000);
-</pre>
-
-
-
-
-
-<ul>
+<ul><li>provider and query mode: a process can query all pairs for a data, with a channel name</li><li>dispatcher and listener mode: a process can dispatch a message to all pairs, with a channel name</li></ul></article>
     
     
-    <li><a href="#fun-registerProvider">function registerProvider(ch, cb, direct) </a></li><li><a href="#fun-registerListener">function registerListener(ch, cb) </a></li><li><a href="#fun-query">function query(ch) </a></li><li><a href="#fun-dispatch">function dispatch(ch, data) </a></li><li><a href="#fun-onWorker">function onWorker(worker) </a></li>
+    <fieldset class="example">
+        <legend>Example</legend>
+        <code><span class="kw">import</span> * <span class="kw">as</span> channel <span class="kw">from</span> <span class="string">'../src/module/channel'</span>;
+
+channel.registerProvider(<span class="string">'get_pid'</span>, <span class="kw">function</span> () {
+    <span class="kw">return</span> <span class="global">process</span>.pid
+});
+
+channel.registerListener(<span class="string">'notify'</span>, <span class="kw">function</span> (data) {
+    <span class="global">console</span>.log(<span class="string">'received notify'</span>, data)
+});
+
+setInterval(<span class="kw">function</span> () {
+    <span class="global">co</span>.run(<span class="kw">function</span> () {
+        <span class="global">console</span>.log(<span class="global">process</span>.pid, channel.query(<span class="string">'get_pid'</span>));
+        channel.dispatch(<span class="string">'notify'</span>, Math.random())
+    }).done();
+}, <span class="number">3000</span>);</code>
+    </fieldset>
     
-</ul>
-
-<dl id="definitions">
-
-    <dt id="fun-registerProvider">
-        <div>registerProvider()</div><sub>method</sub>
-    </dt>
-    <dd>
-        <p class="proto">function registerProvider(ch, cb, direct) 
-        <p class="desc">
-            <p> register a provider for <a href="#query">query</a>. when called by one child, all pairs will be queried and the result
- is returned as an array.</p>
-
-<p> <code>cb</code> is called inside coroutine if <code>direct</code> is set to false</p>
-        </p>
-
+    
+    
+    
+    <h2>functions</h2>
+    <dl>
         
-
-        
-
-        
-        <h4>Parameters</h4>
-        <dl>
+        <dt class="function">dispatch<sub>function dispatch(ch, data)</sub></dt>
+        <dd>
             
-            <dt>ch <code>string</code></dt>
+            <article><p>dispatch a message to all processes</p></article>
             
-            <dd><p>channel name to be queried</p></dd>
-            <dt>cb <code>function</code></dt>
             
-            <dd><p>callback method to get the data</p></dd>
-            <dt>direct <code>boolean</code></dt>
             
-            <dd><p>whether cb should run directly or inside coroutine, default to false
- </p></dd>
-        </dl>
-        
-        
-    </dd>
-
-    <dt id="fun-registerListener">
-        <div>registerListener()</div><sub>method</sub>
-    </dt>
-    <dd>
-        <p class="proto">function registerListener(ch, cb) 
-        <p class="desc">
-            <p> register a listener to dispatch</p>
-
-<p> <code>cb</code> is called outside coroutine</p>
-        </p>
-
-        
-
-        
-
-        
-        <h4>Parameters</h4>
-        <dl>
+            <h3>parameters</h3>
             
-            <dt>ch <code>string</code></dt>
+            <h4>ch <sub>:<span class="primitive">string</span></sub></h4>
+            <article><p>channel to be dispatched</p></article>
             
-            <dd><p>channel name that listens to</p></dd>
-            <dt>cb <code>function</code></dt>
+            <h4>data <sub>:</sub></h4>
+            <article><p>data to be dispatched, must be json serializable</p></article>
             
-            <dd><p>callback method receive the dispatched data
- </p></dd>
-        </dl>
-        
-        
-    </dd>
-
-    <dt id="fun-query">
-        <div>query()</div><sub>method</sub>
-    </dt>
-    <dd>
-        <p class="proto">function query(ch) 
-        <p class="desc">
-            <p> query all processes, get the data by the provider registered, and return them as an array</p>
-        </p>
-
-        
-
-        
-
-        
-        <h4>Parameters</h4>
-        <dl>
             
-            <dt>ch <code>string</code></dt>
+        </dd>
+        
+        <dt class="function">onMessage<sub>function onMessage(mesg)</sub></dt>
+        <dd>
             
-            <dd><p>channel name to be queried</p></dd>
-        </dl>
-        
-        
-        <h4>Returns<code>Array</code></h4>
-        <p>all results of the pairs that registered a provider for this channel</p>
-        
-    </dd>
-
-    <dt id="fun-dispatch">
-        <div>dispatch()</div><sub>method</sub>
-    </dt>
-    <dd>
-        <p class="proto">function dispatch(ch, data) 
-        <p class="desc">
-            <p> dispatch a message to all processes</p>
-        </p>
-
-        
-
-        
-
-        
-        <h4>Parameters</h4>
-        <dl>
             
-            <dt>ch <code>string</code></dt>
             
-            <dd><p>channel to be dispatched</p></dd>
-            <dt>data</dt>
+        </dd>
+        
+        <dt class="function">query<sub>function query(ch)</sub></dt>
+        <dd>
             
-            <dd><p>data to be dispatched, must be json serializable
- </p></dd>
-        </dl>
-        
-        
-    </dd>
-
-    <dt id="fun-onWorker">
-        <div>onWorker()</div><sub>method</sub>
-    </dt>
-    <dd>
-        <p class="proto">function onWorker(worker) 
-        <p class="desc">
-            <p> This method is called by daemon at worker start</p>
-        </p>
-
-        
-
-        
-
-        
-        <h4>Parameters</h4>
-        <dl>
+            <article><p>query all processes, get the data by the provider registered, and return them as an array</p></article>
             
-            <dt>worker <code><a href="https://nodejs.org/api/child_process.html#child_process_class_childprocess">ChildProcess</a></code></dt>
             
-        </dl>
+            
+            <h3>parameters</h3>
+            
+            <h4>ch <sub>:<span class="primitive">string</span></sub></h4>
+            <article><p>channel name to be queried</p></article>
+            
+            
+        </dd>
         
+        <dt class="function">registerListener<sub>function registerListener(ch, cb)</sub></dt>
+        <dd>
+            
+            <article><p>register a listener to dispatch</p>
+
+<p><code>cb</code> is called outside coroutine</p></article>
+            
+            
+            
+            <h3>parameters</h3>
+            
+            <h4>ch <sub>:<span class="primitive">string</span></sub></h4>
+            <article><p>channel name that listens to</p></article>
+            
+            <h4>cb <sub>:<span class="primitive">function</span></sub></h4>
+            <article><p>callback method receive the dispatched data</p></article>
+            
+            
+        </dd>
         
-    </dd>
+        <dt class="function">registerProvider<sub>function registerProvider(ch, cb, direct)</sub></dt>
+        <dd>
+            
+            <article><p>register a provider for <a href="#query">query</a>. when called by one child, all pairs will be queried and the result
+is returned as an array.</p>
 
-</dl>
+<p><code>cb</code> is called inside coroutine if <code>direct</code> is set to false</p></article>
+            
+            
+            
+            <h3>parameters</h3>
+            
+            <h4>ch <sub>:<span class="primitive">string</span></sub></h4>
+            <article><p>channel name to be queried</p></article>
+            
+            <h4>cb <sub>:<span class="primitive">function</span></sub></h4>
+            <article><p>callback method to get the data</p></article>
+            
+            <h4>direct <sub>:<span class="primitive">boolean</span></sub></h4>
+            <article><p>whether cb should run directly or inside coroutine, default to false</p></article>
+            
+            
+        </dd>
+        
+    </dl>
+    
 
-</div>
+    
+
+</section>
 </body>
 </html>
