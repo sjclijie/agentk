@@ -65,11 +65,9 @@ for (var i = 0; i < 256; i++) {
 }
 
 function crc32(input) {
-    input = new Buffer(input, 'binary');
-
     var initial = -1;
     for (var i = 0, end = input.length; i < end; i++) {
-        initial = crc_table[initial & 0xFF ^ input[i]] ^ (initial >> 8 & 0xFFFFFF);
+        initial = crc_table[initial & 0xFF ^ input.charCodeAt(i)] ^ (initial >> 8 & 0xFFFFFF);
     }
     return initial;
 }

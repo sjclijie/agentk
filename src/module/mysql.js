@@ -3,6 +3,11 @@ const pools = {}; // url => pool
 const _mysql = require('mysql'),
     _url = require('url');
 
+/**
+ * An abstraction that implements mysql operations and will execute its query on the original mysql connection object
+ *
+ * @export
+ */
 class Context {
     constructor(conn) {
         this._conn = conn;
@@ -22,7 +27,7 @@ class Context {
         serializer = serializer || (data => data.join());
         interval = interval || 3000;
         const conn = this._conn;
-        const cache = {__proto__: null};
+        const cache = Object.create(null);
 
         let nextScan = Date.now() + interval; // key=>{expires, promise}
 
@@ -62,7 +67,10 @@ class Context {
         }
     }
 }
-
+/**
+ * A dedicated connection that will be returned with pool.getConnection()
+ * @export
+ */
 class Connection extends Context {
     constructor(conn) {
         super(conn);
@@ -87,7 +95,9 @@ class Connection extends Context {
         }
     }
 }
-
+/**
+ * @export
+ */
 class Transaction extends Connection {
     constructor(conn) {
         super(conn);
@@ -116,7 +126,9 @@ class Transaction extends Connection {
         }
     }
 }
-
+/**
+ * @export
+ */
 class Pool extends Context {
     constructor(url) {
         let parsedurl = _url.parse(url, true);

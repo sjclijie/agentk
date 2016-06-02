@@ -38,6 +38,7 @@ const actions = {
             let program = getProgram(dir);
             return {
                 path: dir,
+                class: program.class,
                 workers: program.workers.length,
                 startup: program.startup,
                 restarted: program.restarted,
@@ -54,6 +55,7 @@ const actions = {
         delete programs[dir];
         updateLog();
 
+        // kill all workers
         for (let worker of program.workers) {
             if (!worker) continue;
 
@@ -63,6 +65,12 @@ const actions = {
             }
         }
 
+        // close all schedulers
+        for (let key of Object.keys(program.schedulers)) {
+            program.schedulers[key].free();
+        }
+
+        // close all files (stdout, stderr)
         for (let fd of program.fds) {
             try {
                 file.close(fd);
@@ -123,6 +131,7 @@ function startProgram(dir) {
     let workDir, timeStamp, onPipeData1, onPipeData2;
 
     if (manifest) {
+        option.class = manifest.class;
         option.args.push('run', dir);
         workDir = dir;
         if (manifest.directory) {
@@ -149,6 +158,7 @@ function startProgram(dir) {
     const workers = [], restarted = [];
 
     const program = programs[dir] = {
+        class: option.class || '',
         stdout: option.stdout || null,
         stderr: option.stderr || null,
         directory: workDir,

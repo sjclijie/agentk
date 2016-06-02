@@ -220,7 +220,7 @@ function onIdentifier(node) {
 
 function onVarDecl(decl, i) {
     i && append(', ');
-    onIdentifier(decl.id);
+    onExpr(decl.id);
     if (decl.init) {
         append(' = ');
         onExpr(decl.init);
@@ -265,6 +265,7 @@ function level(expr) {
             return 12;
         case Syntax.ArrowFunctionExpression:
         case Syntax.AssignmentExpression:
+        case Syntax.AssignmentPattern:
             return 13;
         case Syntax.YieldExpression:
             return 14;
@@ -299,9 +300,22 @@ function onExpr(expr, isStmt) {
                 append(expr.operator);
             }
             break;
+        case Syntax.AssignmentPattern:
+            onIdentifier(expr.left);
+            append(' = ');
+            autoWrap(expr.right, 13);
+            break;
+        case Syntax.AssignmentExpression:
+            if (isStmt && expr.left.type === Syntax.ObjectPattern) {
+                append('(');
+                onExpr(expr.left);
+                append(' = ');
+                autoWrap(expr.right, 13);
+                append(')');
+                break;
+            }
         case Syntax.BinaryExpression:
         case Syntax.LogicalExpression:
-        case Syntax.AssignmentExpression:
         {
             const lvl = level(expr);
             autoWrap(expr.left, lvl, isStmt);
@@ -343,6 +357,7 @@ function onExpr(expr, isStmt) {
             onClass(expr);
             break;
         case Syntax.ObjectExpression:
+        case Syntax.ObjectPattern:
             if (isStmt) {
                 appendBefore('({', expr, 1);
             } else {
@@ -351,9 +366,16 @@ function onExpr(expr, isStmt) {
             for (let i = 0, L = expr.properties.length; i < L; i++) {
                 i && append(',');
                 let prop = expr.properties[i];
+                if (prop.computed) append('[');
                 onExpr(prop.key); // identifier or literal
-                append(':');
-                onExpr(prop.value);
+                if (prop.computed) append(']');
+                if (prop.value.type === Syntax.AssignmentPattern) {
+                    append('=');
+                    onExpr(prop.value.right)
+                } else {
+                    append(':')
+                    onExpr(prop.value);
+                }
             }
             appendEnd(isStmt ? '})' : '}', expr);
             break;
@@ -381,7 +403,12 @@ function onExpr(expr, isStmt) {
             append(')');
             break;
         }
+        case Syntax.RestElement:
+            appendBefore('...', expr.argument, 3);
+            onExpr(expr.argument);
+            break;
         case Syntax.ArrayExpression:
+        case Syntax.ArrayPattern:
         {
             appendStart('[', expr);
             onExprs(expr.elements);
@@ -428,10 +455,15 @@ function onExpr(expr, isStmt) {
 function onExprs(arr, isStmt) {
     if (!arr.length) return;
     for (let i = 0, L = arr.length; i < L; i++) {
-        let expr = arr[i], lv = level(expr);
-        append(lv === 15 ? i ? ', (' : '(' : i ? ', ' : '');
+        let expr = arr[i];
+        if (!expr) {
+            append(', ');
+            continue
+        }
+        let isSeq = level(expr) === 15;
+        append(isSeq ? i ? ', (' : '(' : i ? ', ' : '');
         onExpr(arr[i], isStmt && i === 0);
-        lv === 15 && append(')');
+        isSeq && append(')');
     }
 }
 
@@ -441,12 +473,17 @@ function onFunction(expr, isShorthand) {
     appendStart(isArrow || isShorthand ? '' : expr.generator ? 'function* ' : 'function ', expr);
     expr.id && onIdentifier(expr.id);
     let L = expr.params.length;
-    if (!isArrow || L !== 1) append('(');
+    append('(');
     const hasRest = L && expr.params[L - 1].type === Syntax.RestElement;
     if (hasRest) L--;
+    const defaults = expr.defaults || [];
     for (let i = 0; i < L; i++) {
         i && append(', ');
-        onIdentifier(expr.params[i]);
+        onExpr(expr.params[i]);
+        if (defaults[i]) {
+            append(' = ');
+            autoWrap(defaults[i], 13)
+        }
     }
     if (hasRest) {
         append(L ? ', ...' : '...');
@@ -455,15 +492,11 @@ function onFunction(expr, isShorthand) {
     }
     if (isArrow) {
         if (expr.body.type === Syntax.BlockStatement) {
-            if (L === 1) {
-                appendBefore(' => {', expr.body, 4);
-            } else {
-                appendBefore(') => {', expr.body, 5);
-            }
+            appendBefore(') => {', expr.body, 5);
             expr.body.body.forEach(onStmt);
             appendEnd('}', expr.body);
         } else {
-            let prefix = L === 1 ? ' => ' : ') => ';
+            let prefix = ') => ';
             const isObject = expr.body.type === Syntax.ObjectExpression;
             if (isObject) prefix += '(';
 

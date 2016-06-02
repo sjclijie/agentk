@@ -1,6 +1,6 @@
 {
   "name": "agentk",
-  "version": "1.4.5",
+  "version": "1.5.2",
   "description": "synchronous web service framework",
   "main": "index.js",
   "bin": {
@@ -10,7 +10,7 @@
     "test": "test"
   },
   "dependencies": {
-    "fibers": "1.0.7"
+    "fibers": "1.0.13"
   },
   "scripts": {
     "test": "ak test"

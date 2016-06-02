@@ -120,13 +120,13 @@ const compile = function () {
     return function (buffer) {
         const hash = crypto.createHash('sha1').update(buffer).digest('base64').slice(0, -1);
         return compiled[hash] || (compiled[hash] = compile(buffer))
-    }
+    };
     function compile(buffer) {
         let ast = esprima.parse(buffer, parseOptions);
 
         ast = transform(ast, transformOptions);
         const script = build(ast, buildOptions);
-        return [Object.keys(ast.exports), script]
+        return [ast.exports, script]
     }
 }();
 
@@ -137,10 +137,20 @@ function defineModule(module, buffer, option) {
     try {
         compiled = compile(buffer);
     } catch (e) {
-        throw new Error('failed parsing ' + __filename + ': ' + e.message)
+        const err = new Error('failed parsing ' + __filename + ': ' + e.message), old_stack = e.stack;
+
+        if (old_stack) {
+            const stack = err.stack, idx = stack.indexOf('\n');
+
+            err.stack = stack.substr(0, idx) +
+                old_stack.substr(old_stack.indexOf('\n')) +
+                '\n============================================' +
+                stack.substr(idx);
+        }
+        throw err;
     }
     option.exports = compiled[0];
-    //console.log(option.filename, result);
+    // console.log('/* ' + option.filename + '*/$', compiled[1]);
     let ctor = vm.runInThisContext(compiled[1], option);
 
     module[loadProgress] = co.run(function () {

@@ -1,4 +1,4 @@
-import {Syntax,Expression,Statement,build} from 'javascript.js';
+import {Syntax, Expression, Statement, build} from 'javascript.js';
 
 const id = Expression.id, raw = Expression.raw, decl = Statement.decl, block = Statement.Block;
 
@@ -8,10 +8,6 @@ const $pathname = id('pathname'),
     $args = id('args'),
     $undefined = id('undefined'),
     $completions = id('completions');
-
-function pushAll(from, to) {
-    to.push.apply(to, from);
-}
 
 function doWhile0(stmts) {
     return {

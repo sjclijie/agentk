@@ -79,11 +79,11 @@ var tests = {
             "binary supported by Number()": "\nreturn Number('0b1') === 1;\n      "
         }
     }, {
-        "title": "template strings",
+        "title": "template literals",
         "tests": {
             "basic functionality": "\nvar a = \"ba\", b = \"QUX\";\nreturn `foo bar\n${a + \"z\"} ${b.toLowerCase()}` === \"foo bar\\nbaz qux\";\n      ",
             "toString conversion": "\nvar a = {\n  toString: function() { return \"foo\"; },\n  valueOf: function() { return \"bar\"; },\n};\nreturn `${a}` === \"foo\";\n      ",
-            "tagged template strings": "\nvar called = false;\nfunction fn(parts, a, b) {\n  called = true;\n  return parts instanceof Array &&\n    parts[0]     === \"foo\"      &&\n    parts[1]     === \"bar\\n\"    &&\n    parts.raw[0] === \"foo\"      &&\n    parts.raw[1] === \"bar\\\\n\"   &&\n    a === 123                   &&\n    b === 456;\n}\nreturn fn `foo${123}bar\\n${456}` && called;\n      ",
+            "tagged template literals": "\nvar called = false;\nfunction fn(parts, a, b) {\n  called = true;\n  return parts instanceof Array &&\n    parts[0]     === \"foo\"      &&\n    parts[1]     === \"bar\\n\"    &&\n    parts.raw[0] === \"foo\"      &&\n    parts.raw[1] === \"bar\\\\n\"   &&\n    a === 123                   &&\n    b === 456;\n}\nreturn fn `foo${123}bar\\n${456}` && called;\n      ",
             "passed array is frozen": "\nreturn (function(parts) {\n  return Object.isFrozen(parts) && Object.isFrozen(parts.raw);\n}) `foo${0}bar${0}baz`;\n      ",
             "line break normalisation": "\nvar cr   = eval(\"`x\" + String.fromCharCode(13)    + \"y`\");\nvar lf   = eval(\"`x\" + String.fromCharCode(10)    + \"y`\");\nvar crlf = eval(\"`x\" + String.fromCharCode(13,10) + \"y`\");\n\nreturn cr.length === 3 && lf.length === 3 && crlf.length === 3\n  && cr[1] === lf[1] && lf[1] === crlf[1] && crlf[1] === '\\n';\n      "
         }
@@ -93,48 +93,89 @@ var tests = {
             "\"y\" flag": "\nvar re = new RegExp('\\\\w', 'y');\nre.exec('xy');\nreturn (re.exec('xy')[0] === 'y');\n      ",
             "\"y\" flag, lastIndex": "\nvar re = new RegExp('yy', 'y');\nre.lastIndex = 3;\nvar result = re.exec('xxxyyxx')[0];\nreturn result === 'yy' && re.lastIndex === 5;\n      ",
             "\"u\" flag": "\nreturn \"𠮷\".match(/^.$/u)[0].length === 2;\n      ",
-            "\"u\" flag, Unicode code point escapes": "\nreturn \"𝌆\".match(/\\u{1d306}/u)[0].length === 2;\n      "
+            "\"u\" flag, Unicode code point escapes": "\nreturn \"𝌆\".match(/\\u{1d306}/u)[0].length === 2;\n      ",
+            "\"u\" flag, case folding": "\nreturn \"ſ\".match(/S/iu) && \"ſ\".match(/\\w/iu) && \"ſ\".match(/\\W/iu)\n && \"S\".match(/ſ/iu) && \"S\".match(/\\w/iu) && \"S\".match(/\\W/iu);\n      "
         }
     }, {
-        "title": "destructuring",
+        "title": "destructuring, declarations",
         "tests": {
-            "with arrays": "\nvar [a, , [b], c] = [5, null, [6]];\nvar d, e;\n[d,e] = [7,8];\nreturn a === 5 && b === 6 && c === undefined\n  && d === 7 && e === 8;\n      ",
+            "with arrays": "\nvar [a, , [b], c] = [5, null, [6]];\nreturn a === 5 && b === 6 && c === undefined;\n      ",
             "with sparse arrays": "\nvar [a, , b] = [,,,];\nreturn a === undefined && b === undefined;\n      ",
-            "with strings": "\nvar [a, b, c] = \"ab\";\nvar d, e;\n[d,e] = \"de\";\nreturn a === \"a\" && b === \"b\" && c === undefined\n  && d === \"d\" && e === \"e\";\n      ",
-            "with astral plane strings": "\nvar c;\n[c] = \"𠮷𠮶\";\nreturn c === \"𠮷\";\n      ",
-            "with generator instances": "\nvar [a, b, c] = (function*(){ yield 1; yield 2; }());\nvar d, e;\n[d, e] = (function*(){ yield 3; yield 4; }());\nreturn a === 1 && b === 2 && c === undefined\n  && d === 3 && e === 4;\n      ",
-            "with generic iterables": "\nvar [a, b, c] = global.__createIterableObject([1, 2]);\nvar d, e;\n[d, e] = global.__createIterableObject([3, 4]);\nreturn a === 1 && b === 2 && c === undefined\n  && d === 3 && e === 4;\n      ",
-            "with instances of generic iterables": "\nvar [a, b, c] = Object.create(global.__createIterableObject([1, 2]))\nvar d, e;\n[d, e] = Object.create(global.__createIterableObject([3, 4]));\nreturn a === 1 && b === 2 && c === undefined\n  && d === 3 && e === 4;\n      ",
+            "with strings": "\nvar [a, b, c] = \"ab\";\nreturn a === \"a\" && b === \"b\" && c === undefined;\n      ",
+            "with astral plane strings": "\nvar [c] = \"𠮷𠮶\";\nreturn c === \"𠮷\";\n      ",
+            "with generator instances": "\nvar [a, b, c] = (function*(){ yield 1; yield 2; }());\nreturn a === 1 && b === 2 && c === undefined;\n      ",
+            "with generic iterables": "\nvar [a, b, c] = global.__createIterableObject([1, 2]);\nreturn a === 1 && b === 2 && c === undefined;\n      ",
+            "with instances of generic iterables": "\nvar [a, b, c] = Object.create(global.__createIterableObject([1, 2]));\nreturn a === 1 && b === 2 && c === undefined;\n      ",
             "iterator closing": "\nvar closed = false;\nvar iter = global.__createIterableObject([1, 2, 3], {\n  'return': function(){ closed = true; return {}; }\n});\nvar [a, b] = iter;\nreturn closed;\n      ",
-            "iterable destructuring expression": "\nvar a, b, iterable = [1,2];\nreturn ([a, b] = iterable) === iterable;\n      ",
-            "chained iterable destructuring": "\nvar a,b,c,d;\n[a,b] = [c,d] = [1,2];\nreturn a === 1 && b === 2 && c === 1 && d === 2;\n      ",
             "trailing commas in iterable patterns": "\nvar [a,] = [1];\nreturn a === 1;\n      ",
-            "with objects": "\nvar {c, x:d, e} = {c:7, x:8};\nvar f, g;\n({f,g} = {f:9,g:10});\nreturn c === 7 && d === 8 && e === undefined\n  && f === 9 && g === 10;\n      ",
-            "object destructuring with primitives": "\nvar {toFixed} = 2;\nvar {slice} = '';\nvar toString, match;\n({toString} = 2);\n({match} = '');\nreturn toFixed === Number.prototype.toFixed\n  && toString === Number.prototype.toString\n  && slice === String.prototype.slice\n  && match === String.prototype.match;\n      ",
+            "with objects": "\nvar {c, x:d, e} = {c:7, x:8};\nreturn c === 7 && d === 8 && e === undefined;\n      ",
+            "object destructuring with primitives": "\nvar {toFixed} = 2;\nvar {slice} = '';\nreturn toFixed === Number.prototype.toFixed\n  && slice === String.prototype.slice;\n      ",
             "trailing commas in object patterns": "\nvar {a,} = {a:1};\nreturn a === 1;\n      ",
-            "object destructuring expression": "\nvar a, b, obj = { a:1, b:2 };\nreturn ({a,b} = obj) === obj;\n      ",
-            "parenthesised left-hand-side is a syntax error": "\nvar a, b;\n({a,b} = {a:1,b:2});\ntry {\n  eval(\"({a,b}) = {a:3,b:4};\");\n}\ncatch(e) {\n  return a === 1 && b === 2;\n}\n      ",
-            "chained object destructuring": "\nvar a,b,c,d;\n({a,b} = {c,d} = {a:1,b:2,c:3,d:4});\nreturn a === 1 && b === 2 && c === 3 && d === 4;\n      ",
             "throws on null and undefined": "\ntry {\n  var {a} = null;\n  return false;\n} catch(e) {}\ntry {\n  var {b} = undefined;\n  return false;\n} catch(e) {}\nreturn true;\n      ",
             "computed properties": "\nvar qux = \"corge\";\nvar { [qux]: grault } = { corge: \"garply\" };\nreturn grault === \"garply\";\n      ",
             "multiples in a single var statement": "\nvar [a,b] = [5,6], {c,d} = {c:7,d:8};\nreturn a === 5 && b === 6 && c === 7 && d === 8;\n      ",
             "nested": "\nvar [e, {x:f, g}] = [9, {x:10}];\nvar {h, x:[i]} = {h:11, x:[12]};\nreturn e === 9 && f === 10 && g === undefined\n  && h === 11 && i === 12;\n      ",
-            "in parameters": "\nreturn (function({a, x:b, y:e}, [c, d]) {\n  return a === 1 && b === 2 && c === 3 &&\n    d === 4 && e === undefined;\n}({a:1, x:2}, [3, 4]));\n      ",
-            "in parameters, 'arguments' interaction": "\nreturn (function({a, x:b, y:e}, [c, d]) {\n  return arguments[0].a === 1 && arguments[0].x === 2\n    && !(\"y\" in arguments[0]) && arguments[1] + '' === \"3,4\";\n}({a:1, x:2}, [3, 4]));\n      ",
-            "in parameters, new Function() support": "\nreturn new Function(\"{a, x:b, y:e}\",\"[c, d]\",\n  \"return a === 1 && b === 2 && c === 3 && \"\n  + \"d === 4 && e === undefined;\"\n)({a:1, x:2}, [3, 4]);\n      ",
-            "in parameters, function 'length' property": "\nreturn function({a, b}, [c, d]){}.length === 2;\n      ",
             "in for-in loop heads": "\nfor(var [i, j, k] in { qux: 1 }) {\n  return i === \"q\" && j === \"u\" && k === \"x\";\n}\n      ",
             "in for-of loop heads": "\nfor(var [i, j, k] of [[1,2,3]]) {\n  return i === 1 && j === 2 && k === 3;\n}\n      ",
             "in catch heads": "\ntry {\n  throw [1,2];\n} catch([i,j]) {\n  try {\n    throw { k: 3, l: 4 };\n  } catch({k, l}) {\n    return i === 1 && j === 2 && k === 3 && l === 4;\n  }\n}\n      ",
             "rest": "\nvar [a, ...b] = [3, 4, 5];\nvar [c, ...d] = [6];\nreturn a === 3 && b instanceof Array && (b + \"\") === \"4,5\" &&\n   c === 6 && d instanceof Array && d.length === 0;\n      ",
+            "defaults": "\nvar {a = 1, b = 0, z:c = 3} = {b:2, z:undefined};\nvar [d = 0, e = 5, f = 6] = [4,,undefined];\nreturn a === 1 && b === 2 && c === 3\n  && d === 4 && e === 5 && f === 6;\n      ",
+            "defaults, let temporal dead zone": "\nvar {a, b = 2} = {a:1};\ntry {\n  eval(\"let {c = c} = {};\");\n  return false;\n} catch(e){}\ntry {\n  eval(\"let {c = d, d} = {d:1};\");\n  return false;\n} catch(e){}\nreturn a === 1 && b === 2;\n      "
+        }
+    }, {
+        "title": "destructuring, assignment",
+        "tests": {
+            "with arrays": "\nvar a,b,c;\n[a, , [b], c] = [5, null, [6]];\nreturn a === 5 && b === 6 && c === undefined;\n      ",
+            "with sparse arrays": "\nvar a, b;\n[a, , b] = [,,,];\nreturn a === undefined && b === undefined;\n      ",
+            "with strings": "\nvar a,b,c;\n[a, b, c] = \"ab\";\nreturn a === \"a\" && b === \"b\" && c === undefined;\n      ",
+            "with astral plane strings": "\nvar c;\n[c] = \"𠮷𠮶\";\nreturn c === \"𠮷\";\n      ",
+            "with generator instances": "\nvar a,b,c;\n[a, b, c] = (function*(){ yield 1; yield 2; }());\nreturn a === 1 && b === 2 && c === undefined;\n      ",
+            "with generic iterables": "\nvar a,b,c;\n[a, b, c] = global.__createIterableObject([1, 2]);\nreturn a === 1 && b === 2 && c === undefined;\n      ",
+            "with instances of generic iterables": "\nvar a,b,c;\n[a, b, c] = Object.create(global.__createIterableObject([1, 2]));\nreturn a === 1 && b === 2 && c === undefined;\n      ",
+            "iterator closing": "\nvar closed = false;\nvar iter = global.__createIterableObject([1, 2, 3], {\n  'return': function(){ closed = true; return {}; }\n});\nvar a,b;\n[a, b] = iter;\nreturn closed;\n      ",
+            "iterable destructuring expression": "\nvar a, b, iterable = [1,2];\nreturn ([a, b] = iterable) === iterable;\n      ",
+            "chained iterable destructuring": "\nvar a,b,c,d;\n[a,b] = [c,d] = [1,2];\nreturn a === 1 && b === 2 && c === 1 && d === 2;\n      ",
+            "trailing commas in iterable patterns": "\nvar a;\n[a,] = [1];\nreturn a === 1;\n      ",
+            "with objects": "\nvar c,d,e;\n({c, x:d, e} = {c:7, x:8});\nreturn c === 7 && d === 8 && e === undefined;\n      ",
+            "object destructuring with primitives": "\nvar toFixed, slice;\n({toFixed} = 2);\n({slice} = '');\nreturn toFixed === Number.prototype.toFixed\n  && slice === String.prototype.slice;\n      ",
+            "trailing commas in object patterns": "\nvar a;\n({a,} = {a:1});\nreturn a === 1;\n      ",
+            "object destructuring expression": "\nvar a, b, obj = { a:1, b:2 };\nreturn ({a,b} = obj) === obj;\n      ",
+            "parenthesised left-hand-side is a syntax error": "\nvar a, b;\n({a,b} = {a:1,b:2});\ntry {\n  eval(\"({a,b}) = {a:3,b:4};\");\n}\ncatch(e) {\n  return a === 1 && b === 2;\n}\n      ",
+            "chained object destructuring": "\nvar a,b,c,d;\n({a,b} = {c,d} = {a:1,b:2,c:3,d:4});\nreturn a === 1 && b === 2 && c === 3 && d === 4;\n      ",
+            "throws on null and undefined": "\nvar a,b;\ntry {\n  ({a} = null);\n  return false;\n} catch(e) {}\ntry {\n  ({b} = undefined);\n  return false;\n} catch(e) {}\nreturn true;\n      ",
+            "computed properties": "\nvar grault, qux = \"corge\";\n({ [qux]: grault } = { corge: \"garply\" });\nreturn grault === \"garply\";\n      ",
+            "nested": "\nvar e,f,g,h,i;\n[e, {x:f, g}] = [9, {x:10}];\n({h, x:[i]} = {h:11, x:[12]});\nreturn e === 9 && f === 10 && g === undefined\n  && h === 11 && i === 12;\n      ",
+            "rest": "\nvar a,b,c,d;\n[a, ...b] = [3, 4, 5];\n[c, ...d] = [6];\nreturn a === 3 && b instanceof Array && (b + \"\") === \"4,5\" &&\n   c === 6 && d instanceof Array && d.length === 0;\n      ",
             "nested rest": "\nvar a = [1, 2, 3], first, last;\n[first, ...[a[2], last]] = a;\nreturn first === 1 && last === 3 && (a + \"\") === \"1,2,2\";\n      ",
             "empty patterns": "\n[] = [1,2];\n({} = {a:1,b:2});\nreturn true;\n      ",
-            "empty patterns in parameters": "\nreturn function ([],{}){\n  return arguments[0] + '' === \"3,4\" && arguments[1].x === \"foo\";\n}([3,4],{x:\"foo\"});\n      ",
-            "defaults": "\nvar {a = 1, b = 0, z:c = 3} = {b:2, z:undefined};\nvar [d = 0, e = 5, f = 6] = [4,,undefined];\nreturn a === 1 && b === 2 && c === 3\n  && d === 4 && e === 5 && f === 6;\n      ",
-            "defaults in parameters": "\nreturn (function({a = 1, b = 0, c = 3, x:d = 0, y:e = 5},\n    [f = 6, g = 0, h = 8]) {\n  return a === 1 && b === 2 && c === 3 && d === 4 &&\n    e === 5 && f === 6 && g === 7 && h === 8;\n}({b:2, c:undefined, x:4},[, 7, undefined]));\n      ",
-            "defaults, let temporal dead zone": "\nvar {a, b = 2} = {a:1};\ntry {\n  eval(\"let {c = c} = {};\");\n  return false;\n} catch(e){}\ntry {\n  eval(\"let {c = d, d} = {d:1};\");\n  return false;\n} catch(e){}\nreturn a === 1 && b === 2;\n      ",
-            "defaults in parameters, separate scope": "\nreturn (function({a=function(){\n  return typeof b === 'undefined';\n}}){\n  var b = 1;\n  return a();\n}({}));\n      ",
-            "defaults in parameters, new Function() support": "\nreturn new Function(\"{a = 1, b = 0, c = 3, x:d = 0, y:e = 5}\",\n  \"return a === 1 && b === 2 && c === 3 && d === 4 && e === 5;\"\n)({b:2, c:undefined, x:4});\n      "
+            "defaults": "\nvar a,b,c,d,e,f;\n({a = 1, b = 0, z:c = 3} = {b:2, z:undefined});\n[d = 0, e = 5, f = 6] = [4,,undefined];\nreturn a === 1 && b === 2 && c === 3\n  && d === 4 && e === 5 && f === 6;\n      "
+        }
+    }, {
+        "title": "destructuring, parameters",
+        "tests": {
+            "with arrays": "\nreturn function([a, , [b], c]) {\n  return a === 5 && b === 6 && c === undefined;\n}([5, null, [6]]);\n      ",
+            "with sparse arrays": "\nreturn function([a, , b]) {\n  return a === undefined && b === undefined;\n}([,,,]);\n      ",
+            "with strings": "\nreturn function([a, b, c]) {\n  return a === \"a\" && b === \"b\" && c === undefined;\n}(\"ab\");\n      ",
+            "with astral plane strings": "\nreturn function([c]) {\n  return c === \"𠮷\";\n}(\"𠮷𠮶\");\n      ",
+            "with generator instances": "\nreturn function([a, b, c]) {\n  return a === 1 && b === 2 && c === undefined;\n}(function*(){ yield 1; yield 2; }());\n      ",
+            "with generic iterables": "\nreturn function([a, b, c]) {\n  return a === 1 && b === 2 && c === undefined;\n}(global.__createIterableObject([1, 2]));\n      ",
+            "with instances of generic iterables": "\nreturn function([a, b, c]) {\n  return a === 1 && b === 2 && c === undefined;\n}(Object.create(global.__createIterableObject([1, 2])));\n      ",
+            "iterator closing": "\nvar closed = false;\nvar iter = global.__createIterableObject([1, 2, 3], {\n  'return': function(){ closed = true; return {}; }\n});\n(function([a,b]) {}(iter));\nreturn closed;\n      ",
+            "trailing commas in iterable patterns": "\nreturn function([a,]) {\n  return a === 1;\n}([1]);\n      ",
+            "with objects": "\nreturn function({c, x:d, e}) {\n  return c === 7 && d === 8 && e === undefined;\n}({c:7, x:8});\n      ",
+            "object destructuring with primitives": "\nreturn function({toFixed}, {slice}) {\n  return toFixed === Number.prototype.toFixed\n    && slice === String.prototype.slice;\n}(2,'');\n      ",
+            "trailing commas in object patterns": "\nreturn function({a,}) {\n  return a === 1;\n}({a:1});\n      ",
+            "throws on null and undefined": "\ntry {\n  (function({a}){}(null));\n  return false;\n} catch(e) {}\ntry {\n  (function({b}){}(undefined));\n  return false;\n} catch(e) {}\nreturn true;\n      ",
+            "computed properties": "\nvar qux = \"corge\";\nreturn function({ [qux]: grault }) {\n  return grault === \"garply\";\n}({ corge: \"garply\" });\n      ",
+            "nested": "\nreturn function([e, {x:f, g}], {h, x:[i]}) {\n  return e === 9 && f === 10 && g === undefined\n    && h === 11 && i === 12;\n}([9, {x:10}],{h:11, x:[12]});\n      ",
+            "'arguments' interaction": "\nreturn (function({a, x:b, y:e}, [c, d]) {\n  return arguments[0].a === 1 && arguments[0].x === 2\n    && !(\"y\" in arguments[0]) && arguments[1] + '' === \"3,4\";\n}({a:1, x:2}, [3, 4]));\n      ",
+            "new Function() support": "\nreturn new Function(\"{a, x:b, y:e}\",\"[c, d]\",\n  \"return a === 1 && b === 2 && c === 3 && \"\n  + \"d === 4 && e === undefined;\"\n)({a:1, x:2}, [3, 4]);\n      ",
+            "in parameters, function 'length' property": "\nreturn function({a, b}, [c, d]){}.length === 2;\n      ",
+            "rest": "\nreturn function([a, ...b], [c, ...d]) {\n  return a === 3 && b instanceof Array && (b + \"\") === \"4,5\" &&\n     c === 6 && d instanceof Array && d.length === 0;\n}([3, 4, 5], [6]);\n      ",
+            "empty patterns": "\nreturn function ([],{}){\n  return arguments[0] + '' === \"3,4\" && arguments[1].x === \"foo\";\n}([3,4],{x:\"foo\"});\n      ",
+            "defaults": "\nreturn (function({a = 1, b = 0, c = 3, x:d = 0, y:e = 5},\n    [f = 6, g = 0, h = 8]) {\n  return a === 1 && b === 2 && c === 3 && d === 4 &&\n    e === 5 && f === 6 && g === 7 && h === 8;\n}({b:2, c:undefined, x:4},[, 7, undefined]));\n      ",
+            "defaults, separate scope": "\nreturn (function({a=function(){\n  return typeof b === 'undefined';\n}}){\n  var b = 1;\n  return a();\n}({}));\n      ",
+            "defaults, new Function() support": "\nreturn new Function(\"{a = 1, b = 0, c = 3, x:d = 0, y:e = 5}\",\n  \"return a === 1 && b === 2 && c === 3 && d === 4 && e === 5;\"\n)({b:2, c:undefined, x:4});\n      "
         }
     }, {
         "title": "Unicode code point escapes",
@@ -152,28 +193,38 @@ var tests = {
     "Bindings": [{
         "title": "const",
         "tests": {
-            "basic support": "'use strict';\nconst foo = 123;\nreturn (foo === 123);\n      ",
-            "is block-scoped": "'use strict';\nconst bar = 123;\n{ const bar = 456; }\nreturn bar === 123;\n      ",
-            "redefining a const is an error": "'use strict';\nconst baz = 1;\ntry {\n  Function(\"const foo = 1; foo = 2;\")();\n} catch(e) {\n  return true;\n}\n      ",
-            "temporal dead zone": "'use strict';\nvar passed = (function(){ try { qux; } catch(e) { return true; }}());\nfunction fn() { passed &= qux === 456; }\nconst qux = 456;\nfn();\nreturn passed;\n      ",
-            "basic support (strict mode)": "'use strict';\n\"use strict\";\nconst foo = 123;\nreturn (foo === 123);\n      ",
-            "is block-scoped (strict mode)": "'use strict';\n'use strict';\nconst bar = 123;\n{ const bar = 456; }\nreturn bar === 123;\n      ",
+            "basic support": "\nconst foo = 123;\nreturn (foo === 123);\n      ",
+            "is block-scoped": "\nconst bar = 123;\n{ const bar = 456; }\nreturn bar === 123;\n      ",
+            "cannot be in statements": "\nconst bar = 1;\ntry {\n  Function(\"if(true) const baz = 1;\")();\n} catch(e) {\n  return true;\n}\n      ",
+            "redefining a const is an error": "\nconst baz = 1;\ntry {\n  Function(\"const foo = 1; foo = 2;\")();\n} catch(e) {\n  return true;\n}\n      ",
+            "for loop statement scope": "\nconst baz = 1;\nfor(const baz = 0; false;) {}\nreturn baz === 1;\n",
+            "for-in loop iteration scope": "\nvar scopes = [];\nfor(const i in { a:1, b:1 }) {\n  scopes.push(function(){ return i; });\n}\nreturn (scopes[0]() === \"a\" && scopes[1]() === \"b\");\n      ",
+            "for-of loop iteration scope": "\nvar scopes = [];\nfor(const i of ['a','b']) {\n  scopes.push(function(){ return i; });\n}\nreturn (scopes[0]() === \"a\" && scopes[1]() === \"b\");\n      ",
+            "temporal dead zone": "\nvar passed = (function(){ try { qux; } catch(e) { return true; }}());\nfunction fn() { passed &= qux === 456; }\nconst qux = 456;\nfn();\nreturn passed;\n      ",
+            "basic support (strict mode)": "\n\"use strict\";\nconst foo = 123;\nreturn (foo === 123);\n      ",
+            "is block-scoped (strict mode)": "\n'use strict';\nconst bar = 123;\n{ const bar = 456; }\nreturn bar === 123;\n      ",
+            "cannot be in statements (strict mode)": "\n'use strict';\nconst bar = 1;\ntry {\n  Function(\"'use strict'; if(true) const baz = 1;\")();\n} catch(e) {\n  return true;\n}\n      ",
             "redefining a const (strict mode)": "\n'use strict';\nconst baz = 1;\ntry {\n  Function(\"'use strict'; const foo = 1; foo = 2;\")();\n} catch(e) {\n  return true;\n}\n      ",
+            "for loop statement scope (strict mode)": "\n'use strict';\nconst baz = 1;\nfor(const baz = 0; false;) {}\nreturn baz === 1;\n      ",
+            "for-in loop iteration scope (strict mode)": "\n'use strict';\nvar scopes = [];\nfor(const i in { a:1, b:1 }) {\n  scopes.push(function(){ return i; });\n}\nreturn (scopes[0]() === \"a\" && scopes[1]() === \"b\");\n      ",
+            "for-of loop iteration scope (strict mode)": "\n'use strict';\nvar scopes = [];\nfor(const i of ['a','b']) {\n  scopes.push(function(){ return i; });\n}\nreturn (scopes[0]() === \"a\" && scopes[1]() === \"b\");\n      ",
             "temporal dead zone (strict mode)": "\n'use strict';\nvar passed = (function(){ try { qux; } catch(e) { return true; }}());\nfunction fn() { passed &= qux === 456; }\nconst qux = 456;\nfn();\nreturn passed;\n      "
         }
     }, {
         "title": "let",
         "tests": {
-            "basic support": "'use strict';\nlet foo = 123;\nreturn (foo === 123);\n      ",
-            "is block-scoped": "'use strict';\nlet bar = 123;\n{ let bar = 456; }\nreturn bar === 123;\n      ",
-            "for-loop statement scope": "'use strict';\nlet baz = 1;\nfor(let baz = 0; false; false) {}\nreturn baz === 1;\n      ",
-            "temporal dead zone": "'use strict';\nvar passed = (function(){ try {  qux; } catch(e) { return true; }}());\nfunction fn() { passed &= qux === 456; }\nlet qux = 456;\nfn();\nreturn passed;\n      ",
-            "for-loop iteration scope": "\nlet scopes = [];\nfor(let i = 0; i < 2; i++) {\n  scopes.push(function(){ return i; });\n}\nlet passed = (scopes[0]() === 0 && scopes[1]() === 1);\n\nscopes = [];\nfor(let i in { a:1, b:1 }) {\n  scopes.push(function(){ return i; });\n}\npassed &= (scopes[0]() === \"a\" && scopes[1]() === \"b\");\nreturn passed;\n      ",
+            "basic support": "\nlet foo = 123;\nreturn (foo === 123);\n      ",
+            "is block-scoped": "\nlet bar = 123;\n{ let bar = 456; }\nreturn bar === 123;\n      ",
+            "cannot be in statements": "\nlet bar = 1;\ntry {\n  Function(\"if(true) let baz = 1;\")();\n} catch(e) {\n  return true;\n}\n      ",
+            "for loop statement scope": "\nlet baz = 1;\nfor(let baz = 0; false;) {}\nreturn baz === 1;\n      ",
+            "temporal dead zone": "\nvar passed = (function(){ try {  qux; } catch(e) { return true; }}());\nfunction fn() { passed &= qux === 456; }\nlet qux = 456;\nfn();\nreturn passed;\n      ",
+            "for/for-in loop iteration scope": "\nlet scopes = [];\nfor(let i = 0; i < 2; i++) {\n  scopes.push(function(){ return i; });\n}\nlet passed = (scopes[0]() === 0 && scopes[1]() === 1);\n\nscopes = [];\nfor(let i in { a:1, b:1 }) {\n  scopes.push(function(){ return i; });\n}\npassed &= (scopes[0]() === \"a\" && scopes[1]() === \"b\");\nreturn passed;\n      ",
             "basic support (strict mode)": "\n'use strict';\nlet foo = 123;\nreturn (foo === 123);\n      ",
             "is block-scoped (strict mode)": "\n'use strict';\nlet bar = 123;\n{ let bar = 456; }\nreturn bar === 123;\n      ",
-            "for-loop statement scope (strict mode)": "\n'use strict';\nlet baz = 1;\nfor(let baz = 0; false; false) {}\nreturn baz === 1;\n      ",
+            "cannot be in statements (strict mode)": "\n'use strict';\nlet bar = 1;\ntry {\n  Function(\"'use strict'; if(true) let baz = 1;\")();\n} catch(e) {\n  return true;\n}\n      ",
+            "for loop statement scope (strict mode)": "\n'use strict';\nlet baz = 1;\nfor(let baz = 0; false;) {}\nreturn baz === 1;\n      ",
             "temporal dead zone (strict mode)": "\n'use strict';\nvar passed = (function(){ try {  qux; } catch(e) { return true; }}());\nfunction fn() { passed &= qux === 456; }\nlet qux = 456;\nfn();\nreturn passed;\n      ",
-            "for-loop iteration scope (strict mode)": "\n'use strict';\nlet scopes = [];\nfor(let i = 0; i < 2; i++) {\n  scopes.push(function(){ return i; });\n}\nlet passed = (scopes[0]() === 0 && scopes[1]() === 1);\n\nscopes = [];\nfor(let i in { a:1, b:1 }) {\n  scopes.push(function(){ return i; });\n}\npassed &= (scopes[0]() === \"a\" && scopes[1]() === \"b\");\nreturn passed;\n      "
+            "for/for-in loop iteration scope (strict mode)": "\n'use strict';\nlet scopes = [];\nfor(let i = 0; i < 2; i++) {\n  scopes.push(function(){ return i; });\n}\nlet passed = (scopes[0]() === 0 && scopes[1]() === 1);\n\nscopes = [];\nfor(let i in { a:1, b:1 }) {\n  scopes.push(function(){ return i; });\n}\npassed &= (scopes[0]() === \"a\" && scopes[1]() === \"b\");\nreturn passed;\n      "
         }
     }],
     "Functions": [{
@@ -204,6 +255,7 @@ var tests = {
             "prototype methods": "\nclass C {\n  method() { return 2; }\n}\nreturn typeof C.prototype.method === \"function\"\n  && new C().method() === 2;\n      ",
             "string-keyed methods": "\nclass C {\n  \"foo bar\"() { return 2; }\n}\nreturn typeof C.prototype[\"foo bar\"] === \"function\"\n  && new C()[\"foo bar\"]() === 2;\n      ",
             "computed prototype methods": "\nvar foo = \"method\";\nclass C {\n  [foo]() { return 2; }\n}\nreturn typeof C.prototype.method === \"function\"\n  && new C().method() === 2;\n      ",
+            "optional semicolons": "\nclass C {\n  ;\n  method() { return 2; };\n  method2() { return 2; }\n  method3() { return 2; };\n}\nreturn typeof C.prototype.method === \"function\"\n  && typeof C.prototype.method2 === \"function\"\n  && typeof C.prototype.method3 === \"function\";\n      ",
             "static methods": "\nclass C {\n  static method() { return 3; }\n}\nreturn typeof C.method === \"function\"\n  && C.method() === 3;\n      ",
             "computed static methods": "\nvar foo = \"method\";\nclass C {\n  static [foo]() { return 3; }\n}\nreturn typeof C.method === \"function\"\n  && C.method() === 3;\n      ",
             "accessor properties": "\nvar baz = false;\nclass C {\n  get foo() { return \"foo\"; }\n  set bar(x) { baz = x; }\n}\nnew C().bar = true;\nreturn new C().foo === \"foo\" && baz;\n      ",
@@ -241,7 +293,8 @@ var tests = {
             "can't use \"this\" with new": "\nfunction * generator(){\n  yield this.x; yield this.y;\n};\ntry {\n  (new generator()).next();\n}\ncatch (e) {\n  return true;\n}\n      ",
             "sending": "\nvar sent;\nfunction * generator(){\n  sent = [yield 5, yield 6];\n};\nvar iterator = generator();\niterator.next();\niterator.next(\"foo\");\niterator.next(\"bar\");\nreturn sent[0] === \"foo\" && sent[1] === \"bar\";\n      ",
             "%GeneratorPrototype%": "\nfunction * generatorFn(){}\nvar ownProto = Object.getPrototypeOf(generatorFn());\nvar passed = ownProto === generatorFn.prototype;\n\nvar sharedProto = Object.getPrototypeOf(ownProto);\npassed &= sharedProto !== Object.prototype &&\n  sharedProto === Object.getPrototypeOf(function*(){}.prototype) &&\n  sharedProto.hasOwnProperty('next');\n\nreturn passed;\n      ",
-            "%GeneratorPrototype%.constructor": "\nfunction * g (){}\nvar iterator = new g.constructor(\"a\",\"b\",\"c\",\"yield a; yield b; yield c;\")(5,6,7);\nvar item = iterator.next();\nvar passed = item.value === 5 && item.done === false;\nitem = iterator.next();\npassed    &= item.value === 6 && item.done === false;\nitem = iterator.next();\npassed    &= item.value === 7 && item.done === false;\nitem = iterator.next();\npassed    &= item.value === undefined && item.done === true;\nreturn passed;\n      ",
+            "%GeneratorPrototype% prototype chain": "\nfunction * generatorFn(){}\nvar g = generatorFn();\nvar ownProto = Object.getPrototypeOf(g);\nvar passed = ownProto === generatorFn.prototype;\n\nvar sharedProto = Object.getPrototypeOf(ownProto);\nvar iterProto = Object.getPrototypeOf(sharedProto);\n\npassed &= iterProto.hasOwnProperty(Symbol.iterator) &&\n  !sharedProto     .hasOwnProperty(Symbol.iterator) &&\n  !ownProto        .hasOwnProperty(Symbol.iterator) &&\n  g[Symbol.iterator]() === g;\n\nreturn passed;\n      ",
+            "%GeneratorPrototype%.constructor": "\nfunction * g (){}\nvar iterator = new g.constructor(\"a\",\"b\",\"c\",\"yield a; yield b; yield c;\")(5,6,7);\nvar item = iterator.next();\nvar passed = item.value === 5 && item.done === false;\nitem = iterator.next();\npassed    &= item.value === 6 && item.done === false;\nitem = iterator.next();\npassed    &= item.value === 7 && item.done === false;\nitem = iterator.next();\npassed    &= item.value === undefined && item.done === true;\n\npassed &= g.constructor === (function*(){}).constructor;\nreturn passed;\n      ",
             "%GeneratorPrototype%.throw": "\nvar passed = false;\nfunction * generator(){\n  try {\n    yield 5; yield 6;\n  } catch(e) {\n    passed = (e === \"foo\");\n  }\n};\nvar iterator = generator();\niterator.next();\niterator.throw(\"foo\");\nreturn passed;\n      ",
             "%GeneratorPrototype%.return": "\nfunction * generator(){\n  yield 5; yield 6;\n};\nvar iterator = generator();\nvar item = iterator.next();\nvar passed = item.value === 5 && item.done === false;\nitem = iterator.return(\"quxquux\");\npassed    &= item.value === \"quxquux\" && item.done === true;\nitem = iterator.next();\npassed    &= item.value === undefined && item.done === true;\nreturn passed;\n      ",
             "yield operator precedence": "\nvar passed;\nfunction * generator(){\n  passed = yield 0 ? true : false;\n};\nvar iterator = generator();\niterator.next();\niterator.next(true);\nreturn passed;\n      ",
@@ -259,7 +312,8 @@ var tests = {
             "string-keyed shorthand generator methods": "\nvar o = {\n  * \"foo bar\"() {\n    yield 5; yield 6;\n  },\n};\nvar iterator = o[\"foo bar\"]();\nvar item = iterator.next();\nvar passed = item.value === 5 && item.done === false;\nitem = iterator.next();\npassed    &= item.value === 6 && item.done === false;\nitem = iterator.next();\npassed    &= item.value === undefined && item.done === true;\nreturn passed;\n      ",
             "computed shorthand generators": "\nvar garply = \"generator\";\nvar o = {\n  * [garply] () {\n    yield 5; yield 6;\n  },\n};\nvar iterator = o.generator();\nvar item = iterator.next();\nvar passed = item.value === 5 && item.done === false;\nitem = iterator.next();\npassed    &= item.value === 6 && item.done === false;\nitem = iterator.next();\npassed    &= item.value === undefined && item.done === true;\nreturn passed;\n      ",
             "shorthand generator methods, classes": "\nclass C {\n  * generator() {\n    yield 5; yield 6;\n  }\n};\nvar iterator = new C().generator();\nvar item = iterator.next();\nvar passed = item.value === 5 && item.done === false;\nitem = iterator.next();\npassed    &= item.value === 6 && item.done === false;\nitem = iterator.next();\npassed    &= item.value === undefined && item.done === true;\nreturn passed;\n      ",
-            "computed shorthand generators, classes": "\nvar garply = \"generator\";\nclass C {\n  * [garply] () {\n    yield 5; yield 6;\n  }\n}\nvar iterator = new C().generator();\nvar item = iterator.next();\nvar passed = item.value === 5 && item.done === false;\nitem = iterator.next();\npassed    &= item.value === 6 && item.done === false;\nitem = iterator.next();\npassed    &= item.value === undefined && item.done === true;\nreturn passed;\n      "
+            "computed shorthand generators, classes": "\nvar garply = \"generator\";\nclass C {\n  * [garply] () {\n    yield 5; yield 6;\n  }\n}\nvar iterator = new C().generator();\nvar item = iterator.next();\nvar passed = item.value === 5 && item.done === false;\nitem = iterator.next();\npassed    &= item.value === 6 && item.done === false;\nitem = iterator.next();\npassed    &= item.value === undefined && item.done === true;\nreturn passed;\n      ",
+            "shorthand generators can't be constructors": "\nclass C {\n  * generator() {\n    yield 5; yield 6;\n  }\n};\ntry {\n  Function(\"class D { * constructor() { return {}; } }\");\n} catch(e) {\n  return true;\n}\n      "
         }
     }],
     "Built-ins": [{
@@ -285,7 +339,7 @@ var tests = {
             "ArrayBuffer[Symbol.species]": "\nreturn typeof ArrayBuffer[Symbol.species] === 'function';\n      ",
             "constructors require new": "\nvar buffer = new ArrayBuffer(64);\nvar constructors = [\n  'ArrayBuffer',\n  'DataView',\n  'Int8Array',\n  'Uint8Array',\n  'Uint8ClampedArray',\n  'Int16Array',\n  'Uint16Array',\n  'Int32Array',\n  'Uint32Array',\n  'Float32Array',\n  'Float64Array'\n];\nreturn constructors.every(function (constructor) {\n  try {\n    if (constructor in global) {\n      global[constructor](constructor === \"ArrayBuffer\" ? 64 : buffer);\n    }\n    return false;\n  } catch(e) {\n    return true;\n  }\n});\n      ",
             "constructors accept generic iterables": "\nvar constructors = [\n  'Int8Array',\n  'Uint8Array',\n  'Uint8ClampedArray',\n  'Int16Array',\n  'Uint16Array',\n  'Int32Array',\n  'Uint32Array',\n  'Float32Array',\n  'Float64Array'\n];\nfor(var i = 0; i < constructors.length; i++){\n  var arr = new global[constructors[i]](__createIterableObject([1, 2, 3]));\n  if(arr.length !== 3 || arr[0] !== 1 || arr[1] !== 2 || arr[2] !== 3)return false;\n}\nreturn true;\n      ",
-            "correct prototype chains": "\nvar constructors = [\n  'Int8Array',\n  'Uint8Array',\n  'Uint8ClampedArray',\n  'Int16Array',\n  'Uint16Array',\n  'Int32Array',\n  'Uint32Array',\n  'Float32Array',\n  'Float64Array'\n];\nvar constructor = Object.getPrototypeOf(Int8Array);\nvar prototype = Object.getPrototypeOf(Int8Array.prototype);\nfor(var i = 0; i < constructors.length; i+=1) {\n  if (!(constructors[i] in global\n      && Object.getPrototypeOf(global[constructors[i]]) === constructor\n      && Object.getPrototypeOf(global[constructors[i]].prototype) === prototype\n      && Object.getOwnPropertyNames(global[constructors[i]].prototype).sort() + ''\n        === \"BYTES_PER_ELEMENT,constructor\")) {\n    return false;\n  }\n}\nreturn true;\n      ",
+            "correct prototype chains": "\nvar constructors = [\n  'Int8Array',\n  'Uint8Array',\n  'Uint8ClampedArray',\n  'Int16Array',\n  'Uint16Array',\n  'Int32Array',\n  'Uint32Array',\n  'Float32Array',\n  'Float64Array'\n];\nvar constructor = Object.getPrototypeOf(Int8Array);\nvar prototype = Object.getPrototypeOf(Int8Array.prototype);\nif(constructor === Function.prototype || prototype === Object.prototype)return false;\nfor(var i = 0; i < constructors.length; i+=1) {\n  if (!(constructors[i] in global\n      && Object.getPrototypeOf(global[constructors[i]]) === constructor\n      && Object.getPrototypeOf(global[constructors[i]].prototype) === prototype\n      && Object.getOwnPropertyNames(global[constructors[i]].prototype).sort() + ''\n        === \"BYTES_PER_ELEMENT,constructor\")) {\n    return false;\n  }\n}\nreturn true;\n      ",
             "%TypedArray%.from": "\nreturn typeof Int8Array.from === \"function\" &&\ntypeof Uint8Array.from === \"function\" &&\ntypeof Uint8ClampedArray.from === \"function\" &&\ntypeof Int16Array.from === \"function\" &&\ntypeof Uint16Array.from === \"function\" &&\ntypeof Int32Array.from === \"function\" &&\ntypeof Uint32Array.from === \"function\" &&\ntypeof Float32Array.from === \"function\" &&\ntypeof Float64Array.from === \"function\";\n",
             "%TypedArray%.of": "\nreturn typeof Int8Array.of === \"function\" &&\ntypeof Uint8Array.of === \"function\" &&\ntypeof Uint8ClampedArray.of === \"function\" &&\ntypeof Int16Array.of === \"function\" &&\ntypeof Uint16Array.of === \"function\" &&\ntypeof Int32Array.of === \"function\" &&\ntypeof Uint32Array.of === \"function\" &&\ntypeof Float32Array.of === \"function\" &&\ntypeof Float64Array.of === \"function\";\n",
             "%TypedArray%.prototype.subarray": "\nreturn typeof Int8Array.prototype.subarray === \"function\" &&\ntypeof Uint8Array.prototype.subarray === \"function\" &&\ntypeof Uint8ClampedArray.prototype.subarray === \"function\" &&\ntypeof Int16Array.prototype.subarray === \"function\" &&\ntypeof Uint16Array.prototype.subarray === \"function\" &&\ntypeof Int32Array.prototype.subarray === \"function\" &&\ntypeof Uint32Array.prototype.subarray === \"function\" &&\ntypeof Float32Array.prototype.subarray === \"function\" &&\ntypeof Float64Array.prototype.subarray === \"function\";\n",
@@ -331,6 +385,7 @@ var tests = {
             "Map.prototype.values": "\nreturn typeof Map.prototype.values === \"function\";\n      ",
             "Map.prototype.entries": "\nreturn typeof Map.prototype.entries === \"function\";\n      ",
             "Map.prototype[Symbol.iterator]": "\nreturn typeof Map.prototype[Symbol.iterator] === \"function\";\n      ",
+            "Map.prototype isn't an instance": "\nnew Map();\nvar obj = {};\ntry {\n  Map.prototype.has(obj);\n}\ncatch(e) {\n  return true;\n}\n      ",
             "Map iterator prototype chain": "\n// Iterator instance\nvar iterator = new Map()[Symbol.iterator]();\n// %MapIteratorPrototype%\nvar proto1 = Object.getPrototypeOf(iterator);\n// %IteratorPrototype%\nvar proto2 = Object.getPrototypeOf(proto1);\n\nreturn proto2.hasOwnProperty(Symbol.iterator) &&\n  !proto1    .hasOwnProperty(Symbol.iterator) &&\n  !iterator  .hasOwnProperty(Symbol.iterator) &&\n  iterator[Symbol.iterator]() === iterator;\n      ",
             "Map[Symbol.species]": "\nvar prop = Object.getOwnPropertyDescriptor(Map, Symbol.species);\nreturn 'get' in prop && Map[Symbol.species] === Map;\n      "
         }
@@ -353,6 +408,7 @@ var tests = {
             "Set.prototype.values": "\nreturn typeof Set.prototype.values === \"function\";\n      ",
             "Set.prototype.entries": "\nreturn typeof Set.prototype.entries === \"function\";\n      ",
             "Set.prototype[Symbol.iterator]": "\nreturn typeof Set.prototype[Symbol.iterator] === \"function\";\n      ",
+            "Set.prototype isn't an instance": "\nnew Set();\nvar obj = {};\ntry {\n  Set.prototype.has(obj);\n}\ncatch(e) {\n  return true;\n}\n      ",
             "Set iterator prototype chain": "\n// Iterator instance\nvar iterator = new Set()[Symbol.iterator]();\n// %SetIteratorPrototype%\nvar proto1 = Object.getPrototypeOf(iterator);\n// %IteratorPrototype%\nvar proto2 = Object.getPrototypeOf(proto1);\n\nreturn proto2.hasOwnProperty(Symbol.iterator) &&\n  !proto1    .hasOwnProperty(Symbol.iterator) &&\n  !iterator  .hasOwnProperty(Symbol.iterator) &&\n  iterator[Symbol.iterator]() === iterator;\n      ",
             "Set[Symbol.species]": "\nvar prop = Object.getOwnPropertyDescriptor(Set, Symbol.species);\nreturn 'get' in prop && Set[Symbol.species] === Set;\n      "
         }
@@ -368,7 +424,9 @@ var tests = {
             "iterator closing": "\nvar closed = false;\nvar iter = global.__createIterableObject([1, 2, 3], {\n  'return': function(){ closed = true; return {}; }\n});\ntry {\n  new WeakMap(iter);\n} catch(e){}\nreturn closed;\n      ",
             "WeakMap.prototype.set returns this": "\nvar weakmap = new WeakMap();\nvar key = {};\nreturn weakmap.set(key, 0) === weakmap;\n      ",
             "WeakMap.prototype.delete": "\nreturn typeof WeakMap.prototype.delete === \"function\";\n      ",
-            "no WeakMap.prototype.clear method": "\nif (!(\"clear\" in WeakMap.prototype)) {\n  return true;\n}\nvar m = new WeakMap();\nvar key = {};\nm.set(key, 2);\nm.clear();\nreturn m.has(key);\n      "
+            "no WeakMap.prototype.clear method": "\nif (!(\"clear\" in WeakMap.prototype)) {\n  return true;\n}\nvar m = new WeakMap();\nvar key = {};\nm.set(key, 2);\nm.clear();\nreturn m.has(key);\n      ",
+            ".has, .get and .delete methods accept primitives": "\nvar m = new WeakMap;\nreturn m.has(1) === false\n  && m.get(1) === undefined\n  && m.delete(1) === false;\n      ",
+            "WeakMap.prototype isn't an instance": "\nnew WeakMap();\nvar obj = {};\ntry {\n  WeakMap.prototype.has(obj);\n}\ncatch(e) {\n  return true;\n}\n      "
         }
     }, {
         "title": "WeakSet",
@@ -381,29 +439,44 @@ var tests = {
             "iterator closing": "\nvar closed = false;\nvar iter = global.__createIterableObject([1, 2, 3], {\n  'return': function(){ closed = true; return {}; }\n});\ntry {\n  new WeakSet(iter);\n} catch(e){}\nreturn closed;\n      ",
             "WeakSet.prototype.add returns this": "\nvar weakset = new WeakSet();\nvar obj = {};\nreturn weakset.add(obj) === weakset;\n      ",
             "WeakSet.prototype.delete": "\nreturn typeof WeakSet.prototype.delete === \"function\";\n      ",
-            "no WeakSet.prototype.clear method": "\nif (!(\"clear\" in WeakSet.prototype)) {\n  return true;\n}\nvar s = new WeakSet();\nvar key = {};\ns.add(key);\ns.clear();\nreturn s.has(key);\n      "
+            "no WeakSet.prototype.clear method": "\nif (!(\"clear\" in WeakSet.prototype)) {\n  return true;\n}\nvar s = new WeakSet();\nvar key = {};\ns.add(key);\ns.clear();\nreturn s.has(key);\n      ",
+            ".has and .delete methods accept primitives": "\nvar s = new WeakSet;\nreturn s.has(1) === false\n  && s.delete(1) === false;\n      ",
+            "WeakSet.prototype isn't an instance": "\nnew WeakSet();\nvar obj = {};\ntry {\n  WeakSet.prototype.has(obj);\n}\ncatch(e) {\n  return true;\n}\n      "
         }
     }, {
         "title": "Proxy",
         "tests": {
             "constructor requires new": "\nnew Proxy({}, {});\ntry {\n  Proxy({}, {});\n  return false;\n} catch(e) {\n  return true;\n}\n      ",
+            "no \"prototype\" property": "\nnew Proxy({}, {});\nreturn !Proxy.hasOwnProperty('prototype');\n      ",
             "\"get\" handler": "\nvar proxied = { };\nvar proxy = new Proxy(proxied, {\n  get: function (t, k, r) {\n    return t === proxied && k === \"foo\" && r === proxy && 5;\n  }\n});\nreturn proxy.foo === 5;\n      ",
             "\"get\" handler, instances of proxies": "\nvar proxied = { };\nvar proxy = Object.create(new Proxy(proxied, {\n  get: function (t, k, r) {\n    return t === proxied && k === \"foo\" && r === proxy && 5;\n  }\n}));\nreturn proxy.foo === 5;\n      ",
+            "\"get\" handler invariants": "\nvar passed = false;\nvar proxied = { };\nvar proxy = new Proxy(proxied, {\n  get: function () {\n    passed = true;\n    return 4;\n  }\n});\n// The value reported for a property must be the same as the value of the corresponding\n// target object property if the target object property is a non-writable,\n// non-configurable own data property.\nObject.defineProperty(proxied, \"foo\", { value: 5, enumerable: true });\ntry {\n  proxy.foo;\n  return false;\n}\ncatch(e) {}\n// The value reported for a property must be undefined if the corresponding target\n// object property is a non-configurable own accessor property that has undefined\n// as its [[Get]] attribute.\nObject.defineProperty(proxied, \"bar\",\n  { set: function(){}, enumerable: true });\ntry {\n  proxy.bar;\n  return false;\n}\ncatch(e) {}\nreturn passed;\n      ",
             "\"set\" handler": "\nvar proxied = { };\nvar passed = false;\nvar proxy = new Proxy(proxied, {\n  set: function (t, k, v, r) {\n    passed = t === proxied && k + v === \"foobar\" && r === proxy;\n  }\n});\nproxy.foo = \"bar\";\nreturn passed;\n      ",
             "\"set\" handler, instances of proxies": "\nvar proxied = { };\nvar passed = false;\nvar proxy = Object.create(new Proxy(proxied, {\n  set: function (t, k, v, r) {\n    passed = t === proxied && k + v === \"foobar\" && r === proxy;\n  }\n}));\nproxy.foo = \"bar\";\nreturn passed;\n      ",
+            "\"set\" handler invariants": "\nvar passed = false;\nnew Proxy({},{});\n// Cannot change the value of a property to be different from the value of\n// the corresponding target object if the corresponding target object\n// property is a non-writable, non-configurable own data property.\nvar proxied = {};\nvar proxy = new Proxy(proxied, {\n  set: function () {\n    passed = true;\n    return true;\n  }\n});\nObject.defineProperty(proxied, \"foo\", { value: 2, enumerable: true });\nproxy.foo = 2;\ntry {\n  proxy.foo = 4;\n  return false;\n} catch(e) {}\n// Cannot set the value of a property if the corresponding target\n// object property is a non-configurable own accessor property\n// that has undefined as its [[Set]] attribute.\nObject.defineProperty(proxied, \"bar\",\n  { get: function(){}, enumerable: true });\ntry {\n  proxy.bar = 2;\n  return false;\n} catch(e) {}\nreturn passed;\n      ",
             "\"has\" handler": "\nvar proxied = {};\nvar passed = false;\n\"foo\" in new Proxy(proxied, {\n  has: function (t, k) {\n    passed = t === proxied && k === \"foo\";\n  }\n});\nreturn passed;\n      ",
             "\"has\" handler, instances of proxies": "\nvar proxied = {};\nvar passed = false;\n\"foo\" in Object.create(new Proxy(proxied, {\n  has: function (t, k) {\n    passed = t === proxied && k === \"foo\";\n  }\n}));\nreturn passed;\n      ",
-            "\"deleteProperty\" handler": "\nvar proxied = {};\n  var passed = false;\n  delete new Proxy(proxied, {\n    deleteProperty: function (t, k) {\n      passed = t === proxied && k === \"foo\";\n    }\n  }).foo;\n  return passed;\n",
+            "\"has\" handler invariants": "\nvar passed = false;\nnew Proxy({},{});\n// A property cannot be reported as non-existent, if it exists as a\n// non-configurable own property of the target object.\nvar proxied = {};\nvar proxy = new Proxy(proxied, {\n  has: function () {\n    passed = true;\n    return false;\n  }\n});\nObject.defineProperty(proxied, \"foo\", { value: 2, writable: true, enumerable: true });\ntry {\n  'foo' in proxy;\n  return false;\n} catch(e) {}\n// A property cannot be reported as non-existent, if it exists as an\n// own property of the target object and the target object is not extensible.\nproxied.bar = 2;\nObject.preventExtensions(proxied);\ntry {\n  'bar' in proxy;\n  return false;\n} catch(e) {}\nreturn passed;\n      ",
+            "\"deleteProperty\" handler": "\nvar proxied = {};\nvar passed = false;\ndelete new Proxy(proxied, {\n  deleteProperty: function (t, k) {\n    passed = t === proxied && k === \"foo\";\n  }\n}).foo;\nreturn passed;\n      ",
+            "\"deleteProperty\" handler invariant": "\nvar passed = false;\nnew Proxy({},{});\n// A property cannot be reported as deleted, if it exists as a non-configurable\n// own property of the target object.\nvar proxied = {};\nObject.defineProperty(proxied, \"foo\", { value: 2, writable: true, enumerable: true });\ntry {\n  delete new Proxy(proxied, {\n    deleteProperty: function () {\n      passed = true;\n      return true;\n    }\n  }).foo;\n  return false;\n} catch(e) {}\nreturn passed;\n      ",
             "\"getOwnPropertyDescriptor\" handler": "\nvar proxied = {};\nvar fakeDesc = { value: \"foo\", configurable: true };\nvar returnedDesc = Object.getOwnPropertyDescriptor(\n  new Proxy(proxied, {\n    getOwnPropertyDescriptor: function (t, k) {\n      return t === proxied && k === \"foo\" && fakeDesc;\n    }\n  }),\n  \"foo\"\n);\nreturn (returnedDesc.value     === fakeDesc.value\n  && returnedDesc.configurable === fakeDesc.configurable\n  && returnedDesc.writable     === false\n  && returnedDesc.enumerable   === false);\n      ",
+            "\"getOwnPropertyDescriptor\" handler invariants": "\nvar passed = false;\nnew Proxy({},{});\n// A property cannot be reported as non-existent, if it exists as a non-configurable\n// own property of the target object.\nvar proxied = {};\nvar proxy = new Proxy(proxied, {\n  getOwnPropertyDescriptor: function () {\n    passed = true;\n    return undefined;\n  }\n});\nObject.defineProperty(proxied, \"foo\", { value: 2, writable: true, enumerable: true });\ntry {\n  Object.getOwnPropertyDescriptor(proxy, \"foo\");\n  return false;\n} catch(e) {}\n// A property cannot be reported as non-existent, if it exists as an own property\n// of the target object and the target object is not extensible.\nproxied.bar = 3;\nObject.preventExtensions(proxied);\ntry {\n  Object.getOwnPropertyDescriptor(proxy, \"bar\");\n  return false;\n} catch(e) {}\n// A property cannot be reported as existent, if it does not exists as an own property\n// of the target object and the target object is not extensible.\ntry {\n  Object.getOwnPropertyDescriptor(new Proxy(proxied, {\n    getOwnPropertyDescriptor: function() {\n      return { value: 2, configurable: true, writable: true, enumerable: true };\n    }}), \"baz\");\n  return false;\n} catch(e) {}\n// A property cannot be reported as non-configurable, if it does not exists as an own\n// property of the target object or if it exists as a configurable own property of\n// the target object.\ntry {\n  Object.getOwnPropertyDescriptor(new Proxy({}, {\n    getOwnPropertyDescriptor: function() {\n      return { value: 2, configurable: false, writable: true, enumerable: true };\n    }}), \"baz\");\n  return false;\n} catch(e) {}\ntry {\n  Object.getOwnPropertyDescriptor(new Proxy({baz:1}, {\n    getOwnPropertyDescriptor: function() {\n      return { value: 1, configurable: false, writable: true, enumerable: true };\n    }}), \"baz\");\n  return false;\n} catch(e) {}\nreturn passed;\n      ",
             "\"defineProperty\" handler": "\nvar proxied = {};\nvar passed = false;\nObject.defineProperty(\n  new Proxy(proxied, {\n    defineProperty: function (t, k, d) {\n      passed = t === proxied && k === \"foo\" && d.value === 5;\n      return true;\n    }\n  }),\n  \"foo\",\n  { value: 5, configurable: true }\n);\nreturn passed;\n      ",
+            "\"defineProperty\" handler invariants": "\nvar passed = false;\nnew Proxy({},{});\n// A property cannot be added, if the target object is not extensible.\nvar proxied = Object.preventExtensions({});\nvar proxy = new Proxy(proxied, {\n  defineProperty: function() {\n    passed = true;\n    return true;\n  }\n});\ntry {\n  Object.defineProperty(proxy, \"foo\", { value: 2 });\n  return false;\n} catch(e) {}\n// A property cannot be non-configurable, unless there exists a corresponding\n// non-configurable own property of the target object.\ntry {\n  Object.defineProperty(\n    new Proxy({ bar: true }, {\n      defineProperty: function () {\n        return true;\n      }\n    }),\n    \"bar\",\n    { value: 5, configurable: false, writable: true, enumerable: true }\n  );\n  return false;\n} catch(e) {}\nreturn passed;\n      ",
             "\"getPrototypeOf\" handler": "\nvar proxied = {};\nvar fakeProto = {};\nvar proxy = new Proxy(proxied, {\n  getPrototypeOf: function (t) {\n    return t === proxied && fakeProto;\n  }\n});\nreturn Object.getPrototypeOf(proxy) === fakeProto;\n      ",
+            "\"getPrototypeOf\" handler invariant": "\nvar passed = false;\nnew Proxy({},{});\n// If the target object is not extensible, [[GetPrototypeOf]] applied to the proxy object\n// must return the same value as [[GetPrototypeOf]] applied to the proxy object's target object.\ntry {\n  Object.getPrototypeOf(new Proxy(Object.preventExtensions({}), {\n    getPrototypeOf: function () {\n      passed = true;\n      return {};\n    }\n  }));\n  return false;\n} catch(e) {}\nreturn passed;\n      ",
             "\"setPrototypeOf\" handler": "\nvar proxied = {};\nvar newProto = {};\nvar passed = false;\nObject.setPrototypeOf(\n  new Proxy(proxied, {\n    setPrototypeOf: function (t, p) {\n      passed = t === proxied && p === newProto;\n      return true;\n    }\n  }),\n  newProto\n);\nreturn passed;\n      ",
+            "\"setPrototypeOf\" handler invariant": "\nvar passed = false;\nnew Proxy({},{});\nObject.setPrototypeOf({},{});\n// If the target object is not extensible, the argument value must be the\n// same as the result of [[GetPrototypeOf]] applied to target object.\ntry {\n  Object.setPrototypeOf(\n    new Proxy(Object.preventExtensions({}), {\n      setPrototypeOf: function () {\n        passed = true;\n        return true;\n      }\n    }),{});\n  return false;\n} catch(e) {}\nreturn passed;\n      ",
             "\"isExtensible\" handler": "\nvar proxied = {};\nvar passed = false;\nObject.isExtensible(\n  new Proxy(proxied, {\n    isExtensible: function (t) {\n      passed = t === proxied; return true;\n    }\n  })\n);\nreturn passed;\n      ",
+            "\"isExtensible\" handler invariant": "\nvar passed = false;\nnew Proxy({},{});\n// [[IsExtensible]] applied to the proxy object must return the same value\n// as [[IsExtensible]] applied to the proxy object's target object with the same argument.\ntry {\n  Object.isExtensible(new Proxy({}, {\n    isExtensible: function (t) {\n      passed = true;\n      return false;\n    }\n  }));\n  return false;\n} catch(e) {}\ntry {\n  Object.isExtensible(new Proxy(Object.preventExtensions({}), {\n    isExtensible: function (t) {\n      return true;\n    }\n  }));\n  return false;\n} catch(e) {}\nreturn true;\n      ",
             "\"preventExtensions\" handler": "\nvar proxied = {};\nvar passed = false;\nObject.preventExtensions(\n  new Proxy(proxied, {\n    preventExtensions: function (t) {\n      passed = t === proxied;\n      return Object.preventExtensions(proxied);\n    }\n  })\n);\nreturn passed;\n      ",
-            "\"enumerate\" handler": "\nvar proxied = {};\nvar passed = false;\nfor (var i in\n  new Proxy(proxied, {\n    enumerate: function (t) {\n      passed = t === proxied;\n      return {\n        next: function(){ return { done: true, value: null };}\n      };\n    }\n  })\n) { }\nreturn passed;\n      ",
+            "\"preventExtensions\" handler invariant": "\nvar passed = false;\nnew Proxy({},{});\n// [[PreventExtensions]] applied to the proxy object only returns true\n// if [[IsExtensible]] applied to the proxy object's target object is false.\ntry {\n  Object.preventExtensions(new Proxy({}, {\n    preventExtensions: function () {\n      passed = true;\n      return true;\n    }\n  }));\n  return false;\n} catch(e) {}\nreturn passed;\n      ",
             "\"ownKeys\" handler": "\nvar proxied = {};\nvar passed = false;\nObject.keys(\n  new Proxy(proxied, {\n    ownKeys: function (t) {\n      passed = t === proxied; return [];\n    }\n  })\n);\nreturn passed;\n      ",
+            "\"ownKeys\" handler invariant": "\nvar passed = false;\nnew Proxy({},{});\n// The Type of each result List element is either String or Symbol.\ntry {\n  Object.keys(new Proxy({}, {\n    ownKeys: function () {\n      passed = true;\n      return [2];\n    }}));\n  return false;\n} catch(e) {}\n// The result List must contain the keys of all non-configurable own properties of the target object.\nvar proxied = {};\nObject.defineProperty(proxied, \"foo\", { value: 2, writable: true, enumerable: true });\ntry {\n  Object.keys(new Proxy(proxied, {\n    ownKeys: function () {\n      return [];\n    }}));\n  return false;\n} catch(e) {}\n// If the target object is not extensible, then the result List must contain all the keys\n// of the own properties of the target object and no other values.\ntry {\n  Object.keys(new Proxy(Object.preventExtensions({b:1}), {\n    ownKeys: function () {\n      return ['a'];\n    }}));\n  return false;\n} catch(e) {}\nreturn passed;\n      ",
             "\"apply\" handler": "\nvar proxied = function(){};\nvar passed = false;\nvar host = {\n  method: new Proxy(proxied, {\n    apply: function (t, thisArg, args) {\n      passed = t === proxied && thisArg === host && args + \"\" === \"foo,bar\";\n    }\n  })\n};\nhost.method(\"foo\", \"bar\");\nreturn passed;\n      ",
+            "\"apply\" handler invariant": "\nvar passed = false;\nnew Proxy(function(){}, {\n    apply: function () { passed = true; }\n})();\n// A Proxy exotic object only has a [[Call]] internal method if the\n// initial value of its [[ProxyTarget]] internal slot is an object\n// that has a [[Call]] internal method.\ntry {\n  new Proxy({}, {\n    apply: function () {}\n  })();\n  return false;\n} catch(e) {}\nreturn passed;\n      ",
             "\"construct\" handler": "\nvar proxied = function(){};\nvar passed = false;\nnew new Proxy(proxied, {\n  construct: function (t, args) {\n    passed = t === proxied && args + \"\" === \"foo,bar\";\n    return {};\n  }\n})(\"foo\",\"bar\");\nreturn passed;\n      ",
+            "\"construct\" handler invariants": "\nvar passed = false;\nnew Proxy({},{});\n// A Proxy exotic object only has a [[Construct]] internal method if the\n// initial value of its [[ProxyTarget]] internal slot is an object\n// that has a [[Construct]] internal method.\ntry {\n  new new Proxy({}, {\n    construct: function (t, args) {\n      return {};\n    }\n  })();\n  return false;\n} catch(e) {}\n// The result of [[Construct]] must be an Object.\ntry {\n  new new Proxy(function(){}, {\n    construct: function (t, args) {\n      passed = true;\n      return 5;\n    }\n  })();\n  return false;\n} catch(e) {}\nreturn passed;\n      ",
             "Proxy.revocable": "\nvar obj = Proxy.revocable({}, { get: function() { return 5; } });\nvar passed = (obj.proxy.foo === 5);\nobj.revoke();\ntry {\n  obj.proxy.foo;\n} catch(e) {\n  passed &= e instanceof TypeError;\n}\nreturn passed;\n      ",
             "Array.isArray support": "\nreturn Array.isArray(new Proxy([], {}));\n      ",
             "JSON.stringify support": "\nreturn JSON.stringify(new Proxy(['foo'], {})) === '[\"foo\"]';\n      "
@@ -421,7 +494,6 @@ var tests = {
             "Reflect.setPrototypeOf": "\nvar obj = {};\nReflect.setPrototypeOf(obj, Array.prototype);\nreturn obj instanceof Array;\n      ",
             "Reflect.isExtensible": "\nreturn Reflect.isExtensible({}) &&\n  !Reflect.isExtensible(Object.preventExtensions({}));\n      ",
             "Reflect.preventExtensions": "\nvar obj = {};\nReflect.preventExtensions(obj);\nreturn !Object.isExtensible(obj);\n      ",
-            "Reflect.enumerate": "\nvar obj = { foo: 1, bar: 2 };\nvar iterator = Reflect.enumerate(obj);\nvar passed = 1;\nif (typeof Symbol === 'function' && 'iterator' in Symbol) {\n  passed &= Symbol.iterator in iterator;\n}\nvar item = iterator.next();\npassed &= item.value === \"foo\" && item.done === false;\nitem = iterator.next();\npassed &= item.value === \"bar\" && item.done === false;\nitem = iterator.next();\npassed &= item.value === undefined && item.done === true;\nreturn passed === 1;\n      ",
             "Reflect.ownKeys, string keys": "\nvar obj = Object.create({ C: true });\nobj.A = true;\nObject.defineProperty(obj, 'B', { value: true, enumerable: false });\n\nreturn Reflect.ownKeys(obj).sort() + '' === \"A,B\";\n      ",
             "Reflect.ownKeys, symbol keys": "\nvar s1 = Symbol(), s2 = Symbol(), s3 = Symbol();\nvar proto = {};\nproto[s1] = true;\nvar obj = Object.create(proto);\nobj[s2] = true;\nObject.defineProperty(obj, s3, { value: true, enumerable: false });\n\nvar keys = Reflect.ownKeys(obj);\nreturn keys.indexOf(s2) >-1 && keys.indexOf(s3) >-1 && keys.length === 2;\n      ",
             "Reflect.apply": "\nreturn Reflect.apply(Array.prototype.push, [1,2], [3,4,5]) === 5;\n      ",
@@ -434,6 +506,7 @@ var tests = {
         "tests": {
             "basic functionality": "\nvar p1 = new Promise(function(resolve, reject) { resolve(\"foo\"); });\nvar p2 = new Promise(function(resolve, reject) { reject(\"quux\"); });\nvar score = 0;\n\nfunction thenFn(result)  { score += (result === \"foo\");  check(); }\nfunction catchFn(result) { score += (result === \"quux\"); check(); }\nfunction shouldNotRun(result)  { score = -Infinity;   }\n\np1.then(thenFn, shouldNotRun);\np2.then(shouldNotRun, catchFn);\np1.catch(shouldNotRun);\np2.catch(catchFn);\n\np1.then(function() {\n  // Promise.prototype.then() should return a new Promise\n  score += p1.then() !== p1;\n  check();\n});\n\nfunction check() {\n  if (score === 4) asyncTestPassed();\n}\n      ",
             "constructor requires new": "\nnew Promise(function(){});\ntry {\n  Promise(function(){});\n  return false;\n} catch(e) {\n  return true;\n}\n      ",
+            "Promise.prototype isn't an instance": "\nnew Promise(function(){});\ntry {\n  Promise.prototype.then(function(){});\n} catch (e) {\n  return true;\n}\n      ",
             "Promise.all": "\nvar fulfills = Promise.all([\n  new Promise(function(resolve)   { setTimeout(resolve,200,\"foo\"); }),\n  new Promise(function(resolve)   { setTimeout(resolve,100,\"bar\"); }),\n]);\nvar rejects = Promise.all([\n  new Promise(function(_, reject) { setTimeout(reject, 200,\"baz\"); }),\n  new Promise(function(_, reject) { setTimeout(reject, 100,\"qux\"); }),\n]);\nvar score = 0;\nfulfills.then(function(result) { score += (result + \"\" === \"foo,bar\"); check(); });\nrejects.catch(function(result) { score += (result === \"qux\"); check(); });\n\nfunction check() {\n  if (score === 2) asyncTestPassed();\n}\n      ",
             "Promise.all, generic iterables": "\nvar fulfills = Promise.all(global.__createIterableObject([\n  new Promise(function(resolve)   { setTimeout(resolve,200,\"foo\"); }),\n  new Promise(function(resolve)   { setTimeout(resolve,100,\"bar\"); }),\n]));\nvar rejects = Promise.all(global.__createIterableObject([\n  new Promise(function(_, reject) { setTimeout(reject, 200,\"baz\"); }),\n  new Promise(function(_, reject) { setTimeout(reject, 100,\"qux\"); }),\n]));\nvar score = 0;\nfulfills.then(function(result) { score += (result + \"\" === \"foo,bar\"); check(); });\nrejects.catch(function(result) { score += (result === \"qux\"); check(); });\n\nfunction check() {\n  if (score === 2) asyncTestPassed();\n}\n      ",
             "Promise.race": "\nvar fulfills = Promise.race([\n  new Promise(function(resolve)   { setTimeout(resolve,200,\"foo\"); }),\n  new Promise(function(_, reject) { setTimeout(reject, 300,\"bar\"); }),\n]);\nvar rejects = Promise.race([\n  new Promise(function(_, reject) { setTimeout(reject, 200,\"baz\"); }),\n  new Promise(function(resolve)   { setTimeout(resolve,300,\"qux\"); }),\n]);\nvar score = 0;\nfulfills.then(function(result) { score += (result === \"foo\"); check(); });\nrejects.catch(function(result) { score += (result === \"baz\"); check(); });\n\nfunction check() {\n  if (score === 2) asyncTestPassed();\n}\n      ",
@@ -447,6 +520,7 @@ var tests = {
             "typeof support": "\nreturn typeof Symbol() === \"symbol\";\n      ",
             "symbol keys are hidden to pre-ES6 code": "\nvar object = {};\nvar symbol = Symbol();\nobject[symbol] = 1;\n\nfor (var x in object){}\nvar passed = !x;\n\nif (Object.keys && Object.getOwnPropertyNames) {\n  passed &= Object.keys(object).length === 0\n    && Object.getOwnPropertyNames(object).length === 0;\n}\n\nreturn passed;\n      ",
             "Object.defineProperty support": "\nvar object = {};\nvar symbol = Symbol();\nvar value = {};\n\nif (Object.defineProperty) {\n  Object.defineProperty(object, symbol, { value: value });\n  return object[symbol] === value;\n}\n\nreturn passed;\n      ",
+            "symbols inherit from Symbol.prototype": "\nvar symbol = Symbol();\nvar passed = symbol.foo === undefined;\nSymbol.prototype.foo = 2;\npassed &= symbol.foo === 2;\ndelete Symbol.prototype.foo;\nreturn passed;\n      ",
             "cannot coerce to string or number": "\nvar symbol = Symbol();\n\ntry {\n  symbol + \"\";\n  return false;\n}\ncatch(e) {}\n\ntry {\n  symbol + 0;\n  return false;\n} catch(e) {}\n\nreturn true;\n      ",
             "can convert with String()": "\nreturn String(Symbol(\"foo\")) === \"Symbol(foo)\";\n      ",
             "new Symbol() throws": "\nvar symbol = Symbol();\ntry {\n  new Symbol();\n} catch(e) {\n  return true;\n}\n      ",
@@ -455,7 +529,7 @@ var tests = {
             "global symbol registry": "\nvar symbol = Symbol.for('foo');\nreturn Symbol.for('foo') === symbol &&\n   Symbol.keyFor(symbol) === 'foo';\n      "
         }
     }, {
-        "title": "well-known symbols[17]",
+        "title": "well-known symbols[18]",
         "tests": {
             "Symbol.hasInstance": "\nvar passed = false;\nvar obj = { foo: true };\nvar C = function(){};\nObject.defineProperty(C, Symbol.hasInstance, {\n  value: function(inst) { passed = inst.foo; return false; }\n});\nobj instanceof C;\nreturn passed;\n      ",
             "Symbol.isConcatSpreadable": "\nvar a = [], b = [];\nb[Symbol.isConcatSpreadable] = false;\na = a.concat(b);\nreturn a[0] === b;\n      ",
@@ -468,6 +542,7 @@ var tests = {
             "Symbol.species, Array.prototype.slice": "\nvar obj = [];\nobj.constructor = {};\nobj.constructor[Symbol.species] = function() {\n    return { foo: 1 };\n};\nreturn Array.prototype.slice.call(obj, 0).foo === 1;\n      ",
             "Symbol.species, Array.prototype.splice": "\nvar obj = [];\nobj.constructor = {};\nobj.constructor[Symbol.species] = function() {\n    return { foo: 1 };\n};\nreturn Array.prototype.splice.call(obj, 0).foo === 1;\n      ",
             "Symbol.species, RegExp.prototype[Symbol.split]": "\nvar passed = false;\nvar obj = { constructor: {} };\nobj[Symbol.split] = RegExp.prototype[Symbol.split];\nobj.constructor[Symbol.species] = function() {\n  passed = true;\n  return /./;\n};\n\"\".split(obj);\nreturn passed;\n      ",
+            "Symbol.species, Promise.prototype.then": "\nvar promise      = new Promise(function(resolve){ resolve(42); });\nvar FakePromise1 = promise.constructor = function(exec){ exec(function(){}, function(){}); };\nvar FakePromise2 = function(exec){ exec(function(){}, function(){}); };\nObject.defineProperty(FakePromise1, Symbol.species, {value: FakePromise2});\nreturn promise.then(function(){}) instanceof FakePromise2;\n      ",
             "Symbol.replace": "\nvar O = {};\nO[Symbol.replace] = function(){\n  return 42;\n};\nreturn ''.replace(O) === 42;\n      ",
             "Symbol.search": "\nvar O = {};\nO[Symbol.search] = function(){\n  return 42;\n};\nreturn ''.search(O) === 42;\n      ",
             "Symbol.split": "\nvar O = {};\nO[Symbol.split] = function(){\n  return 42;\n};\nreturn ''.split(O) === 42;\n      ",
@@ -478,6 +553,8 @@ var tests = {
             "Symbol.match, String.prototype.includes": "\nvar re = /./;\ntry {\n  '/./'.includes(re);\n} catch(e){\n  re[Symbol.match] = false;\n  return '/./'.includes(re);\n}\n      ",
             "Symbol.toPrimitive": "\nvar a = {}, b = {}, c = {};\nvar passed = 0;\na[Symbol.toPrimitive] = function(hint) { passed += hint === \"number\";  return 0; };\nb[Symbol.toPrimitive] = function(hint) { passed += hint === \"string\";  return 0; };\nc[Symbol.toPrimitive] = function(hint) { passed += hint === \"default\"; return 0; };\n\na >= 0;\nb in {};\nc == 0;\nreturn passed === 3;\n      ",
             "Symbol.toStringTag": "\nvar a = {};\na[Symbol.toStringTag] = \"foo\";\nreturn (a + \"\") === \"[object foo]\";\n      ",
+            "Symbol.toStringTag affects existing built-ins": "\nvar s = Symbol.toStringTag;\nvar passed = true;\n[\n  [Array.prototype, []],\n  [String.prototype, ''],\n  [arguments, arguments],\n  [Function.prototype, function(){}],\n  [Error.prototype, new Error()],\n  [Boolean.prototype, true],\n  [Number.prototype, 2],\n  [Date.prototype, new Date()],\n  [RegExp.prototype, /./]\n].forEach(function(pair){\n  pair[0][s] = \"foo\";\n  passed &= (Object.prototype.toString.call(pair[1]) === \"[object foo]\");\n  delete pair[0][s];\n});\nreturn passed;\n      ",
+            "Symbol.toStringTag, new built-ins": "\nvar passed = true;\nvar s = Symbol.toStringTag;\n[\n  [String, \"String Iterator\"],\n  [Array, \"Array Iterator\"],\n  [Map, \"Map Iterator\"],\n  [Set, \"Set Iterator\"]\n].forEach(function(pair){\n  var iterProto = Object.getPrototypeOf(new pair[0]()[Symbol.iterator]());\n  passed = passed\n    && iterProto.hasOwnProperty(s)\n    && iterProto[s] === pair[1];\n});\npassed = passed\n  && Object.getPrototypeOf(function*(){})[s] === \"GeneratorFunction\"\n  && Object.getPrototypeOf(function*(){}())[s] === \"Generator\"\n  && Map.prototype[s] === \"Map\"\n  && Set.prototype[s] === \"Set\"\n  && ArrayBuffer.prototype[s] === \"ArrayBuffer\"\n  && DataView.prototype[s] === \"DataView\"\n  && Promise.prototype[s] === \"Promise\"\n  && Symbol.prototype[s] === \"Symbol\"\n  && typeof Object.getOwnPropertyDescriptor(\n    Object.getPrototypeOf(Int8Array).prototype, Symbol.toStringTag).get === \"function\";\n  return passed;\n      ",
             "Symbol.toStringTag, misc. built-ins": "\nvar s = Symbol.toStringTag;\nreturn Math[s] === \"Math\"\n  && JSON[s] === \"JSON\";\n      ",
             "Symbol.unscopables": "\nvar a = { foo: 1, bar: 2 };\na[Symbol.unscopables] = { bar: true };\nwith (a) {\n  return foo === 1 && typeof bar === \"undefined\";\n}\n      "
         }
@@ -680,6 +757,7 @@ var tests = {
             "RegExp constructor": "\n// RegExp -> Get -> [[Get]]\nvar get = [];\nvar re = { constructor: null };\nre[Symbol.match] = true;\nvar p = new Proxy(re, { get: function(o, k) { get.push(k); return o[k]; }});\nRegExp(p);\nreturn get[0] === Symbol.match && get.slice(1) + '' === \"constructor,source,flags\";\n      ",
             "RegExp.prototype.flags": "\n// RegExp.prototype.flags -> Get -> [[Get]]\nvar get = [];\nvar p = new Proxy({}, { get: function(o, k) { get.push(k); return o[k]; }});\nObject.getOwnPropertyDescriptor(RegExp.prototype, 'flags').get.call(p);\nreturn get + '' === \"global,ignoreCase,multiline,unicode,sticky\";\n      ",
             "RegExp.prototype.test": "\n// RegExp.prototype.test -> RegExpExec -> Get -> [[Get]]\nvar get = [];\nvar p = new Proxy({ exec: function() { return null; } }, { get: function(o, k) { get.push(k); return o[k]; }});\nRegExp.prototype.test.call(p);\nreturn get + '' === \"exec\";\n      ",
+            "RegExp.prototype.toString": "\n// RegExp.prototype.toString -> Get -> [[Get]]\nvar get = [];\nvar p = new Proxy({}, { get: function(o, k) { get.push(k); return o[k]; }});\nRegExp.prototype.toString.call(p);\nreturn get + '' === \"source,flags\";\n      ",
             "RegExp.prototype[Symbol.match]": "\n// RegExp.prototype[Symbol.match] -> Get -> [[Get]]\nvar get = [];\nvar p = new Proxy({ exec: function() { return null; } }, { get: function(o, k) { get.push(k); return o[k]; }});\nRegExp.prototype[Symbol.match].call(p);\np.global = true;\nRegExp.prototype[Symbol.match].call(p);\nreturn get + '' === \"global,exec,global,unicode,exec\";\n      ",
             "RegExp.prototype[Symbol.replace]": "\n// RegExp.prototype[Symbol.replace] -> Get -> [[Get]]\nvar get = [];\nvar p = new Proxy({ exec: function() { return null; } }, { get: function(o, k) { get.push(k); return o[k]; }});\nRegExp.prototype[Symbol.replace].call(p);\np.global = true;\nRegExp.prototype[Symbol.replace].call(p);\nreturn get + '' === \"global,exec,global,unicode,exec\";\n      ",
             "RegExp.prototype[Symbol.search]": "\n// RegExp.prototype[Symbol.search] -> Get -> [[Get]]\nvar get = [];\nvar p = new Proxy({ exec: function() { return null; } }, { get: function(o, k) { get.push(k); return o[k]; }});\nRegExp.prototype[Symbol.search].call(p);\nreturn get + '' === \"lastIndex,exec\";\n      ",
@@ -763,8 +841,7 @@ var tests = {
     }, {
         "title": "own property order",
         "tests": {
-            "for..in": "\nvar obj = {\n  // Non-negative integer names appear first in value order\n  2:    true,\n  0:    true,\n  1:    true,\n  // Other string names appear in source order\n  ' ':  true,\n  // Non-negative integers are sorted above other names\n  9:    true,\n  D:    true,\n  B:    true,\n  // Negative integers are treated as other names\n  '-1': true,\n};\n// Other string names are added in order of creation\nobj.A = true;\n// Non-negative integer names, conversely, ignore order of creation\nobj[3] = true;\n// Having a total of 20+ properties doesn't affect property order\n\"EFGHIJKLMNOPQRSTUVWXYZ\".split('').forEach(function(key){\n  obj[key] = true;\n});\n// Object.defineProperty doesn't affect the above rules\nObject.defineProperty(obj, 'C', { value: true, enumerable: true });\nObject.defineProperty(obj, '4', { value: true, enumerable: true });\n// Deleting and reinserting a property doesn't preserve its position\ndelete obj[2];\nobj[2] = true;\n\nvar result = '';\nfor(var i in obj) {\n  result += i;\n}\nreturn result === \"012349 DB-1AEFGHIJKLMNOPQRSTUVWXYZC\";\n      ",
-            "Object.keys": "\nvar obj = {\n  2:    true,\n  0:    true,\n  1:    true,\n  ' ':  true,\n  9:    true,\n  D:    true,\n  B:    true,\n  '-1': true\n};\nobj.A = true;\nobj[3] = true;\n\"EFGHIJKLMNOPQRSTUVWXYZ\".split('').forEach(function(key){\n  obj[key] = true;\n});\nObject.defineProperty(obj, 'C', { value: true, enumerable: true });\nObject.defineProperty(obj, '4', { value: true, enumerable: true });\ndelete obj[2];\nobj[2] = true;\n\nreturn Object.keys(obj).join('') === \"012349 DB-1AEFGHIJKLMNOPQRSTUVWXYZC\";\n      ",
+            "Object.keys": "\nvar obj = {\n  // Non-negative integer names appear first in value order\n  2:    true,\n  0:    true,\n  1:    true,\n  // Other string names appear in source order\n  ' ':  true,\n  // Non-negative integers are sorted above other names\n  9:    true,\n  D:    true,\n  B:    true,\n  // Negative integers are treated as other names\n  '-1': true,\n};\n// Other string names are added in order of creation\nobj.A = true;\n// Non-negative integer names, conversely, ignore order of creation\nobj[3] = true;\n// Having a total of 20+ properties doesn't affect property order\n\"EFGHIJKLMNOPQRSTUVWXYZ\".split('').forEach(function(key){\n  obj[key] = true;\n});\n// Object.defineProperty doesn't affect the above rules\nObject.defineProperty(obj, 'C', { value: true, enumerable: true });\nObject.defineProperty(obj, '4', { value: true, enumerable: true });\n// Deleting and reinserting a property doesn't preserve its position\ndelete obj[2];\nobj[2] = true;\n\nvar forInOrder = '';\nfor(var key in obj)forInOrder += key;\n\nreturn Object.keys(obj).join('') === forInOrder;\n      ",
             "Object.getOwnPropertyNames": "\nvar obj = {\n  2:    true,\n  0:    true,\n  1:    true,\n  ' ':  true,\n  9:    true,\n  D:    true,\n  B:    true,\n  '-1': true\n};\nobj.A = true;\nobj[3] = true;\n\"EFGHIJKLMNOPQRSTUVWXYZ\".split('').forEach(function(key){\n  obj[key] = true;\n});\nObject.defineProperty(obj, 'C', { value: true, enumerable: true });\nObject.defineProperty(obj, '4', { value: true, enumerable: true });\ndelete obj[2];\nobj[2] = true;\n\nreturn Object.getOwnPropertyNames(obj).join('') === \"012349 DB-1AEFGHIJKLMNOPQRSTUVWXYZC\";\n      ",
             "Object.assign": "\nvar result = '';\nvar target = {};\n\n\"012349 DBACEFGHIJKLMNOPQRST\".split('').concat(-1).forEach(function(key){\n  Object.defineProperty(target, key, {\n    set: function(){\n      result += key;\n    }\n  })\n});\n\nvar obj = {2: 2, 0: 0, 1: 1, ' ': ' ', 9: 9, D: 'D', B: 'B', '-1': '-1'};\nObject.defineProperty(obj, 'A', {value: 'A',  enumerable: true});\nObject.defineProperty(obj, '3', {value: '3',  enumerable: true});\nObject.defineProperty(obj, 'C', {value: 'C',  enumerable: true});\nObject.defineProperty(obj, '4', {value: '4',  enumerable: true});\ndelete obj[2];\nobj[2] = true;\n\n\"EFGHIJKLMNOPQRST\".split('').forEach(function(key){\n  obj[key] = key;\n});\n\nObject.assign(target, obj);\n\nreturn result === \"012349 DB-1ACEFGHIJKLMNOPQRST\";\n      ",
             "JSON.stringify": "\nvar obj = {\n  2:    true,\n  0:    true,\n  1:    true,\n  ' ':  true,\n  9:    true,\n  D:    true,\n  B:    true,\n  '-1': true\n};\nobj.A = true;\nobj[3] = true;\n\"EFGHIJKLMNOPQRSTUVWXYZ\".split('').forEach(function(key){\n  obj[key] = true;\n});\nObject.defineProperty(obj, 'C', { value: true, enumerable: true });\nObject.defineProperty(obj, '4', { value: true, enumerable: true });\ndelete obj[2];\nobj[2] = true;\n\nreturn JSON.stringify(obj) ===\n  '{\"0\":true,\"1\":true,\"2\":true,\"3\":true,\"4\":true,\"9\":true,\" \":true,\"D\":true,\"B\":true,\"-1\":true,\"A\":true,\"E\":true,\"F\":true,\"G\":true,\"H\":true,\"I\":true,\"J\":true,\"K\":true,\"L\":true,\"M\":true,\"N\":true,\"O\":true,\"P\":true,\"Q\":true,\"R\":true,\"S\":true,\"T\":true,\"U\":true,\"V\":true,\"W\":true,\"X\":true,\"Y\":true,\"Z\":true,\"C\":true}';\n      ",
@@ -782,9 +859,9 @@ var tests = {
             "accessors aren't constructors": "\ntry {\n  new (Object.getOwnPropertyDescriptor({get a(){}}, 'a')).get;\n} catch(e) {\n  return true;\n}\n      ",
             "Invalid Date": "\nreturn new Date(NaN) + \"\" === \"Invalid Date\";\n      ",
             "RegExp constructor can alter flags": "\nreturn new RegExp(/./im, \"g\").global === true;\n      ",
-            "built-in prototypes are not instances": "\ntry {\n  RegExp.prototype.source; return false;\n} catch(e) {}\ntry {\n  Date.prototype.valueOf(); return false;\n} catch(e) {}\n\nif (![Error, EvalError, RangeError, ReferenceError, SyntaxError, TypeError, URIError].every(function (E) {\n    return Object.prototype.toString.call(E.prototype) === '[object Object]';\n})) {\n  return false;\n}\n\nreturn true;\n      ",
+            "RegExp.prototype.toString generic and uses \"flags\" property": "\nreturn RegExp.prototype.toString.call({source: 'foo', flags: 'bar'}) === '/foo/bar';\n      ",
+            "built-in prototypes are not instances": "\ntry {\n  RegExp.prototype.exec(); return false;\n} catch(e) {}\ntry {\n  Date.prototype.valueOf(); return false;\n} catch(e) {}\n\nif (![Error, EvalError, RangeError, ReferenceError, SyntaxError, TypeError, URIError].every(function (E) {\n    return Object.prototype.toString.call(E.prototype) === '[object Object]';\n})) {\n  return false;\n}\n\nreturn true;\n      ",
             "function 'length' is configurable": "\nvar fn = function(a, b) {};\n\nvar desc = Object.getOwnPropertyDescriptor(fn, \"length\");\nif (desc.configurable) {\n  Object.defineProperty(fn, \"length\", { value: 1 });\n  return fn.length === 1;\n}\n\nreturn false;\n      ",
-            "String.prototype case methods, Unicode support": "\nreturn \"𐐘\".toLowerCase() === \"𐑀\" && \"𐑀\".toUpperCase() === \"𐐘\";\n      ",
             "hoisted block-level function declaration": "\n// Note: only available outside of strict mode.\nif (!this) return false;\nvar passed = f() === 1;\nfunction f() { return 1; }\n\npassed &= typeof g === 'undefined';\n{ function g() { return 1; } }\npassed &= g() === 1;\n\npassed &= h() === 2;\n{ function h() { return 1; } }\nfunction h() { return 2; }\npassed &= h() === 1;\n\nreturn passed;\n      ",
             "labeled function statements": "\n// Note: only available outside of strict mode.\nif (!this) return false;\n\nlabel: function foo() { return 2; }\nreturn foo() === 2;\n      ",
             "function statements in if-statement clauses": "\n// Note: only available outside of strict mode.\nif (!this) return false;\n\nif(true) function foo() { return 2; }\nif(false) {} else function bar() { return 3; }\nif(true) function baz() { return 4; } else {}\nif(false) function qux() { return 5; } else function qux() { return 6; }\nreturn foo() === 2 && bar() === 3 && baz() === 4 && qux() === 6;\n      ",
@@ -811,20 +888,8 @@ var tests = {
             "octal escape sequences": "\nreturn /\\041/.exec(\"!\")[0] === \"!\"\n  && /[\\041]/.exec(\"!\")[0] === \"!\";\n      ",
             "invalid backreferences become octal escapes": "\nreturn /\\41/.exec(\"!\")[0] === \"!\"\n  && /[\\41]/.exec(\"!\")[0] === \"!\";\n      "
         }
-    }]
-};
-
-global.__createIterableObject = function (arr) {
-    var ret = {};
-    ret[Symbol.iterator] = function () {
-        var curr = 0, len = arr.length;
-        return {
-            next: function () {
-                return curr === len ? {done: true} : {value: arr[curr++], done: false}
-            }
-        }
-    }
-    return ret;
+    }],
+    "Annex b": []
 };
 
 var verbose = process.argv[2] === '-v';
@@ -899,7 +964,7 @@ async(Object.keys(tests), function (key, next) {
 
 function async(arr, cb, complete) {
     var n = 0, L = arr.length;
-
+    if (!L) return complete();
     cb(arr[0], next);
 
     function next() {
@@ -930,7 +995,7 @@ function fetchResults() {
 
     };
     var arr = document.querySelectorAll('#table-wrapper tr');
-    for (var i = 2, L = arr.length; i < L; i++) {
+    for (var i = 1, L = arr.length; i < L; i++) {
         onRow(arr[i])
     }
     return JSON.stringify(results);

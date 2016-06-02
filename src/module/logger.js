@@ -290,8 +290,6 @@ function streamWriter(stream) {
  * log method that will format the arguments into a string and write them into output
  *
  * @method
- *
- * @type {Function}
  */
 export let verbose = logger(VERBOSE, 'verbose'),
     debug = logger(DEBUG, 'debug'),

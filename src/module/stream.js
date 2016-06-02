@@ -14,11 +14,12 @@
  */
 export function read(incoming) {
     return co.promise(function (resolve, reject) {
-        let bufs = [];
+        let bufs = [], totalLen = 0;
         incoming.on('data', function (data) {
+            totalLen += data.length;
             bufs.push(data);
-        }).on('end', function () {
-            resolve(Buffer.concat(bufs));
+        }).once('end', function () {
+            resolve(Buffer.concat(bufs, totalLen));
         })
     })
 }
@@ -89,31 +90,6 @@ export function iterator(incoming) {
     };
 }
 
-function defer() {
-    let resolved = null, rejected = null, resolver = {
-        resolve(value) {
-            this.resolve = this.reject = Boolean;
-            resolved = {value};
-        },
-        reject(value) {
-            this.resolve = this.reject = Boolean;
-            rejected = {value};
-        }
-    };
-    const ret = new Promise(function (resolve, reject) {
-        if (resolved) {
-            resolve(resolved.value)
-        } else if (rejected) {
-            reject(rejected.value)
-        } else {
-            resolver.resolve = resolve;
-            resolver.reject = reject;
-        }
-    });
-    ret.resolver = resolver;
-    return ret;
-}
-
 const SlowBuffer = require('buffer').SlowBuffer;
 
 export class Input {
@@ -162,23 +138,22 @@ export class Input {
         stream.pause();
 
         function onerror(err) {
+            self._buf = {
+                get length() {
+                    throw new Error('socket closed')
+                }
+            };
             for (let resolver of pending) {
                 resolver.reject(err);
-                self._buf = {
-                    get length() {
-                        throw new Error('socket closed')
-                    }
-                }
             }
             pending.length = 0;
         }
 
         this._wait = function (length) {
-            const resolver = Promise.defer();
-            resolver.required = length;
-            pending.push(resolver);
-            pending.length === 1 && stream.resume();
-            co.yield(resolver.promise);
+            co.promise(function (resolve, reject) {
+                pending.push({required: length, resolve, reject});
+                pending.length === 1 && stream.resume();
+            })
         }
     }
 

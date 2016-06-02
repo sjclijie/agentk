@@ -1,3 +1,25 @@
+/**
+ * Websocket protocol implemention.
+ * 
+ * @example
+ *
+ *     import {listen, TYPE_TEXT} from 'module/websocket';
+ *     let server = listen(1234, function (req) {
+ *         if(req.pathname !== '/foo') {
+ *             return req.reject();
+ *         }
+ *
+ *         let ws = req.accept();
+ *
+ *         ws.send('hello');
+ *
+ *         ws.on('message', function (msg, type) {
+ *             if(type === TYPE_TEXT) console.log('recv text', msg);
+ *         });
+ *     }
+ */
+
+
 import * as http from 'http';
 import {sha1} from 'crypto';
 
@@ -19,30 +41,21 @@ const FIN = 8, RSV1 = 4, RSV2 = 2, RSV3 = 1;
 const INFLATE_TAIL = new SlowBuffer(4);
 INFLATE_TAIL.write('\x00\x00\xff\xff\xde\xad\xbe\xef\xca\xbd', 'binary');
 
-function makeDeflater(onMessage) {
-    const deflater = _zlib.createDeflateRaw({flush: _zlib.Z_SYNC_FLUSH}), deflated = [];
+export const TYPE_TEXT = 'text', TYPE_BUFFER = 'buffer';
 
-    deflater.on('data', function (buf) {
-        deflated.push(buf);
-    });
+function makeDeflater(onMessage) {
+    const deflater = _zlib.createDeflateRaw({flush: _zlib.Z_SYNC_FLUSH}),
+        onFlush = makeFlusher(deflater, onMessage);
+
     return function (buf) {
         deflater.write(buf);
         deflater.flush(_zlib.Z_SYNC_FLUSH, onFlush)
     };
-
-    function onFlush() {
-        const block = Buffer.concat(deflated);
-        deflated.length = 0;
-        onMessage(block);
-    }
 }
 
 function makeInflater(onMessage) {
-    const inflater = _zlib.createInflateRaw(), inflated = [];
-
-    inflater.on('data', function (buf) {
-        inflated.push(buf);
-    });
+    const inflater = _zlib.createInflateRaw(),
+        onFlush = makeFlusher(inflater, onMessage);
 
     return function (buf) {
         inflater.write(buf);
@@ -50,10 +63,19 @@ function makeInflater(onMessage) {
         inflater.flush(onFlush)
         return 0x7fffffff; // prevent triggering reader::next
     };
+}
 
-    function onFlush() {
-        const block = Buffer.concat(inflated);
-        inflated.length = 0;
+function makeFlusher(stream, onMessage) {
+    const received = [];
+    let recvLen = 0;
+    stream.on('data', function (buf) {
+        recvLen += buf.length;
+        received.push(buf);
+    });
+
+    return function onFlush() {
+        const block = Buffer.concat(received, recvLen);
+        received.length = recvLen = 0;
         onMessage(block);
     }
 }
@@ -193,11 +215,11 @@ class WebSocket extends EventEmitter {
                 let type, data;
                 switch (opcode) {
                     case 1: // text
-                        type = 'text';
+                        type = TYPE_TEXT;
                         data = payload.toString();
                         break;
                     case 2: //buffer
-                        type = 'buffer';
+                        type = TYPE_BUFFER;
                         data = payload;
                         break;
                     case 8: // close

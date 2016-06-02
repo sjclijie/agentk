@@ -1,34 +1,797 @@
 "use strict";
-let handleStringTemplate, handleClass, handleRest;
+let handle_string_template, handle_class, handle_destruct, handle_function_default_param, handle_function_rest_param;
 
 const Syntax = require('./esprima').Syntax;
 
 const params = ['module', 'co', 'require', 'include', '__filename', '__dirname', 'moduleDefault', 'loadProgress'].map(id),
     useStrict = expr(raw('"use strict"')),
-    VariableType = {type: 'variable'},
+    VarType = {kind: 'var'},
     $proto = id('proto'),
+    $super_class = id('super_class'),
     $super_proto = id('super_proto'),
-    $dtemp = id('$dtemp'),
-    $ptemp = {
-        type: Syntax.VariableDeclaration,
-        kind: 'var',
-        declarations: [declarator(id('$ptemp')), declarator($dtemp)]
-    }, $this = {type: Syntax.ThisExpression},
-    $noDefault = expr(call(id('Object.defineProperty'), [id('module'), id('moduleDefault'), {
-        type: Syntax.ObjectExpression,
-        properties: [prop('value', id('undefined'))]
-    }]));
+    $undefined = id('undefined'),
+    $arguments = id('arguments'),
+    $destruct_temp = id('_destruct_temp'),
+    $empty = expr(raw('/**/')),
+    $this = {type: Syntax.ThisExpression},
+    $module = id('module'),
+    $moduleDefault = id('moduleDefault');
 
-let context = {}, exportedNames = {}, hasDestruct = false, hasDefault = false;
+
+let context = {onIdentifier: Boolean};
 
 function transform(ast, options) {
-    handleStringTemplate = options.StringTemplate;
-    handleClass = options.Class;
-    handleRest = options.Rest;
+    handle_string_template = options.StringTemplate;
+    handle_class = options.Class;
+    handle_function_default_param = options.Default;
+    handle_function_rest_param = options.Rest;
+    handle_destruct = options.Destruct;
 
-    let stmts = ast.body;
-    stmts.forEach(onStmt);
-    return stmts;
+    iterate(ast.body);
+    return ast.body;
+}
+
+function Empty() {
+}
+Empty.prototype = Object.create(null);
+
+const handler = handle.bind.bind(handle, null);
+
+const handlers = {
+    ImportDeclaration: function (stmt, idx, arr) {
+        const $include = call(id('include'), [stmt.source]);
+        if (!stmt.specifiers.length) { // import only
+            arr[idx] = expr(call(member({
+                type: Syntax.MemberExpression,
+                object: $include,
+                property: id('loadProgress'),
+                computed: true
+            }, 'done'), []));
+            return
+        }
+        const loc = stmt.loc,
+            name = stmt.source.value,
+            slash = name.lastIndexOf('/'),
+            ns = {
+                type: Syntax.Identifier,
+                name: '_' + name.substr(slash + 1).replace(/\W/g, '_') + '_' + loc.start.line + '_' + loc.start.column
+            };
+
+        for (let specifier of stmt.specifiers) {
+            switch (specifier.type) {
+                case Syntax.ImportNamespaceSpecifier:
+                    ns.name = specifier.local.name;
+                    break;
+                case Syntax.ImportSpecifier:
+                    context.addImported(specifier.local.name, member(ns, specifier.imported.name));
+                    break;
+                case Syntax.ImportDefaultSpecifier:
+                    context.addImported(specifier.local.name, {
+                        type: Syntax.MemberExpression,
+                        object: ns,
+                        property: $moduleDefault,
+                        computed: true
+                    });
+                    break;
+            }
+        }
+
+        arr[idx] = {
+            loc: loc,
+            type: Syntax.VariableDeclaration,
+            kind: 'const',
+            declarations: [declarator(ns, $include)]
+        }
+    },
+    ExportNamedDeclaration: function (stmt, idx, arr) {
+        if (stmt.declaration) { // export let ...
+            const ctx = context.beginExport();
+            handle('declaration', stmt);
+            arr[idx] = stmt.declaration;
+            ctx.dispose();
+        } else { // export {...}
+            context.exportIds(stmt.specifiers);
+            arr[idx] = $empty
+        }
+    },
+    ExportDefaultDeclaration: function (stmt, idx, arr) {
+        const decl = stmt.declaration;
+        if ((decl.type === Syntax.ClassDeclaration || decl.type === Syntax.FunctionDeclaration) && !decl.id) {
+            decl.type = decl.type === Syntax.FunctionDeclaration ? Syntax.FunctionExpression : Syntax.ClassExpression;
+        }
+        let init;
+        switch (decl.type) {
+            case Syntax.ClassDeclaration:
+            case Syntax.FunctionDeclaration:
+                init = decl.id;
+                arr[idx] = decl;
+                handle(idx, arr);
+                arr.splice(++idx, 0, null);
+                break;
+            default:
+                handle('declaration', stmt);
+                init = stmt.declaration;
+                break;
+        }
+        arr[idx] = expr(call(id('Object.defineProperty'), [
+            $module, $moduleDefault, {
+                type: Syntax.ObjectExpression, properties: [
+                    prop('value', init)]
+            }]));
+        context.onDefaultExport();
+    },
+    VariableDeclaration: function (stmt) {
+        for (let i = 0, decls = stmt.declarations, L = decls.length; i < L; i++) {
+            const decl = decls[i];
+            decl.init && handle('init', decl);
+            const id = decl.id;
+            if (id.type === Syntax.Identifier) {
+                context.addVariable(id, stmt);
+            } else if (handle_destruct) {
+                // let {x} = init
+                let init;
+                if (decl.init.type === Syntax.Identifier) {
+                    init = decl.init;
+                    decls.splice(i--, 1); // delete the declaration
+                    L--;
+                } else {
+                    init = decl.id = makeDestructDummy(id)
+                }
+                walkDestruct(id, init, function (identifier, init) {
+                    context.addVariable(identifier, stmt);
+                    decls.splice(++i, 0, declarator(identifier, init));
+                    L++;
+                });
+            } else {
+                walkDestruct(id, null, function (identifier) {
+                    context.addVariable(identifier, stmt);
+                });
+            }
+        }
+    },
+    IfStatement: handles('test', 'consequent', 'alternate'),
+    WhileStatement: handles('test', 'body'),
+    DoWhileStatement: handles('body', 'test'),
+    ForStatement: function (stmt) {
+        const ctx = makeContext();
+        handle('init', stmt);
+        handle('test', stmt);
+        handle('update', stmt);
+        handle('body', stmt);
+        ctx.dispose();
+    }, ForOfStatement: function (stmt) {
+        const ctx = makeContext();
+        const left = stmt.left;
+        const extra_decls = [];
+        if (left.type === Syntax.VariableDeclaration) { // for(let x of ...)
+            const id = left.declarations[0].id;
+            if (id.type === Syntax.Identifier) {
+                context.addVariable(id, left)
+            } else if (handle_destruct) {
+                const dummy = left.declarations[0].id = makeDestructDummy(id);
+                walkDestruct(id, dummy, function (identifier, init) {
+                    context.addVariable(identifier, left);
+                    extra_decls.push(declarator(identifier, init))
+                });
+            } else {
+                walkDestruct(id, null, function (identifier) {
+                    context.addVariable(identifier, left);
+                });
+            }
+        }
+        handle('right', stmt);
+        handle('body', stmt);
+        extra_decls.length && pushExtraDecls(left.kind, extra_decls, stmt);
+        ctx.dispose();
+    },
+    SwitchStatement: function (stmt) {
+        handle('discriminant', stmt);
+        for (let kase of stmt.cases) {
+            handle('test', kase);
+            iterate(kase.consequent)
+        }
+    },
+    TryStatement: function (stmt) {
+        handle('block', stmt);
+        if (stmt.handler) {
+            const ctx = makeContext();
+            context.addVariable(stmt.handler.param, VarType);
+            iterate(stmt.handler.body.body);
+            ctx.dispose();
+        }
+        stmt.finalizer && handle('finalizer', stmt);
+    },
+    BlockStatement: function (stmt, key) {
+        if (key === 'body') {
+            iterate(stmt.body);
+        } else {
+            const ctx = makeContext();
+            iterate(stmt.body);
+            ctx.dispose();
+        }
+    },
+    ClassDeclaration: function (node, key, parent) {
+        const isStmt = node.type === Syntax.ClassDeclaration;
+        isStmt && context.addVariable(node.id, VarType);
+        const superClass = node.superClass;
+        superClass && handle('superClass', node);
+        const body = node.body.body;
+
+        const $className = body.$className = node.id || id('anonymous');
+
+        iterate(body);
+        // body.forEach(onMethod);
+        if (!handle_class) return;
+
+        // const proto = <Class>.prototype
+        const env_decl = [declarator($proto, member($className, 'prototype'))];
+
+        // super_class = <Super>, super_proto = proto.__proto__ = super_class.prototype
+        superClass && env_decl.push(
+            declarator($super_class, superClass),
+            declarator($super_proto, assign(member($proto, '__proto__'), member($super_class, 'prototype')))
+        );
+        body.unshift({
+            type: Syntax.VariableDeclaration,
+            kind: 'const',
+            declarations: env_decl
+        });
+
+        body.push({
+            type: Syntax.ReturnStatement,
+            argument: $className,
+            loc: {start: {line: node.loc.end.line, column: 0}}
+        });
+
+        if (!body.hasConstructor) {
+            body.push({
+                type: Syntax.FunctionDeclaration,
+                id: $className,
+                params: [],
+                body: {
+                    type: Syntax.BlockStatement,
+                    body: node.superClass ? [expr(call(member($super_proto, 'constructor.call'), [$this]))] : []
+                }
+            })
+        }
+
+        const factory = {
+            type: Syntax.FunctionExpression,
+            params: [],
+            body: {
+                loc: node.body.loc,
+                type: Syntax.BlockStatement,
+                body: body
+            }
+        };
+        if (isStmt) {
+            parent[key] = {
+                type: Syntax.VariableDeclaration,
+                kind: 'var',
+                declarations: [declarator(node.id, call(factory, []))]
+            };
+        } else {
+            parent[key] = call(factory, []);
+        }
+
+    },
+    MethodDefinition: function (method, i, arr) {
+        handleFunction(method.value);
+        if (!handle_class) return;
+        let target = method.static ? arr.$className.name : 'proto';
+        if (method.kind.length === 3) { // get|set
+            arr[i] = expr(call(member({
+                type: Syntax.Identifier,
+                name: target,
+                loc: method.loc
+            }, method.kind === 'get' ? '__defineGetter__' : '__defineSetter__'), [
+                method.key.type === Syntax.Identifier ? raw(JSON.stringify(method.key.name)) : method.key,
+                method.value
+            ]));
+        } else if (method.kind === 'constructor') {
+            arr.hasConstructor = true;
+            method.value.type = Syntax.FunctionDeclaration;
+            method.value.id = arr.$className;
+            arr[i] = method.value;
+        } else {
+            method.type = Syntax.ExpressionStatement;
+            method.expression = assign({
+                type: Syntax.MemberExpression,
+                object: {type: Syntax.Identifier, name: target, loc: method.loc},
+                property: method.key,
+                computed: method.computed
+            }, method.value);
+        }
+    },
+    FunctionDeclaration: function (stmt) {
+        context.addVariable(stmt.id, VarType);
+        handleFunction(stmt, true);
+    },
+    ReturnStatement: handler('argument'),
+    LabeledStatement: function (stmt) {
+        return handle(0, [stmt.body]);
+    },
+    ExpressionStatement: handler('expression'),
+    SequenceExpression: function (expr) {
+        iterate(expr.expressions)
+    },
+    CallExpression: function (expr) {
+        handle('callee', expr);
+        iterate(expr['arguments']);
+    },
+    MemberExpression: function (expr, key, parent) {
+        if (handle_class && key === 'callee' && expr.object.type === Syntax.Super) {
+            // super.xxx(...) => super_proto.xxx.call(this, ...)
+            expr.object = {type: Syntax.Identifier, name: 'super_proto', loc: expr.loc};
+            parent.callee = member(expr, 'call');
+            parent['arguments'].unshift($this)
+        } else {
+            handle('object', expr)
+        }
+        if (expr.computed) {
+            handle('property', expr)
+        }
+    },
+    Super: function (expr, key, parent) {
+        if (handle_class) {
+            if (key === 'callee') {
+                // super(...) => super_class.call(this, ...)
+                expr = {type: Syntax.Identifier, name: 'super_class', loc: expr.loc};
+                parent.callee = member(expr, 'call');
+                parent['arguments'].unshift($this)
+            } else {
+                // super.xxx => super_proto.xxx
+                parent[key] = {type: Syntax.Identifier, name: 'super_proto', loc: expr.loc}
+            }
+        }
+    },
+    ObjectExpression: function (expr) {
+        for (let prop of expr.properties) {
+            handle('value', prop)
+        }
+    },
+    ObjectPattern: function (expr, key, parent) { // {} = {}
+        if (key === 'left' && parent.type === Syntax.AssignmentExpression) {
+            if (handle_destruct) {
+                const seqs = [];
+                let init = parent.right;
+                if (init.type !== Syntax.Identifier) {
+                    context.addTemp($destruct_temp);
+                    seqs.push(assign($destruct_temp, init));
+                    init = $destruct_temp;
+                }
+                walkDestruct(expr, init, function (identifier, init) {
+                    if (!init) {
+                        context.addTemp(identifier);
+                    } else {
+                        handle(0, [identifier]);
+                        seqs.push(assign(identifier, init));
+                    }
+                });
+                seqs.push(init);
+                parent.type = Syntax.SequenceExpression;
+                parent.expressions = seqs;
+            }
+            return;
+        }
+        console.error(expr, key, parent);
+        throw new Error('unhandled object pattern');
+    },
+    ArrayExpression: function (expr) {
+        iterate(expr.elements);
+    },
+    BinaryExpression: handles('left', 'right'),
+    ConditionalExpression: handles('test', 'consequent', 'alternate'),
+    FunctionExpression: function (expr) {
+        handleFunction(expr, false)
+    },
+    Identifier: function (id) {
+        context.onIdentifier(id)
+    },
+    TemplateLiteral: function (expr, key, obj) {
+        const exprs = expr.expressions;
+        let i = exprs.length;
+        iterate(exprs);
+        if (!handle_string_template) return;
+        if (i === 0) { // `simple string`
+            obj[key] = {
+                type: Syntax.Literal,
+                raw: JSON.stringify(expr.quasis[0].value.cooked),
+                loc: expr.loc
+            };
+            return;
+        }
+
+        expr.type = Syntax.BinaryExpression;
+        expr.operator = '+';
+        let current = expr, last = expr.quasis[i].value;
+
+        while (i--) {
+            let str = expr.quasis[i].value;
+            str.type = Syntax.Literal;
+            str.raw = JSON.stringify(str.cooked);
+
+            current = current.left = binary(binary(null, '+', str), '+', exprs[i]);
+            current = current.left;
+        }
+        if (last.cooked) {
+            expr.right = last;
+            last.type = Syntax.Literal;
+            last.raw = JSON.stringify(last.cooked);
+        } else {
+            expr.right = expr.left.right;
+            expr.left = expr.left.left;
+        }
+        current.type = Syntax.Literal;
+        current.raw = current.right.raw;
+        current.loc = current.right.loc;
+    },
+    BreakStatement: Boolean,
+    ContinueStatement: Boolean,
+    Literal: Boolean,
+    ThisExpression: Boolean
+};
+
+function handles() {
+    const names = arguments, L = names.length;
+    return function (expr) {
+        for (let i = 0; i < L; i++) {
+            handle(names[i], expr)
+        }
+    }
+}
+
+// aliases
+handlers.ForInStatement = handlers.ForOfStatement;
+handlers.ClassExpression = handlers.ClassDeclaration;
+handlers.NewExpression = handlers.CallExpression;
+handlers.ArrayPattern = handlers.ObjectPattern;
+handlers.ArrowFunctionExpression = handlers.FunctionExpression;
+handlers.AssignmentExpression
+    = handlers.LogicalExpression
+    = handlers.BinaryExpression;
+handlers.UnaryExpression
+    = handlers.UpdateExpression
+    = handlers.YieldExpression
+    = handlers.ThrowStatement
+    = handlers.ReturnStatement;
+
+
+function iterate(arr) {
+    for (let i = arr.length; i; i--) {
+        handle(arr.length - i, arr)
+    }
+}
+
+function handle(key, obj) {
+    const child = obj[key];
+    if (!child) return;
+    // console.error('handle', key, child.type);
+    const handler = handlers[child.type];
+    if (!handler) {
+        console.error(obj, key);
+        throw new Error('unhandled object type ' + child.type);
+        return console.error('unhandled object type ' + child.type);
+    }
+    handler(child, key, obj)
+}
+
+function makeDestructDummy(param) {
+    return {
+        type: Syntax.Identifier,
+        name: '_destruct_temp_' + param.loc.start.line + '_' + param.loc.start.column,
+        loc: param.loc
+    };
+}
+
+function walkDestruct(pattern, variable, cb) {
+    switch (pattern.type) {
+        case Syntax.ObjectPattern: // {a:a}
+            for (let prop of pattern.properties) {
+                walkDestruct(prop.value, variable && {
+                        type: Syntax.MemberExpression,
+                        object: variable,
+                        property: prop.key,
+                        computed: prop.computed || prop.key.type !== Syntax.Identifier
+                    }, cb)
+            }
+            break;
+        case Syntax.ArrayPattern: // [a]
+            pattern.elements.forEach(function (elem, i) {
+                elem && walkDestruct(elem, variable && {
+                        type: Syntax.MemberExpression,
+                        object: variable,
+                        property: raw(i + ''),
+                        computed: true
+                    }, cb);
+            });
+            break;
+        case Syntax.AssignmentPattern: // {a=...}
+            if (variable) {
+                const temp = makeDestructDummy(pattern.left);
+                cb(temp);
+                cb(pattern.left, makeDefault(temp, variable, pattern.right))
+            } else {
+                cb(pattern.left);
+            }
+            break;
+        case Syntax.RestElement: // [, ...a], variable from ArrayPattern
+            cb(pattern.argument, variable && call(id('Array.prototype.slice.call'), [variable.object, variable.property]));
+            break;
+        default:
+            cb(pattern, variable);
+            break;
+    }
+}
+
+function makeGlobalContext() {
+    const pseudo_ctx = context;
+    let exporting = false;
+    const variables = new Empty(), exportMap = new Empty(), importMap = new Empty();
+    const global_refs = [];
+
+    const temps = [], tempMap = new Empty();
+
+    let has_default = false;
+    const scope = context = {
+        _scope: null,
+        _variables: variables,
+        hasDefault: false,
+        addVariable: function (id, stmt) {
+            if (exporting) {
+                if (id.name in exportMap) throw new Error(id.name + ' has already been exported');
+                exportMap[id.name] = {kind: stmt.kind, local: id, exported: id};
+            }
+            variables[id.name] = stmt.kind;
+        },
+        onIdentifier: function (id, asserted) {
+            if (asserted || !(id.name in variables)) {
+                global_refs.push(id)
+            }
+        },
+        beginExport: function () {
+            exporting = true;
+
+            return {
+                dispose: function () {
+                    exporting = false;
+                }
+            };
+        },
+        exportIds: function (ids) {
+            for (let specifier of ids) {
+                const exported = specifier.exported.name;
+                if (exported in exportMap) throw new Error(exported + ' has already been exported');
+                specifier.kind = variables[specifier.local.name];
+                exportMap[exported] = specifier;
+            }
+        },
+        addImported: function (local_name, expr) {
+            importMap[local_name] = expr;
+        },
+        addTemp: function (id) {
+            if (id.name in tempMap)  return;
+            tempMap[id.name] = true;
+            temps.push(declarator(id, null));
+        },
+        onDefaultExport: function () {
+            has_default = true;
+        }
+    };
+    scope._scope = scope;
+
+
+    return {
+        exports: function*() {
+            for (let exported in  exportMap) {
+                const obj = exportMap[exported], local = obj.local;
+
+                if (!obj.kind && (obj.kind = variables[local.name]) !== 'var') {
+                    throw new ReferenceError(local.name + ' is not defined')
+                }
+                yield obj;
+            }
+        },
+        dispose: function () {
+            if (temps.length) {
+                this.extra_decl = {
+                    type: Syntax.VariableDeclaration,
+                    kind: 'var',
+                    declarations: temps
+                }
+            }
+            this.hasDefaultExport = has_default;
+            // check for global refs
+            if (global_refs.length) {
+                for (let id of global_refs) {
+                    const name = id.name;
+                    if (!(name in variables) && (name in importMap)) {
+                        // console.error('found imported reference', name);
+                        const imported = importMap[name];
+                        id.type = Syntax.MemberExpression;
+                        id.object = {type: Syntax.Identifier, name: imported.object.name, loc: id.loc};
+                        id.property = imported.property;
+                        id.computed = imported.computed;
+                    }
+                }
+            }
+            context = pseudo_ctx;
+        }
+    };
+}
+
+function makeScopeContext() {
+    const old_ctx = context;
+    const variables = Object.create(old_ctx._variables);
+    const globals = [];
+
+    const extra_decls = [], tempMap = new Empty();
+
+    context = {
+        _scope: null,
+        _variables: variables,
+        addVariable: function (id, stmt) {
+            variables[id.name] = stmt.kind;
+        },
+        onIdentifier: function (id, asserted) {
+            if (asserted || !(id.name in variables)) {
+                globals.push(id)
+            }
+        },
+        addTemp: function (id) {
+            if (id.name in tempMap)  return;
+            tempMap[id.name] = true;
+            extra_decls.push(declarator(id, null));
+        }
+    };
+    context._scope = context;
+
+    return {
+        temps: extra_decls,
+        dispose: function () {
+            // check for global refs
+            if (globals.length) {
+                for (let id of globals) {
+                    if (id.name in variables && variables[id.name] === 'var') {
+                        // found! it's not a global reference
+                    } else {
+                        // console.error('found global reference', id.name);
+                        old_ctx.onIdentifier(id, true);
+                    }
+                }
+            }
+            context = old_ctx;
+        }
+    }
+}
+
+function makeContext() {
+    const old_ctx = context, scope = old_ctx._scope;
+    const variables = Object.create(old_ctx._variables);
+    context = {
+        _scope: scope,
+        _variables: variables,
+        addVariable: function (id, stmt) {
+            (stmt === VarType || stmt.kind === 'var' ? scope._variables : variables)[id.name] = stmt.kind;
+        },
+        onIdentifier: function (id) {
+            if (!(id.name in variables)) {
+                scope.onIdentifier(id, true)
+            }
+        },
+        addTemp: scope.addTemp
+    };
+
+    return {
+        dispose: function () {
+            context = old_ctx;
+        }
+    }
+}
+
+function handleFunction(obj, is_decl) {
+    const middle_ctx = makeContext();
+    if (!is_decl && obj.id) {
+        context.addVariable(obj.id, VarType);
+    }
+    const scope = makeScopeContext();
+
+    const params = obj.params,
+        defaults = obj.defaults,
+        paramLen = params.length,
+        has_rest_param = paramLen && params[paramLen - 1].type === Syntax.RestElement,
+        real_paramLen = paramLen - has_rest_param;
+
+    const extra_decls = [];
+
+    for (let i = 0; i < real_paramLen; i++) {
+        const param = params[i];
+        if (param.type === Syntax.Identifier) {
+            context.addVariable(param, VarType);
+        } else if (handle_destruct) {
+            // destruct
+            const dummy = obj.params[i] = makeDestructDummy(param);
+            walkDestruct(param, dummy, function (identifier, init) {
+                extra_decls.push(declarator(identifier, init));
+                context.addVariable(identifier, VarType);
+            })
+        } else {
+            walkDestruct(param, null, function (identifier) {
+                context.addVariable(identifier, VarType);
+            })
+        }
+    }
+    if (has_rest_param && handle_function_rest_param) {
+        // assert(handle_function_default_param);
+        extra_decls.push(declarator(
+            params[paramLen - 1].argument,
+            call(id('Array.prototype.slice.call'), [$arguments, raw(real_paramLen + '')])
+        ));
+        params.length = real_paramLen;
+    }
+
+    if (defaults.length) {
+        let i = 0;
+        while (!defaults[i]) i++;
+        // found first
+        const first_default = i;
+        for (; i < real_paramLen; i++) {
+            const def = defaults[i];
+
+            handle(i, defaults);
+            if (handle_function_default_param) {
+                const id = params[i];
+                extra_decls.splice(i - first_default, 0, declarator(id, makeDefault(id, {
+                    type: Syntax.MemberExpression, object: $arguments, property: raw('' + i), computed: true
+                }, def)));
+            }
+        }
+        if (handle_function_default_param) {
+            params.length = first_default;
+            defaults.length = 0;
+        }
+    }
+
+    // body maybe block or expr
+    if (obj.body.type === Syntax.BlockStatement)
+        iterate(obj.body.body);
+    else  // an expression
+        handle('body', obj);
+
+    scope.dispose();
+    middle_ctx.dispose();
+    scope.temps.length && extra_decls.push.apply(extra_decls, scope.temps);
+    extra_decls.length && pushExtraDecls('var', extra_decls, obj, true);
+}
+
+function pushExtraDecls(kind, extra_decls, obj, is_returns) {
+    const decl = {
+        type: Syntax.VariableDeclaration,
+        kind: kind,
+        declarations: extra_decls
+    };
+    if (obj.body.type === Syntax.BlockStatement) {
+        obj.body.body.unshift(decl);
+    } else {
+        obj.body = {
+            type: Syntax.BlockStatement,
+            body: [decl, is_returns ? {type: Syntax.ReturnStatement, argument: obj.body} : obj.body]
+        }
+    }
+}
+
+function makeDefault(id, variable, defaults) {
+    return binary({
+        type: Syntax.AssignmentExpression,
+        left: id,
+        operator: '=',
+        right: variable
+    }, '||', {
+        type: Syntax.ConditionalExpression,
+        test: binary(id, '===', $undefined),
+        consequent: defaults,
+        alternate: id
+    });
 }
 
 function id(name) {
@@ -67,66 +830,61 @@ function declarator(id, init) {
     return {type: Syntax.VariableDeclarator, id: id, init: init}
 }
 
+
 module.exports = function (ast, options) {
+    const ctx = makeGlobalContext(ast);
+
+
     const stmts = transform(ast, options);
 
-    // handle exported
-    const properties = [], exports = {};
-    for (let key in exportedNames) {
-        let val = exportedNames[key], name = val.name, varDecl = context[name], $name = id(name);
-        if (!varDecl || (varDecl.kind === 'let' || varDecl.kind === 'const') && !val.found) throw new Error(name + ' not found in identifiers');
+    if (!stmts.length ||
+        stmts[0].type !== Syntax.ExpressionStatement ||
+        stmts[0].expression.type !== Syntax.Literal ||
+        stmts[0].expression.value !== 'use strict'
+    ) stmts.unshift(useStrict);
+
+    const properties = [], exports = [];
+    for (let obj of ctx.exports()) {
+        const local = obj.local;
+
         let attrs;
 
-        exports[key] = varDecl.kind;
-
-        if (varDecl.kind === 'const') {
-            attrs = [prop('value', $name)]
+        if (obj.kind === 'const') {
+            attrs = [prop('value', local)]
         } else {
             attrs = [prop('get', {
-                type: Syntax.FunctionExpression,
+                type: Syntax.ArrowFunctionExpression,
                 params: [],
-                body: {
-                    type: Syntax.BlockStatement,
-                    body: [{
-                        type: Syntax.ReturnStatement,
-                        argument: $name
-                    }]
-                }
+                body: local
             }), prop('set', {
-                type: Syntax.FunctionExpression,
-                params: [id('_' + val.name)],
+                type: Syntax.ArrowFunctionExpression,
+                params: [id('_')],
                 body: {
                     type: Syntax.BlockStatement,
-                    body: [expr(assign($name, id('_' + name)))]
+                    body: [expr(assign(local, id('_')))]
                 }
             })]
         }
-        properties.push(prop(key, {
+        exports.push(obj.exported.name);
+        properties.push(prop(local.name, {
             type: Syntax.ObjectExpression,
             properties: attrs
-        }))
+        }));
     }
 
-    properties.length && stmts.push(expr(call(id('Object.defineProperties'), [id('module'), {
-        type: Syntax.ObjectExpression,
-        properties: properties
-    }])));
+    properties.length && stmts.push(expr(call(id('Object.defineProperties'), [
+        $module, {type: Syntax.ObjectExpression, properties: properties}
+    ])));
 
+    ctx.dispose();
 
-    if (stmts[0] && stmts[0].type === Syntax.ExpressionStatement && stmts[0].expression.type === Syntax.Literal && stmts[0].expression.value === 'use strict') {
-    } else {
-        stmts.unshift(useStrict);
-    }
-    if (!hasDefault) {
-        stmts.push($noDefault)
-    }
+    ctx.hasDefaultExport || stmts.push(expr(call(id('Object.defineProperty'), [
+        $module, $moduleDefault, {
+            type: Syntax.ObjectExpression, properties: [
+                prop('value', id('undefined'))]
+        }])));
 
-    hasDestruct && stmts.push($ptemp);
-    hasDestruct = false;
-
-    context = {};
-    exportedNames = {};
-    hasDefault = false;
+    ctx.extra_decl && stmts.push(ctx.extra_decl);
 
     return {
         exports: exports,
@@ -141,674 +899,6 @@ module.exports = function (ast, options) {
             }
         })]
     };
-}
+};
 
 module.exports.transform = transform;
-
-function onMethod(method, i, arr) {
-    onExpr(method.value);
-    if (!handleClass) {
-        return;
-    }
-    let target = method.static ? arr.$className.name : 'proto';
-    if (method.kind.length === 3) { // get|set
-        method.type = Syntax.ExpressionStatement;
-        method.expression = call(member({
-            type: Syntax.Identifier,
-            name: target,
-            loc: method.loc
-        }, method.kind === 'get' ? '__defineGetter__' : '__defineSetter__'), [
-            method.key.type === Syntax.Identifier ? raw(JSON.stringify(method.key.name)) : method.key,
-            method.value
-        ])
-    } else if (method.kind === 'constructor') {
-        arr.hasConstructor = true;
-        method.type = Syntax.FunctionDeclaration;
-        method.id = arr.$className;
-        method.params = method.value.params;
-        method.body = method.value.body;
-    } else {
-        method.type = Syntax.ExpressionStatement;
-        method.expression = assign({
-            type: Syntax.MemberExpression,
-            object: {type: Syntax.Identifier, name: target, loc: method.loc},
-            property: method.key,
-            computed: method.computed
-        }, method.value);
-    }
-}
-
-function saveScope() {
-    const oldCtx = context;
-    context = {__proto__: context};
-    return oldCtx;
-}
-
-function onStmt(stmt, i, arr) {
-    for (; stmt;) switch (stmt.type) {
-        case Syntax.BlockStatement:
-        {
-            const oldCtx = saveScope();
-            stmt.body.forEach(onStmt);
-            context = oldCtx;
-            return;
-        }
-        case Syntax.ExpressionStatement:
-            onExpr(stmt.expression);
-            return;
-        case Syntax.IfStatement:
-            onExpr(stmt.test);
-            onStmt(stmt.consequent);
-            stmt = stmt.alternate;
-            continue;
-        case Syntax.ReturnStatement:
-        case Syntax.ThrowStatement:
-            onExpr(stmt.argument);
-        case Syntax.EmptyStatement:
-        case Syntax.BreakStatement:
-        case Syntax.ContinueStatement:
-        case Syntax.DebuggerStatement:
-            return;
-        case Syntax.TryStatement:
-            onStmt(stmt.block);
-            if (stmt.handler) {
-                const oldCtx = saveScope();
-                context[stmt.handler.param.name] = {kind: 'var'};
-                stmt.handler.body.body.forEach(onStmt);
-                context = oldCtx;
-            }
-            stmt = stmt.finalizer;
-            continue;
-        case Syntax.WhileStatement:
-            onExpr(stmt.test);
-            stmt = stmt.body;
-            continue;
-        case Syntax.DoWhileStatement:
-            onStmt(stmt.body);
-            onExpr(stmt.test);
-            return;
-        case Syntax.ForStatement:
-            stmt.init && (stmt.init.type === Syntax.VariableDeclaration ? onStmt : onExpr)(stmt.init);
-            onExpr(stmt.test);
-            onExpr(stmt.update);
-            stmt = stmt.body;
-            continue;
-        case Syntax.ForOfStatement:
-        case Syntax.ForInStatement:
-        {
-            const isFor = stmt.type === Syntax.ForStatement,
-                init = isFor ? stmt.init : stmt.left,
-                hasDecl = init && init.type === Syntax.VariableDeclaration;
-            let body = stmt.body, hasBlockBody = body.type === Syntax.BlockStatement;
-
-
-            if (hasDecl && !hasBlockBody) {
-                body = stmt.body = {
-                    type: Syntax.BlockStatement,
-                    body: [body]
-                };
-                hasBlockBody = true;
-            }
-            const oldCtx = hasBlockBody ? saveScope() : null;
-
-            if (hasDecl) {
-                const kind = init.kind, decl = init.declarations[0], $id = decl.id;
-                if ($id.type === Syntax.Identifier) {
-                    context[$id.name] = init;
-                } else { // destruct
-                    init.kind = 'let';
-                    const temp = decl.id = id('$ftemp' + $id.loc.start.line + '_' + $id.loc.start.column);
-                    const decls = [];
-                    handleDestruct($id, temp, function (decl, init) {
-                        context[decl.name] = init;
-                        decls.push(declarator(decl, init));
-                    });
-                    if (decls.length) {
-                        body.body.unshift({type: Syntax.VariableDeclaration, kind: kind, declarations: decls});
-                    }
-                }
-            } else {
-                onExpr(stmt.left);
-            }
-
-            if (isFor) {
-                onExpr(stmt.test);
-                onExpr(stmt.update);
-            } else {
-                onExpr(stmt.right);
-            }
-            if (hasBlockBody) {
-                body.body.forEach(onStmt);
-                context = oldCtx;
-                return
-            } else {
-                stmt = body;
-                continue;
-            }
-        }
-        case Syntax.VariableDeclaration:
-        {
-            for (let i = 0, decls = stmt.declarations, L = decls.length; i < L; i++) {
-                let decl = decls[i], id = decl.id;
-                onExpr(decl.init);
-                if (id.type === Syntax.Identifier) {
-                    context[id.name] = stmt;
-                } else {
-                    const start = i;
-                    decls.splice(i--, 1); // delete this decl
-                    let destructed = 0;
-                    let variable = handleDestruct(id, decl.init, function (identifier, init) {
-                        destructed++;
-                        decls.splice(++i, 0, declarator(identifier, init));
-                    });
-                    if (variable.name === '$ptemp') { // has rename
-                        let curr = decls[start].init, expr;
-                        do {
-                            expr = curr;
-                            curr = curr.object;
-                        } while (curr.type === Syntax.MemberExpression);
-                        expr.object = i > start ? assign(variable, decl.init) : decl.init;
-                    }
-                }
-            }
-
-            return;
-        }
-        case Syntax.ClassDeclaration:
-            onClass(stmt);
-            return;
-        case Syntax.FunctionDeclaration:
-            context[stmt.id.name] = {kind: 'var'};
-            onFunction(stmt);
-            return;
-        case Syntax.ExportNamedDeclaration:
-            if (stmt.declaration) {
-                stmt = arr[i] = stmt.declaration;
-                if (stmt.type === Syntax.FunctionDeclaration || stmt.type === Syntax.ClassDeclaration) {
-                    exportedNames[stmt.id.name] = {name: stmt.id.name, found: true};
-                } else if (stmt.type === Syntax.VariableDeclaration) {
-                    for (let decl of stmt.declarations) {
-                        exportedNames[decl.id.name] = {name: decl.id.name, found: true};
-                    }
-                }
-                continue; // tail call optimization
-            } else {
-                for (let spec of stmt.specifiers) {
-                    let localName = spec.local.name;
-                    exportedNames[spec.exported.name] = {name: localName, found: localName in context};
-                }
-                arr[i] = null;
-            }
-            return;
-        case Syntax.ExportDefaultDeclaration:
-        {
-            hasDefault = true;
-            const decl = stmt.declaration;
-            let isExpr = true, stmtId = null;
-            if (decl.type === Syntax.ClassDeclaration || decl.type === Syntax.FunctionDeclaration) {
-                stmtId = decl.id;
-                if (!stmtId) {
-                    decl.type = decl.type === Syntax.ClassDeclaration ? Syntax.ClassExpression : Syntax.FunctionExpression;
-                } else {
-                    isExpr = false
-                }
-            }
-            if (isExpr) {
-                onExpr(decl);
-
-                stmt.type = Syntax.ExpressionStatement;
-                stmt.expression = call({
-                    type: Syntax.Identifier,
-                    name: 'Object.defineProperty',
-                    loc: stmt.loc
-                }, [id('module'), id('moduleDefault'), {
-                    type: Syntax.ObjectExpression,
-                    properties: [prop('value', stmt.declaration)]
-                }]);
-                return;
-            } else {
-                arr.push(expr(call(id('Object.defineProperty'), [id('module'), id('moduleDefault'), {
-                    type: Syntax.ObjectExpression,
-                    properties: [prop('value', stmtId)]
-                }])));
-                arr[i] = decl;
-                stmt = decl;
-                continue;
-            }
-        }
-        case Syntax.ImportDeclaration:
-        {
-            const callStmt = call({type: Syntax.Literal, raw: 'include', loc: stmt.loc}, [raw(stmt.source.raw)]);
-            if (!stmt.specifiers.length) {
-                stmt.type = Syntax.ExpressionStatement;
-                stmt.expression = call(member({
-                    type: Syntax.MemberExpression,
-                    object: callStmt,
-                    property: id('loadProgress'),
-                    computed: true
-                }, 'done'), []);
-                return;
-            }
-            let imported = {type: Syntax.Identifier};
-            for (let spec of stmt.specifiers) {
-                if (spec.type === Syntax.ImportNamespaceSpecifier) {
-                    imported.name = spec.local.name;
-                    context[imported.name] = {kind: 'const'};
-                } else {
-                    const isDefault = spec.type === Syntax.ImportDefaultSpecifier;
-                    context[spec.local.name] = {
-                        kind: 'imported',
-                        imported: imported,
-                        name: isDefault ? {
-                            type: Syntax.Identifier,
-                            name: 'moduleDefault',
-                            computed: true
-                        } : spec.imported,
-                        computed: isDefault
-                    };
-                }
-            }
-            if (!imported.name) imported.name = '$' + stmt.source.value.replace(/\W+/g, '_') + '_' + stmt.loc.start.line;
-            //console.log(stmt.specifiers);
-
-            stmt.type = Syntax.VariableDeclaration;
-            stmt.kind = 'const';
-            stmt.declarations = [declarator(imported, callStmt)];
-
-            return;
-        }
-        case Syntax.SwitchStatement:
-            onExpr(stmt.discriminant);
-            stmt.cases.forEach(onSwitchCase);
-            return;
-        case Syntax.LabeledStatement:
-            stmt = stmt.body;
-            continue;
-        default:
-            console.error('on statement', stmt);
-            throw new Error('unhandled statement ' + stmt.type);
-    }
-}
-
-function onSwitchCase(switchCase) {
-    onExpr(switchCase.test);
-    switchCase.consequent.forEach(onStmt);
-}
-
-function handleDestruct(left, right, cb) {
-    let variable = {type: Syntax.Identifier, loc: left.loc};
-    if (right.type === Syntax.Identifier) {
-        variable.name = right.name;
-    } else {
-        hasDestruct = true;
-        variable.name = '$ptemp';
-    }
-    walk(left, variable);
-    return variable;
-
-    function walk(pattern, variable) {
-        switch (pattern.type) {
-            case Syntax.ObjectPattern:
-                for (let prop of pattern.properties) walk(prop.value, {
-                    type: Syntax.MemberExpression,
-                    object: variable,
-                    property: prop.key,
-                    computed: prop.computed || prop.key.type !== Syntax.Identifier
-                });
-                break;
-            case Syntax.ArrayPattern:
-                pattern.elements.forEach(function (elem, i) {
-                    elem && walk(elem, {
-                        type: Syntax.MemberExpression,
-                        object: variable,
-                        property: raw(i + ''),
-                        computed: true
-                    });
-                });
-                break;
-            case Syntax.AssignmentPattern:
-                cb(pattern.left, variableDefault(variable, pattern.right));
-                break;
-            case Syntax.RestElement:
-                cb(pattern.argument, call(id('Array.prototype.slice.call'), [variable.object, variable.property]));
-                break;
-            default:
-                cb(pattern, variable);
-                break;
-        }
-    }
-}
-
-function variableDefault(variable, defaults) {
-    hasDestruct = true;
-
-    return binary({
-        type: Syntax.AssignmentExpression,
-        left: $dtemp,
-        operator: '=',
-        right: variable
-    }, '||', {
-        type: Syntax.ConditionalExpression,
-        test: binary({
-            type: Syntax.UnaryExpression,
-            operator: 'typeof',
-            prefix: true,
-            argument: $dtemp
-        }, '===', raw('"undefined"')),
-        consequent: defaults,
-        alternate: $dtemp
-    });
-    //return {
-    //    type: Syntax.ConditionalExpression,
-    //    test: binary({
-    //        type: Syntax.UnaryExpression,
-    //        operator: 'typeof',
-    //        prefix: true,
-    //        argument: {
-    //            type: Syntax.AssignmentExpression,
-    //            left: $dtemp,
-    //            operator: '=',
-    //            right: variable
-    //        }
-    //    }, '===', raw('"undefined"')),
-    //    consequent: defaults,
-    //    alternate: $dtemp
-    //}
-}
-
-function onExpr(expr) {
-    for (; expr;) switch (expr.type) {
-        case Syntax.Literal:
-        case Syntax.ThisExpression:
-            return;
-        case Syntax.Identifier:
-        {
-            let variable = context[expr.name];
-            if (variable && variable.kind === 'imported') {
-                expr.type = Syntax.MemberExpression;
-                expr.object = {type: Syntax.Identifier, name: variable.imported.name, loc: expr.loc};
-                expr.property = variable.name;
-                expr.computed = variable.computed;
-            }
-            return;
-        }
-        case Syntax.UpdateExpression:
-        case Syntax.UnaryExpression:
-        case Syntax.YieldExpression:
-            expr = expr.argument;
-            continue;
-        case Syntax.CallExpression:
-        {
-            expr['arguments'].forEach(onExpr);
-            const callee = expr.callee;
-            if (handleClass) {
-                if (callee.type === Syntax.Super) { // super()
-                    expr.callee = member({
-                        type: Syntax.Identifier,
-                        name: 'super_proto',
-                        loc: callee.loc
-                    }, 'constructor.call');
-                    expr['arguments'].unshift($this);
-                    return
-                }
-                if (callee.type === Syntax.MemberExpression && callee.object.type === Syntax.Super) {
-                    // super.xxx()
-                    callee.object = {type: Syntax.Identifier, name: 'super_proto', loc: callee.object.loc};
-                    expr.callee = member(callee, 'call');
-                    expr['arguments'].unshift($this);
-                }
-            }
-
-            expr = expr.callee;
-            continue;
-        }
-        case Syntax.NewExpression:
-            onExpr(expr.callee);
-            expr['arguments'].forEach(onExpr);
-            return;
-        case Syntax.MemberExpression:
-            onExpr(expr.object);
-            if (expr.computed) {
-                expr = expr.property;
-                continue;
-            } else {
-                return;
-            }
-        case Syntax.AssignmentExpression:
-            if (expr.left.type === Syntax.ObjectPattern || expr.left.type === Syntax.ArrayPattern) {
-                onExpr(expr.right);
-
-                expr.type = Syntax.SequenceExpression;
-                const expressions = expr.expressions = [];
-                let variable = handleDestruct(expr.left, expr.right, function (left, right) {
-                    onExpr(left);
-                    expressions.push(assign(left, right));
-                });
-                variable.name === '$ptemp' && expressions.unshift(assign(variable, expr.right));
-                expressions.push(variable);
-                return;
-            }
-        case Syntax.LogicalExpression:
-        case Syntax.BinaryExpression:
-            onExpr(expr.left);
-            expr = expr.right;
-            continue;
-        case Syntax.ConditionalExpression:
-            onExpr(expr.test);
-            onExpr(expr.consequent);
-            expr = expr.alternate;
-            continue;
-        case Syntax.ClassExpression:
-            onClass(expr);
-            return;
-        case Syntax.FunctionExpression:
-            onFunction(expr);
-            return;
-        case Syntax.Super:
-            if (handleClass) {
-                expr.type = Syntax.Identifier;
-                expr.name = 'super_proto';
-            }
-            return;
-        case Syntax.TemplateLiteral:
-        {
-            const exprs = expr.expressions;
-            let i = exprs.length;
-            exprs.forEach(onExpr);
-            if (!handleStringTemplate) return;
-            if (i === 0) { // `simple string`
-                expr.type = Syntax.Literal;
-                expr.raw = JSON.stringify(expr.quasis[0].value.cooked);
-                return;
-            }
-
-            expr.type = Syntax.BinaryExpression;
-            expr.operator = '+';
-            let current = expr, last = expr.quasis[i].value;
-
-            while (i--) {
-                let str = expr.quasis[i].value;
-                str.type = Syntax.Literal;
-                str.raw = JSON.stringify(str.cooked);
-
-                current = current.left = binary(binary(null, '+', str), '+', exprs[i]);
-                current = current.left;
-            }
-            if (last.cooked) {
-                expr.right = last;
-                last.type = Syntax.Literal;
-                last.raw = JSON.stringify(last.cooked);
-            } else {
-                expr.right = expr.left.right;
-                expr.left = expr.left.left;
-            }
-            current.type = Syntax.Literal;
-            current.raw = current.right.raw;
-            current.loc = current.right.loc;
-            return;
-        }
-        case Syntax.ArrayExpression:
-            expr.elements.forEach(onExpr);
-            return;
-        case Syntax.ObjectExpression:
-            expr.properties.forEach(function (prop) {
-                onExpr(prop.value)
-            });
-            return;
-        case Syntax.ArrowFunctionExpression:
-            onFunction(expr);
-            return;
-        case Syntax.SequenceExpression:
-            expr.expressions.forEach(onExpr);
-            return;
-        default:
-            console.error('on expression', expr);
-            throw new Error('unhandled expression ' + expr.type);
-    }
-}
-
-function onFunction(node) {
-    const body = node.body, params = node.params;
-
-    const isArrow = node.type === Syntax.ArrowFunctionExpression,
-        isBlock = !isArrow || body.type === Syntax.BlockStatement;
-
-    const stmts = isBlock ? body.body : [];
-    const oldCtx = saveScope(), oldDestruct = hasDestruct;
-    hasDestruct = false;
-    let L = node.params.length;
-    const hasRest = L && node.params[L - 1].type === Syntax.RestElement;
-    hasRest && L--;
-
-
-    const paramType = {kind: 'var'};
-    let startOfStmts = 0, extraDecls = [], nonDefault = L;
-    for (let i = 0; i < L; i++) {
-        let p = node.params[i], d = node.defaults[i], hasDestruct;
-
-        if (p.type !== Syntax.Identifier) {
-            hasDestruct = p;
-            p = node.params[i] = id('$ptemp' + i);
-        }
-
-        if (d) {
-            if (isArrow) {
-                extraDecls.push(declarator(p, variableDefault(p, d)))
-            } else {
-                if (nonDefault > i) nonDefault = i;
-                extraDecls.push(declarator(p, variableDefault({
-                    type: Syntax.MemberExpression,
-                    object: id('arguments'),
-                    property: raw(i + ''),
-                    computed: true
-                }, d)))
-            }
-        }
-        if (hasDestruct) {
-            handleDestruct(hasDestruct, p, function (identifier, init) {
-                extraDecls.push(declarator(identifier, init));
-            });
-        } else {
-            context[p.name] = paramType;
-        }
-    }
-    if (!isBlock && (stmts.length || extraDecls.length || hasRest && handleRest)) {
-        stmts.push({
-            type: Syntax.ReturnStatement,
-            argument: node.body
-        });
-        stmts.forEach(onStmt);
-        node.body = {
-            type: Syntax.BlockStatement,
-            body: stmts
-        };
-    } else if (isBlock) {
-        stmts.forEach(onStmt);
-    } else {
-        onExpr(node.body);
-    }
-
-    extraDecls.length && stmts.splice(startOfStmts, 0, {
-        type: Syntax.VariableDeclaration,
-        kind: 'var',
-        declarations: extraDecls
-    });
-
-    if (hasRest) {
-        if (handleRest || nonDefault < L) {
-            stmts.unshift({
-                type: Syntax.VariableDeclaration,
-                kind: 'const',
-                declarations: [declarator(node.params[L].argument, call(id('Array.prototype.slice.call'), [id('arguments'), raw(L + '')]))]
-            });
-            node.params.length = nonDefault;
-        } else {
-            context[node.params[L].argument.name] = paramType
-        }
-    }
-    if (nonDefault < L) {
-        node.params.length = nonDefault;
-    }
-    hasDestruct && stmts.push($ptemp);
-
-    context = oldCtx;
-    hasDestruct = oldDestruct;
-}
-
-function onClass(node) {
-    const isStmt = node.type === Syntax.ClassDeclaration;
-    //console.log(stmt);
-    node.superClass && onExpr(node.superClass);
-
-    const body = node.body.body;
-
-    const className = node.id ? node.id.name : 'anonymous', $className = body.$className = id(className);
-    isStmt && (context[className] = {kind: 'var'});
-    body.forEach(onMethod);
-    if (!handleClass) {
-        return;
-    }
-
-    body.unshift({
-        type: Syntax.VariableDeclaration,
-        kind: 'const',
-        declarations: [declarator($proto, member($className, 'prototype'))]
-    });
-
-    if (node.superClass) {
-        body[0].declarations.push(declarator($super_proto, assign(member($proto, '__proto__'), member(node.superClass, 'prototype'))))
-    }
-
-    body.push({type: Syntax.ReturnStatement, argument: $className});
-    if (!body.hasConstructor) {
-        body.push({
-            type: Syntax.FunctionDeclaration,
-            id: $className,
-            params: [],
-            body: {
-                type: Syntax.BlockStatement,
-                body: node.superClass ? [expr(call(member($super_proto, 'constructor.call'), [$this]))] : []
-            }
-        })
-    }
-
-    const factory = {
-        type: Syntax.FunctionExpression,
-        params: [],
-        body: {
-            loc: node.body.loc,
-            type: Syntax.BlockStatement,
-            body: body
-        }
-    };
-    if (isStmt) {
-        node.type = Syntax.VariableDeclaration;
-        node.kind = 'var';
-        node.declarations = [declarator(node.id, call(factory, []))];
-    } else {
-        node.type = Syntax.CallExpression;
-        node.callee = factory;
-        node['arguments'] = [];
-    }
-
-}

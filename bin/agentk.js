@@ -4,7 +4,7 @@
 
 let exec = 'ak';
 
-let min_version = 'v0.12.2';
+let min_version = 'v0.12';
 
 if (process.version < min_version) {
     throw new Error(exec + " runs on Node.js " + min_version + " or higher, please upgrade your installation and try again.");
@@ -54,11 +54,11 @@ for (let i = args.length; i--;) {
 
 let cmd;
 
+const levels = {verbose: 0, debug: 1, info: 2, log: 2, warn: 3, error: 4, fatal: 5};
 
-function xtermEscape(str) {
-    return str.replace(/\$#[rgbcmykw]{2}<(.+?)>/gi, function (m, text) {
-        return '\x1b[3' + colors[m[2]] + ';4' + colors[m[3]] + 'm' + text + '\x1b[0m';
-    });
+function print(level, str) {
+    str = str.replace(/\$#[rgbcmykw]{2}<(.+?)>/gi, (m, text) => '\x1b[3' + colors[m[2]] + ';4' + colors[m[3]] + 'm' + text + '\x1b[0m');
+    (levels[level] > 2 ? process.stdout : process.stderr).write(str + '\n')
 }
 
 function callService(cmd, options) {
@@ -69,9 +69,9 @@ function callService(cmd, options) {
             else  module.fallback(cmd, options);
         } catch (err) {
             if (err.code === 'ECONNREFUSED' || err.code === 'ENOENT') {
-                console.error('command \'' + cmd + '\' failed, maybe service not started?')
+                print('error', 'command \'' + cmd + '\' failed, maybe service not started?')
             } else {
-                console.error('command \'' + cmd + '\' failed, ' + err.message)
+                print('error', 'command \'' + cmd + '\' failed, ' + err.message)
             }
             process.exit(1)
         }
@@ -82,7 +82,7 @@ function callService(cmd, options) {
 function commander(dir) {
     if (dir !== undefined) {
         if (!require('fs').statSync(dir).isDirectory()) {
-            console.error(exec + ' ' + cmd + ' requires directory name as parameter');
+            print('error', exec + ' ' + cmd + ' requires directory name as parameter');
             process.exit(-1);
         }
         process.chdir(dir);
@@ -100,25 +100,25 @@ let commands = {
             let cmd = args[0];
             if (cmd === 'help' && arguments.length && subcmd in commands) { // help <cmd>
                 let command = commands[subcmd];
-                console.log(xtermEscape("$#Gk<usage>: $#Ck<" + exec + "> " + subcmd + " " + (command.args || "") + "\n"));
+                print('info', "$#Gk<usage>: $#Ck<" + exec + "> " + subcmd + " " + (command.args || "") + "\n");
                 let desc = 'desc' in command ? command.desc : command.help;
-                desc && console.log(desc);
+                desc && print('info', desc);
                 return;
             } else if (!cmd || cmd === 'help' && !subcmd) { // agentk help?
-                console.log(xtermEscape("$#Ck<AgentK> v" + require('../package.json').version +
-                    "\n$#Gk<usage>: $#Ck<" + exec + "> <command> [<args>]\n"));
+                print('info', "$#Ck<AgentK> v" + require('../package.json').version +
+                    "\n$#Gk<usage>: $#Ck<" + exec + "> <command> [<args>]\n");
             } else {
                 if (cmd === 'help') { // agentk help xxx
                     cmd = subcmd
                 }
-                console.log(xtermEscape("command not found: $#Rk<" + cmd + ">\n"));
+                print('warn', "command not found: $#Rk<" + cmd + ">\n");
             }
 
-            console.log(xtermEscape("possible commands are:"));
+            print('info', "possible commands are:");
             Object.keys(commands).forEach(function (cmd) {
-                console.log(xtermEscape("  $#yk<" + cmd + ">" + "            ".substr(cmd.length) + commands[cmd].help))
+                print('info', "  $#yk<" + cmd + ">" + "            ".substr(cmd.length) + commands[cmd].help)
             });
-            console.log(xtermEscape("\ntype $#Ck<" + exec + " help> <command> to get more info"));
+            print('info', "\ntype $#Ck<" + exec + " help> <command> to get more info");
         }, completion: function (prefix, triggers) {
             let output = '';
             for (let txt of Object.keys(commands)) {
@@ -273,12 +273,12 @@ let commands = {
                 }
             }
             if (!found) {
-                console.error("'" + dir + "' not found in running programs");
+                print('error', "'" + dir + "' not found in running programs");
                 return
             }
 
             if (!found.stdout && !found.stderr) {
-                console.error("'" + dir + "' stdout/stderr not redirected to file");
+                print('error', "'" + dir + "' stdout/stderr not redirected to file");
                 return
             }
 
@@ -334,7 +334,7 @@ let commands = {
                         throw new Error("completion is not supported in this shell, Install MinGW32 and try again")
                     }
                 }
-                return console.log('. ' + file)
+                return process.stdout.write('. ' + file + '\n')
             }
             if (p !== "--") {
                 return showHelp();
@@ -374,7 +374,7 @@ let commands = {
                     process.chdir(manifest.directory);
                 }
             } else {
-                console.warn(xtermEscape('$#Yk<WARN> manifest.json not found'));
+                print('info', '$#Yk<WARN> manifest.json not found');
             }
             let files;
             if (arguments.length) { // call by name
@@ -448,7 +448,7 @@ let commands = {
                     throw new Error('configuration name to be deleted is required');
                 }
                 if (name in config) {
-                    console.log(config[name]);
+                    process.stdout.write(config[name] + '\n');
                 }
             } else {
                 if (name === '-d') {

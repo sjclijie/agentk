@@ -14,6 +14,11 @@ const ohttp = require('http'),
 
 const $slice = [].slice;
 
+/**
+ *
+ * @param {Headers} headers
+ * @param {Function} cb
+ */
 function* headersIterator(headers, cb) {
     let entries = headers._entries;
     for (let key in entries) {
@@ -23,6 +28,10 @@ function* headersIterator(headers, cb) {
         }
     }
 }
+
+function Empty() {
+}
+Empty.prototype = Object.create(null);
 
 export class Headers {
     /**
@@ -34,7 +43,7 @@ export class Headers {
      * @param {object} [headers] initial name-value map of headers
      */
     constructor(headers) {
-        this._entries = Object.create(null);
+        this._entries = new Empty();
 
         if (headers && typeof headers === 'object') {
             for (let name in headers) {
@@ -136,34 +145,28 @@ export class Headers {
     /**
      * Returns an iterator that yields name-value pair of all entries
      *
-     * @returns {Iterator}
+     * @returns {Iterator.<[string,string]>}
      */
     entries() {
-        return headersIterator(this, function (val, key) {
-            return [key, val]
-        })
+        return headersIterator(this, (val, key) => [key, val])
     }
 
     /**
      * Returns an iterator that yields names of all entries
      *
-     * @returns {Iterator}
+     * @returns {Iterator.<string>}
      */
     keys() {
-        return headersIterator(this, function (val, key) {
-            return key
-        })
+        return headersIterator(this, (val, key) => key)
     }
 
     /**
      * Returns an iterator that yields values of all entries
      *
-     * @returns {Iterator}
+     * @returns {Iterator.<string>}
      */
     values() {
-        return headersIterator(this, function (val, key) {
-            return val
-        })
+        return headersIterator(this, String)
     }
 
     /**
@@ -177,26 +180,36 @@ export class Headers {
 }
 
 const stream_Readable = require('stream').Readable;
+const _empty = new Buffer(0);
 
+const $Buffer_fromString = Buffer.alloc ? Buffer.from : function (str) {
+        const buf = new Buffer(str.length * 3);
+        return buf.slice(0, buf.write(str));
+    },
+    $Buffer_fromArrayBuffer = Buffer.alloc ? Buffer.from : function (obj) {
+        return new Buffer(new Uint8Array(obj))
+    };
+/**
+ * Abstract class for http request/response entity
+ *
+ */
 export class Body {
     /**
-     * Abstract class for http request/response entity
      *
-     * @param {string|Buffer|ArrayBuffer|node.stream::stream.Readable} body
+     * @param {string|Buffer|ArrayBuffer|node.stream.stream.Readable} body
      */
     constructor(body) {
         let buf = null, stream = null;
         if (body && body instanceof stream_Readable) {
             stream = body;
         } else if (!body) {
-            buf = new Buffer(0)
+            buf = _empty
         } else if (typeof body === 'string') {
-            buf = new Buffer(body.length * 3);
-            buf = buf.slice(0, buf.write(body));
+            buf = $Buffer_fromString(body)
         } else if (body instanceof Buffer) {
             buf = body;
         } else if (body instanceof ArrayBuffer) {
-            buf = new Buffer(new Uint8Array(body))
+            buf = $Buffer_fromArrayBuffer(body)
         } else {
             throw new Error('body accepts only string, Buffer, ArrayBuffer or stream.Readable');
         }
@@ -208,7 +221,7 @@ export class Body {
 
     /**
      *
-     * @returns {Promise} a promise that yields the request payload as a string
+     * @returns {Promise.<string>} a promise that yields the request payload as a string
      */
     text() {
         return this.buffer().then(buf => buf.toString())
@@ -224,7 +237,7 @@ export class Body {
 
     /**
      *
-     * @returns {ArrayBuffer} a promise that yields the request payload as an ArrayBuffer
+     * @returns {Promise.<ArrayBuffer>} a promise that yields the request payload as an ArrayBuffer
      */
     arrayBuffer() {
         return this.buffer().then(buf => new Uint8Array(buf).buffer)
@@ -232,7 +245,7 @@ export class Body {
 
     /**
      *
-     * @returns {Promise} a promise that yields the request payload as a Buffer
+     * @returns {Promise.<Buffer>} a promise that yields the request payload as a Buffer
      */
     buffer() {
         if (!this._payload) {
@@ -249,7 +262,7 @@ export class Body {
 
     /**
      *
-     * @returns {node.stream::stream.Readable} a readable stream
+     * @returns {node.stream.stream.Readable} a readable stream
      */
     get stream() {
         let stream = this._stream;
@@ -266,11 +279,12 @@ export class Body {
             }
             const self = this;
             this._payload = new Promise(function (resolve, reject) {
-                let bufs = [];
+                let bufs = [], totalLen = 0;
                 stream.on('data', function (buf) {
+                    totalLen += buf.length;
                     bufs.push(buf)
                 }).once('end', function () {
-                    resolve(self._buffer = Buffer.concat(bufs))
+                    resolve(self._buffer = Buffer.concat(bufs, totalLen))
                 }).once('error', reject)
             });
         } else {
@@ -295,10 +309,12 @@ export class Body {
     }
 }
 
+/**
+ * A `Request` is an representation of a client request that will be sent to a remote server, or a server request
+ * that received from the remote client.
+ */
 export class Request extends Body {
     /**
-     * A `Request` is an representation of a client request that will be sent to a remote server, or a server request
-     * that received from the remote client.
      *
      * @example
      *     // a normal request
@@ -313,7 +329,6 @@ export class Request extends Body {
      *     new http.Request('unix:///foo/bar?test=foobar')
      *     // the server path is '/foo/bar' and the request url is '/?test=foobar'
      *
-     * @extends Body
      * @param {string} url a remote url
      * @param {object} [options] optional arguments, which contains any of:
      *
@@ -321,7 +336,6 @@ export class Request extends Body {
      *   - headers `object|Headers` request headers
      *   - body `string|Buffer|ArrayBuffer|node.stream::stream.Readable` request payload to be sent or received
      *
-     * @returns {Request}
      */
     constructor(url, options) {
         if (options && typeof options !== 'object') options = null;
@@ -590,12 +604,12 @@ export class Response extends Body {
  * default agent for http request. You can set
  * maximum socket per host when calling request
  *
- * @type {node.http::http.Agent}
+ * @type {node.http.http.Agent}
  */
 export const agent = new ohttp.Agent();
 
 function groupHeaders(obj) {
-    const headers = {__proto__: null}, entries = obj._headers._entries;
+    const headers = new Empty(), entries = obj._headers._entries;
     for (let key in entries) {
         let arr = entries[key];
         headers[arr.name] = arr.length === 1 ? arr[0] : $slice.call(arr);
@@ -625,10 +639,10 @@ function groupHeaders(obj) {
  *     });
  *
  * @param {number|string} port TCP port number or unix domain socket path to listen to
- * @param {function|router::Router} cb request handler callback
+ * @param {function|router.Router} cb request handler callback
  * @param {string} [host] hostname to listen to, only valid if port is a 0-65535 number
  * @param {number} [backlog] maximum requests pending to be accepted, only valid if port is a 0-65535 number
- * @returns {node.http::http.Server} returned after the `listening` event has been fired
+ * @returns {node.http.http.Server} returned after the `listening` event has been fired
  */
 export function listen(port, cb, host, backlog) {
     return co.promise(function (resolve, reject) {

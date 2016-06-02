@@ -26,6 +26,11 @@ class Handle {
         delete worker.handles[this.key];
         if (--this.workers) return;
         // free handle
+        this.free();
+    }
+
+    free() {
+        if (!this.handle) return;
         this.handle.close();
         this.handle = null;
         delete this.schedulers[this.key];
@@ -79,7 +84,6 @@ class RoundRobinHandle extends Handle {
         this.workers = 0;
 
         let server = net.createServer(assert.fail);
-
 
         if (option.fd >= 0)
             server.listen({fd: option.fd});
@@ -250,14 +254,18 @@ function workerOnMessage(message) {
 function workerOnExit() {
     const schedulers = this.program.schedulers;
     for (let key in this.handles) {
-        schedulers[key].remove(this);
+        key in schedulers && schedulers[key].remove(this);
     }
 }
 
 export function onWorker(worker) {
-    worker.handles = {__proto__: null};
+    worker.handles = Object.create(null);
     worker.on('internalMessage', workerOnMessage);
     worker.on('exit', workerOnExit);
+}
+
+export function onExit() {
+
 }
 
 const timeOff = new Date().getTimezoneOffset() * 60e3;

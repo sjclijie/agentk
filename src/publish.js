@@ -3,15 +3,6 @@
 const http = require('http'),
     zlib = require('zlib');
 
-
-function readConfig() {
-    try {
-        return JSON.parse(fs.readFileSync(path.join(process.env.HOME, '.agentk/config.json'), 'utf8'));
-    } catch (e) {
-        return {};
-    }
-}
-
 let host = process.env.MODULE_SERVER_HOST;
 if (!host) {
     let fs = require('fs'), configFile = require('path').join(process.env.HOME, '.agentk/config.json');
@@ -55,14 +46,15 @@ exports.download = function (name) {
             if (tres.statusCode !== 200) {
                 return reject(new Error("file not found on remote server: " + shortname));
             }
-            let bufs = [];
+            let bufs = [], totalLen = 0;
             if (tres.headers['content-encoding'] === 'gzip') {
                 tres = tres.pipe(zlib.createGunzip());
             }
             tres.on('data', function (chunk) {
+                totalLen += chunk.length;
                 bufs.push(chunk)
             }).on('end', function (argument) {
-                let result = Buffer.concat(bufs);
+                let result = Buffer.concat(bufs, totalLen);
                 resolve(result)
             }).on('error', reject)
         }).on('error', reject).end();
